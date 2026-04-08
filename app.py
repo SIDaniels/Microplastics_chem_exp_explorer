@@ -565,6 +565,11 @@ st.markdown("""
 
     .stDeployButton {display: none !important;}
     [data-testid="stDecoration"] {visibility: hidden !important; height: 0 !important; position: fixed !important;}
+
+    /* Hide the running/loading progress bar */
+    .stApp > div[data-testid="stDecoration"] {display: none !important;}
+    .stSpinner {display: none !important;}
+    div[data-testid="stAppViewBlockContainer"] > div:first-child > div[style*="position: fixed"] {display: none !important;}
     [data-testid="stToolbar"] {visibility: hidden !important; height: 0 !important; position: fixed !important;}
     [data-testid="stStatusWidget"] {visibility: hidden !important; height: 0 !important; position: fixed !important;}
     .stApp > footer {display: none !important;}
