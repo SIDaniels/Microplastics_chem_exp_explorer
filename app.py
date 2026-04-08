@@ -1647,7 +1647,7 @@ with tab1:
         table_df.columns = [col_names.get(c, c) for c in display_cols]
 
         # Show grants with row selection enabled
-        st.caption("Click the checkbox next to a grant to view its abstract below")
+        st.markdown("<p style='color: #666; font-size: 0.95rem; margin-bottom: 0.5rem;'><strong>Click a row</strong> to view the full abstract below.</p>", unsafe_allow_html=True)
         selection = st.dataframe(
             table_df,
             use_container_width=True,
@@ -1718,8 +1718,8 @@ with tab4:
     st.markdown("""
     <div style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); padding: 1rem; border-radius: 8px; margin-bottom: 1rem; border-left: 4px solid #D4A84B;">
         <p style="margin: 0; font-size: 0.95rem; color: #333;">
-            <strong>Find established experts</strong> who already study your mechanism of interest with other chemicals.
-            These researchers have existing expertise that could translate to microplastics research.
+            <strong>Find established experts</strong> who already study your research niche of interest with other chemicals.
+            These experts are currently funded in pollutant research in relation to human health, and their approach could translate to work on microplastics.
         </p>
     </div>
     """, unsafe_allow_html=True)
