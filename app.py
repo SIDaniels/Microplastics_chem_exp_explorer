@@ -1554,7 +1554,7 @@ with tab1:
         <a href="https://reporter.nih.gov/" target="_blank" style="color: #0D3B3C;">NIH-funded grants</a> (FY2022-2025)
         focused on environmental chemical exposures, combined with conference abstracts from the
         <a href="https://hsc.unm.edu/pharmacy/research/areas/cmbm/mnp-conf/_docs/full-digital-program.pdf" target="_blank" style="color: #0D3B3C;">UNM Micro- and Nanoplastics Conference</a>.
-        Use the filters to explore research by exposure type, organ system, mechanism, and more.
+        Use the filters to explore research by exposure type, organ system, mechanism, and more. Use <strong>Cross-Field Insights</strong> to find methods and techniques funded for other pollutants that could accelerate your work.
         <br><br>
         <em>This tool is in beta and your feedback is welcomed! <a href="https://biotechstrategygroup.com/contact" target="_blank" style="color: #0D3B3C;">Drop us a line</a> to report any issues or let us know what pollutants you'd like to see added next.</em>
     </div>
