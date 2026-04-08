@@ -1511,8 +1511,8 @@ filtered = filter_grants(df, selected_exposures, selected_mechanisms, "", select
 # Sidebar stats
 st.sidebar.markdown("---")
 
-# Always show all grants (no deduplication) - checkbox removed per user request
-group_by_project = False
+# Group by project to show 204 unique projects (not 217 fiscal year records)
+group_by_project = True
 
 # Count NIH grants and conference abstracts (used elsewhere)
 nih_count = (~df['CORE_PROJECT_NUM'].astype(str).str.startswith('CONF_')).sum()
