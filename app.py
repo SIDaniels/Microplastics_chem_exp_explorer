@@ -274,7 +274,7 @@ def create_horizontal_bar_chart(data: dict, title: str = "", value_label: str = 
         y=alt.Y('category:N',
                 sort='-x',
                 title=None,
-                axis=alt.Axis(labelLimit=500, labelOverlap=False)),
+                axis=alt.Axis(labelLimit=500, tickCount=len(data))),
         color=alt.Color('value:Q',
                        scale=alt.Scale(range=[ER_COLORS['soft_teal'], ER_COLORS['dark_teal']]),
                        legend=None),
@@ -283,7 +283,7 @@ def create_horizontal_bar_chart(data: dict, title: str = "", value_label: str = 
             alt.Tooltip('value:Q', title=value_label, format=',')
         ]
     ).properties(
-        height=max(len(data) * 28, 150),
+        height=max(len(data) * 35, 150),
     ).configure_axis(
         labelFontSize=12,
         titleFontSize=13,
