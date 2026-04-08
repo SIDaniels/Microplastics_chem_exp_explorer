@@ -589,8 +589,10 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# Data path - use pre-filtered file (6,500 chemical exposure grants)
-DATA_PATH = Path(__file__).parent / 'data' / 'chemical_exposure_grants_filtered.csv'
+# Data path - use microplastic grants with pre-classified columns for STOMP Analysis
+DATA_PATH = Path(__file__).parent / 'data' / 'microplastic_grants_cleaned.csv'
+# Cross-field data path - use full chemical exposure dataset for Cross-Field Insights
+CROSSFIELD_DATA_PATH = Path(__file__).parent / 'data' / 'chemical_exposure_grants_filtered.csv'
 
 # Exposure categories
 EXPOSURES = {
@@ -991,15 +993,14 @@ def classify_stomp_categories(df: pd.DataFrame, deduplicate: bool = True) -> dic
         'ORGAN_IMMUNE': 'ORGAN_IMMUNE',
     }
 
-    # Organ systems - use pre-classified columns OR keyword matching
+    # Organ systems - use pre-classified columns ONLY (no runtime keyword matching)
     for key, (label, pattern) in ORGAN_SYSTEMS.items():
         col_name = organ_col_map.get(key)
         if col_name and col_name in df_unique.columns:
-            # Use pre-classified column OR keyword match
-            preclassified = df_unique[col_name] == 1
-            keyword_match = text.str.contains(pattern, regex=True, flags=re.IGNORECASE, na=False)
-            matches = preclassified | keyword_match
+            # Use pre-classified column only
+            matches = df_unique[col_name] == 1
         else:
+            # Fallback to keyword matching only if pre-classified column not available
             matches = text.str.contains(pattern, regex=True, flags=re.IGNORECASE, na=False)
         count = matches.sum()
         pct = 100 * count / n_projects if n_projects > 0 else 0
@@ -1020,14 +1021,14 @@ def classify_stomp_categories(df: pd.DataFrame, deduplicate: bool = True) -> dic
         'TYPE_METHODS': 'TYPE_METHODS',
     }
 
-    # Research types - use pre-classified columns OR keyword matching
+    # Research types - use pre-classified columns ONLY (no runtime keyword matching)
     for key, (label, pattern) in RESEARCH_TYPES.items():
         col_name = type_col_map.get(key)
         if col_name and col_name in df_unique.columns:
-            preclassified = df_unique[col_name] == 1
-            keyword_match = text.str.contains(pattern, regex=True, flags=re.IGNORECASE, na=False)
-            matches = preclassified | keyword_match
+            # Use pre-classified column only
+            matches = df_unique[col_name] == 1
         else:
+            # Fallback to keyword matching only if pre-classified column not available
             matches = text.str.contains(pattern, regex=True, flags=re.IGNORECASE, na=False)
         count = matches.sum()
         pct = 100 * count / n_projects if n_projects > 0 else 0
@@ -1344,6 +1345,23 @@ def load_data(_cache_version: str = "v7_conference_2026") -> pd.DataFrame:
     df = df.reset_index(drop=True)
 
     return df
+
+
+@st.cache_data
+def load_crossfield_data(_cache_version: str = "v1_crossfield") -> pd.DataFrame:
+    """Load full chemical exposure dataset for Cross-Field Insights comparison."""
+    if not CROSSFIELD_DATA_PATH.exists():
+        return pd.DataFrame()
+
+    cf_df = pd.read_csv(CROSSFIELD_DATA_PATH, low_memory=False)
+
+    # Create combined text field for searching
+    cf_df['_text'] = cf_df['PROJECT_TITLE'].fillna('') + ' ' + cf_df['ABSTRACT_TEXT'].fillna('')
+
+    # Reset index to avoid alignment issues
+    cf_df = cf_df.reset_index(drop=True)
+
+    return cf_df
 
 
 def filter_grants(df: pd.DataFrame, exposures: list, mechanisms: list,
@@ -1681,12 +1699,15 @@ with tab4:
     </div>
     """, unsafe_allow_html=True)
 
+    # Load the full chemical exposure dataset for cross-field comparison
+    cf_df = load_crossfield_data()
+
     # Fixed chemical exposure to Microplastics
     my_exposure = 'EXP_MICROPLASTICS'
 
-    # Pre-compute microplastics grant counts for each category
-    text_combined = df['PROJECT_TITLE'].fillna('') + ' ' + df['ABSTRACT_TEXT'].fillna('')
-    mp_mask = (df[my_exposure] == 1)
+    # Pre-compute microplastics grant counts for each category using the crossfield dataset
+    text_combined = cf_df['PROJECT_TITLE'].fillna('') + ' ' + cf_df['ABSTRACT_TEXT'].fillna('')
+    mp_mask = (cf_df[my_exposure] == 1)
 
     category_mp_counts = {}
     for cat_key in MECHANISMS_AND_TYPES.keys():
@@ -1694,9 +1715,9 @@ with tab4:
             # TYPE_ categories use regex
             pattern = TYPE_PATTERNS[cat_key]
             cat_mask = mp_mask & text_combined.str.contains(pattern, regex=True, flags=re.IGNORECASE, na=False)
-        elif cat_key in df.columns:
+        elif cat_key in cf_df.columns:
             # MECH_ categories use pre-classified columns
-            cat_mask = mp_mask & (df[cat_key] == 1)
+            cat_mask = mp_mask & (cf_df[cat_key] == 1)
         else:
             cat_mask = mp_mask
         category_mp_counts[cat_key] = cat_mask.sum()
@@ -1745,11 +1766,11 @@ with tab4:
             if my_mechanism.startswith('TYPE_') and my_mechanism in TYPE_PATTERNS:
                 type_pattern = TYPE_PATTERNS[my_mechanism]
                 cat_mask = mp_mask & text_combined.str.contains(type_pattern, regex=True, flags=re.IGNORECASE, na=False)
-            elif my_mechanism in df.columns:
-                cat_mask = mp_mask & (df[my_mechanism] == 1)
+            elif my_mechanism in cf_df.columns:
+                cat_mask = mp_mask & (cf_df[my_mechanism] == 1)
             else:
                 cat_mask = mp_mask
-            cat_grants = df[cat_mask]
+            cat_grants = cf_df[cat_mask]
             cat_text = cat_grants['PROJECT_TITLE'].fillna('') + ' ' + cat_grants['ABSTRACT_TEXT'].fillna('')
 
             # Find organ systems
@@ -1827,32 +1848,32 @@ with tab4:
     use_regex_filter = my_mechanism and my_mechanism.startswith('TYPE_') and my_mechanism in TYPE_PATTERNS
 
     # Build combined text column for regex matching (used for TYPE_ categories)
-    text_combined = df['PROJECT_TITLE'].fillna('') + ' ' + df['ABSTRACT_TEXT'].fillna('')
+    text_combined = cf_df['PROJECT_TITLE'].fillna('') + ' ' + cf_df['ABSTRACT_TEXT'].fillna('')
 
     # Get grants from MY field (with mechanism filter - now always applied)
-    my_field_mask = (df[my_exposure] == 1)
+    my_field_mask = (cf_df[my_exposure] == 1)
     if my_mechanism:
         if use_regex_filter:
             # TYPE_ categories: Use regex pattern matching
             type_pattern = TYPE_PATTERNS[my_mechanism]
             my_field_mask = my_field_mask & text_combined.str.contains(type_pattern, regex=True, flags=re.IGNORECASE, na=False)
-        elif my_mechanism in df.columns:
+        elif my_mechanism in cf_df.columns:
             # MECH_ categories: Use pre-classified column
-            my_field_mask = my_field_mask & (df[my_mechanism] == 1)
-    my_grants = df[my_field_mask]
+            my_field_mask = my_field_mask & (cf_df[my_mechanism] == 1)
+    my_grants = cf_df[my_field_mask]
 
     # Get grants from OTHER fields (with mechanism filter)
-    other_exp_cols = [e for e in EXPOSURES.keys() if e != my_exposure and e in df.columns]
-    other_field_mask = (df[other_exp_cols].max(axis=1) > 0) & (df[my_exposure] == 0)
+    other_exp_cols = [e for e in EXPOSURES.keys() if e != my_exposure and e in cf_df.columns]
+    other_field_mask = (cf_df[other_exp_cols].max(axis=1) > 0) & (cf_df[my_exposure] == 0)
     if my_mechanism:
         if use_regex_filter:
             # TYPE_ categories: Use regex pattern matching
             type_pattern = TYPE_PATTERNS[my_mechanism]
             other_field_mask = other_field_mask & text_combined.str.contains(type_pattern, regex=True, flags=re.IGNORECASE, na=False)
-        elif my_mechanism in df.columns:
+        elif my_mechanism in cf_df.columns:
             # MECH_ categories: Use pre-classified column
-            other_field_mask = other_field_mask & (df[my_mechanism] == 1)
-    other_grants = df[other_field_mask]
+            other_field_mask = other_field_mask & (cf_df[my_mechanism] == 1)
+    other_grants = cf_df[other_field_mask]
 
     # Count by chemical field for the gap ratio display
     chemical_counts = {}
@@ -1862,14 +1883,14 @@ with tab4:
                 # TYPE_ categories: Use regex pattern matching
                 type_pattern = TYPE_PATTERNS[my_mechanism]
                 type_mask = text_combined.str.contains(type_pattern, regex=True, flags=re.IGNORECASE, na=False)
-                count = ((df[exp_col] == 1) & type_mask & (df[my_exposure] == 0)).sum()
-            elif my_mechanism in df.columns:
+                count = ((cf_df[exp_col] == 1) & type_mask & (cf_df[my_exposure] == 0)).sum()
+            elif my_mechanism in cf_df.columns:
                 # MECH_ categories: Use pre-classified column
-                count = ((df[exp_col] == 1) & (df[my_mechanism] == 1) & (df[my_exposure] == 0)).sum()
+                count = ((cf_df[exp_col] == 1) & (cf_df[my_mechanism] == 1) & (cf_df[my_exposure] == 0)).sum()
             else:
-                count = ((df[exp_col] == 1) & (df[my_exposure] == 0)).sum()
+                count = ((cf_df[exp_col] == 1) & (cf_df[my_exposure] == 0)).sum()
         else:
-            count = ((df[exp_col] == 1) & (df[my_exposure] == 0)).sum()
+            count = ((cf_df[exp_col] == 1) & (cf_df[my_exposure] == 0)).sum()
         if count > 0:
             chemical_counts[EXPOSURES.get(exp_col, exp_col)] = count
 
@@ -2094,6 +2115,17 @@ with tab_organ:
 
         organ_data = stomp_results['organs']
         if organ_data:
+            # Calculate projects with any organ system identified using CSV columns directly
+            n_grants = len(filtered_stomp)
+            organ_cols = ['ORGAN_BRAIN_NERVOUS', 'ORGAN_GI_GUT', 'ORGAN_RESPIRATORY', 'ORGAN_CARDIOVASCULAR',
+                         'ORGAN_REPRODUCTIVE', 'ORGAN_LIVER', 'ORGAN_KIDNEY', 'ORGAN_IMMUNE', 'ORGAN_SKIN', 'ORGAN_ENDOCRINE']
+            any_organ_mask = pd.Series([False] * len(filtered_stomp), index=filtered_stomp.index)
+            for col in organ_cols:
+                if col in filtered_stomp.columns:
+                    any_organ_mask = any_organ_mask | (filtered_stomp[col] == 1)
+            any_organ = any_organ_mask.sum()
+            any_organ_pct = round(100 * any_organ / n_grants, 1) if n_grants > 0 else 0
+            st.info(f"**{any_organ:,}** projects ({any_organ_pct}%) have at least one organ system identified")
             # Sort by count
             sorted_organs = sorted(organ_data.items(), key=lambda x: x[1]['count'], reverse=True)
 
@@ -2215,6 +2247,17 @@ with tab_model:
         filtered_stomp = filtered.drop_duplicates(subset=['PROJECT_TITLE'], keep='first')
 
         st.markdown("#### What model systems are being used?")
+
+        # Calculate projects with any model system identified using pre-classified columns
+        n_grants = len(filtered_stomp)
+        model_cols = ['MODEL_INVITRO', 'MODEL_RODENT', 'MODEL_ZEBRAFISH', 'MODEL_OTHER_ANIMAL', 'MODEL_HUMAN', 'MODEL_ENVIRONMENTAL']
+        any_model_mask = pd.Series([False] * len(filtered_stomp))
+        for col in model_cols:
+            if col in filtered_stomp.columns:
+                any_model_mask = any_model_mask | (filtered_stomp[col] == 1)
+        any_model = any_model_mask.sum()
+        any_model_pct = round(100 * any_model / n_grants, 1) if n_grants > 0 else 0
+        st.info(f"**{any_model:,}** projects ({any_model_pct}%) have at least one model system identified")
 
         # Model systems patterns
         MODEL_SYSTEMS = {
