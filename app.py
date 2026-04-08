@@ -1683,39 +1683,103 @@ with tab4:
             cat_mask = mp_mask
         category_mp_counts[cat_key] = cat_mask.sum()
 
-    # Category selection with pill buttons (like STOMP)
-    st.markdown("#### Select a Research Category")
+    # Category selection with dropdown + summary card
     category_options_list = list(MECHANISMS_AND_TYPES.keys())
-    category_labels = [MECHANISMS_AND_TYPES[k] for k in category_options_list]
+    category_labels = [f"{MECHANISMS_AND_TYPES[k]} ({category_mp_counts.get(k, 0)} grants)" for k in category_options_list]
 
     # Initialize session state for crossfield category
     if 'crossfield_category' not in st.session_state:
         st.session_state.crossfield_category = category_options_list[0] if category_options_list else None
 
-    # Show pills in rows of 4 with grant counts
-    for row_start in range(0, len(category_options_list), 4):
-        row_items = category_options_list[row_start:row_start + 4]
-        cols = st.columns(len(row_items))
-        for i, (col, cat_key) in enumerate(zip(cols, row_items)):
-            with col:
-                cat_label = MECHANISMS_AND_TYPES.get(cat_key, cat_key)
-                mp_count = category_mp_counts.get(cat_key, 0)
-                is_selected = st.session_state.crossfield_category == cat_key
-                if is_selected:
-                    st.markdown(f"""
-                    <div style="background-color: #0D3B3C; color: white; padding: 8px 12px;
-                                border-radius: 20px; text-align: center; font-weight: 600;
-                                font-family: 'Source Sans Pro', sans-serif; font-size: 0.85rem;
-                                box-shadow: 0 2px 8px rgba(13, 59, 60, 0.3); margin-bottom: 8px;">
-                        {cat_label} <span style="background: rgba(255,255,255,0.2); padding: 2px 6px; border-radius: 10px; font-size: 0.75rem; margin-left: 4px;">{mp_count}</span>
-                    </div>
-                    """, unsafe_allow_html=True)
-                else:
-                    if st.button(f"{cat_label} ({mp_count})", key=f"cf_pill_{row_start}_{i}", use_container_width=True):
-                        st.session_state.crossfield_category = cat_key
-                        st.rerun()
+    # Two-column layout: selector on left, summary card on right
+    sel_col, summary_col = st.columns([1, 2])
+
+    with sel_col:
+        st.markdown("#### Microplastics Research Category")
+        # Create a mapping for the selectbox
+        label_to_key = {label: key for key, label in zip(category_options_list, category_labels)}
+        current_label = f"{MECHANISMS_AND_TYPES[st.session_state.crossfield_category]} ({category_mp_counts.get(st.session_state.crossfield_category, 0)} grants)"
+
+        selected_label = st.selectbox(
+            "Select category:",
+            category_labels,
+            index=category_labels.index(current_label) if current_label in category_labels else 0,
+            key="cf_category_select",
+            label_visibility="collapsed"
+        )
+
+        # Update session state if changed
+        selected_key = label_to_key.get(selected_label, category_options_list[0])
+        if selected_key != st.session_state.crossfield_category:
+            st.session_state.crossfield_category = selected_key
+            st.rerun()
 
     my_mechanism = st.session_state.crossfield_category
+    mech_label = MECHANISMS_AND_TYPES.get(my_mechanism, my_mechanism) if my_mechanism else "All Categories"
+    mp_count = category_mp_counts.get(my_mechanism, 0)
+
+    with summary_col:
+        # Get the static summary for this category
+        summary = CATEGORY_SUMMARIES.get(my_mechanism, "")
+
+        # Build organ/model tags for current category (compute here for display)
+        if my_mechanism:
+            if my_mechanism.startswith('TYPE_') and my_mechanism in TYPE_PATTERNS:
+                type_pattern = TYPE_PATTERNS[my_mechanism]
+                cat_mask = mp_mask & text_combined.str.contains(type_pattern, regex=True, flags=re.IGNORECASE, na=False)
+            elif my_mechanism in df.columns:
+                cat_mask = mp_mask & (df[my_mechanism] == 1)
+            else:
+                cat_mask = mp_mask
+            cat_grants = df[cat_mask]
+            cat_text = cat_grants['PROJECT_TITLE'].fillna('') + ' ' + cat_grants['ABSTRACT_TEXT'].fillna('')
+
+            # Find organ systems
+            cat_organs = []
+            for organ_key, (organ_label, pattern) in ORGAN_SYSTEMS.items():
+                matches = cat_text.str.contains(pattern, regex=True, flags=re.IGNORECASE, na=False)
+                pct = 100 * matches.sum() / len(cat_text) if len(cat_text) > 0 else 0
+                if pct >= 10:
+                    cat_organs.append((organ_label, round(pct, 0)))
+            cat_organs.sort(key=lambda x: x[1], reverse=True)
+
+            # Find model systems
+            cat_models = []
+            for model_name, pattern in MODEL_SYSTEMS.items():
+                matches = cat_text.str.contains(pattern, regex=True, flags=re.IGNORECASE, na=False)
+                pct = 100 * matches.sum() / len(cat_text) if len(cat_text) > 0 else 0
+                if pct >= 10:
+                    cat_models.append((model_name, round(pct, 0)))
+            cat_models.sort(key=lambda x: x[1], reverse=True)
+        else:
+            cat_organs = []
+            cat_models = []
+
+        # Build tags HTML
+        organ_html = ""
+        if cat_organs:
+            organ_tags = ' '.join([f'<span style="background: #e8f4f5; color: #0D3B3C; padding: 2px 8px; border-radius: 12px; font-size: 0.8rem; margin-right: 4px;">{org[0]}</span>' for org in cat_organs[:4]])
+            organ_html = f'<div style="margin-bottom: 8px;"><strong style="color: #666; font-size: 0.85rem;">Organ Systems:</strong> {organ_tags}</div>'
+
+        model_html = ""
+        if cat_models:
+            model_tags = ' '.join([f'<span style="background: #f5f0e8; color: #8B6914; padding: 2px 8px; border-radius: 12px; font-size: 0.8rem; margin-right: 4px;">{mod[0]}</span>' for mod in cat_models[:4]])
+            model_html = f'<div style="margin-bottom: 8px;"><strong style="color: #666; font-size: 0.85rem;">Model Systems:</strong> {model_tags}</div>'
+
+        # Styled summary card
+        st.markdown(f"""
+        <div style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+                    padding: 1rem 1.25rem; border-radius: 10px;
+                    border-left: 4px solid #0D3B3C; margin-bottom: 0.5rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+                <h4 style="margin: 0; color: #0D3B3C; font-family: 'Source Sans Pro', sans-serif;">{mech_label}</h4>
+                <span style="background: #0D3B3C; color: white; padding: 4px 12px; border-radius: 15px; font-size: 0.85rem; font-weight: 600;">{mp_count} grants</span>
+            </div>
+            {organ_html}
+            {model_html}
+            <p style="margin: 0; font-size: 0.9rem; color: #444; line-height: 1.5;">{summary if summary else f"<em>{mp_count} microplastics grants studying {mech_label}.</em>"}</p>
+        </div>
+        """, unsafe_allow_html=True)
 
     # Secondary filters row
     st.markdown("<div style='height: 12px'></div>", unsafe_allow_html=True)
@@ -1878,10 +1942,6 @@ with tab4:
                 st.markdown(summary)
             else:
                 st.markdown(f"*{len(my_grants)} microplastics grants studying {mech_label}.*")
-
-        # Results section header
-        st.markdown(f"### Experts Studying {mech_label} with Other Chemicals")
-        st.markdown(f"*These researchers already have expertise in **{mech_label}** using established chemical models.*")
 
         if len(other_grants) > 0:
             # Compute similarity scores with enhanced weighting
