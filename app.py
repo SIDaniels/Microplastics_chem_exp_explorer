@@ -57,19 +57,42 @@ def check_rate_limit() -> tuple[bool, str]:
 
     return True, ""
 
-def search_grants_for_chat(df: pd.DataFrame, query: str, max_results: int = 15) -> pd.DataFrame:
-    """Search grants relevant to a chat query."""
-    query_lower = query.lower()
+def search_grants_for_chat(df: pd.DataFrame, query: str, max_results: int = 20) -> pd.DataFrame:
+    """Search grants relevant to a chat query using keyword extraction."""
+    # Extract meaningful keywords (skip common words)
+    stop_words = {'who', 'what', 'where', 'when', 'why', 'how', 'is', 'are', 'the', 'a', 'an',
+                  'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by', 'from',
+                  'about', 'into', 'through', 'during', 'before', 'after', 'above', 'below',
+                  'between', 'research', 'researching', 'studying', 'studies', 'study',
+                  'working', 'work', 'doing', 'does', 'did', 'have', 'has', 'been', 'being',
+                  'there', 'their', 'they', 'them', 'this', 'that', 'these', 'those',
+                  'can', 'could', 'would', 'should', 'may', 'might', 'must', 'will',
+                  'tell', 'me', 'show', 'find', 'look', 'looking', 'any', 'some'}
 
-    # Search in title and abstract
-    mask = (
-        df['PROJECT_TITLE'].fillna('').str.lower().str.contains(query_lower, regex=False) |
-        df['ABSTRACT_TEXT'].fillna('').str.lower().str.contains(query_lower, regex=False) |
-        df['PI_NAMEs'].fillna('').str.lower().str.contains(query_lower, regex=False) |
-        df['ORG_NAME'].fillna('').str.lower().str.contains(query_lower, regex=False)
-    )
+    # Extract keywords from query
+    words = re.findall(r'\b[a-zA-Z]{3,}\b', query.lower())
+    keywords = [w for w in words if w not in stop_words]
 
-    results = df[mask].head(max_results)
+    if not keywords:
+        # Fall back to full query if no keywords extracted
+        keywords = [query.lower()]
+
+    # Create combined text for searching
+    text = (df['PROJECT_TITLE'].fillna('') + ' ' +
+            df['ABSTRACT_TEXT'].fillna('') + ' ' +
+            df['PI_NAMEs'].fillna('') + ' ' +
+            df['ORG_NAME'].fillna('')).str.lower()
+
+    # Score each grant by how many keywords it matches
+    df = df.copy()
+    df['_match_score'] = 0
+    for keyword in keywords:
+        df['_match_score'] += text.str.contains(keyword, regex=False).astype(int)
+
+    # Filter to grants that match at least one keyword, sort by score
+    results = df[df['_match_score'] > 0].sort_values('_match_score', ascending=False).head(max_results)
+    results = results.drop(columns=['_match_score'])
+
     return results
 
 def format_grants_for_context(grants_df: pd.DataFrame) -> str:
