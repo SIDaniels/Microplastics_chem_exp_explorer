@@ -1599,7 +1599,10 @@ with tab1:
             use_container_width=True,
             hide_index=True,
             on_select="rerun",
-            selection_mode="single-row"
+            selection_mode="single-row",
+            column_config={
+                "Title": st.column_config.TextColumn("Title", width="large"),
+            }
         )
 
         if len(display_df) > 100:
@@ -1997,7 +2000,10 @@ with tab4:
                         hide_index=True,
                         use_container_width=True,
                         on_select="rerun",
-                        selection_mode="single-row"
+                        selection_mode="single-row",
+                        column_config={
+                            "Project Title": st.column_config.TextColumn("Project Title", width="large"),
+                        }
                     )
 
                     if len(inspiring) > 25:
@@ -2164,7 +2170,10 @@ with tab_organ:
                             use_container_width=True,
                             height=300,
                             on_select="rerun",
-                            selection_mode="single-row"
+                            selection_mode="single-row",
+                            column_config={
+                                "Title": st.column_config.TextColumn("Title", width="large"),
+                            }
                         )
 
                         if len(organ_grants) > 50:
@@ -2274,7 +2283,10 @@ with tab_model:
                     use_container_width=True,
                     height=300,
                     on_select="rerun",
-                    selection_mode="single-row"
+                    selection_mode="single-row",
+                    column_config={
+                        "Title": st.column_config.TextColumn("Title", width="large"),
+                    }
                 )
 
                 if len(model_grants) > 50:
@@ -2388,7 +2400,10 @@ with tab_model:
                         use_container_width=True,
                         height=300,
                         on_select="rerun",
-                        selection_mode="single-row"
+                        selection_mode="single-row",
+                        column_config={
+                            "Title": st.column_config.TextColumn("Title", width="large"),
+                        }
                     )
 
                     if len(mech_grants) > 50:
