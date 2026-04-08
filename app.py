@@ -266,10 +266,38 @@ st.markdown("""
         display: none;
     }
 
-    /* DataFrames */
+    /* DataFrames - white/light background */
     .stDataFrame {
         border-radius: 8px;
         overflow: hidden;
+        background-color: white !important;
+    }
+
+    .stDataFrame [data-testid="stDataFrameResizable"] {
+        background-color: white !important;
+    }
+
+    /* Table cells and rows */
+    .stDataFrame table {
+        background-color: white !important;
+    }
+
+    .stDataFrame th {
+        background-color: #f8f9fa !important;
+        color: #0D3B3C !important;
+    }
+
+    .stDataFrame td {
+        background-color: white !important;
+    }
+
+    /* Glide Data Grid (Streamlit's dataframe component) */
+    [data-testid="stDataFrame"] > div {
+        background-color: white !important;
+    }
+
+    .dvn-scroller {
+        background-color: white !important;
     }
 
     /* Multiselect tags */
