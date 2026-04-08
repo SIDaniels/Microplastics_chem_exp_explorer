@@ -339,7 +339,6 @@ MECHANISMS = {
 CONF_TYPE_CATEGORIES = {
     'TYPE_METHODS': 'Methods / Detection',
     'TYPE_ACCUMULATION': 'Tissue Accumulation',
-    'TYPE_POLICY': 'Policy / Communication',
     'TYPE_ENVIRONMENTAL': 'Environmental Studies',
     'TYPE_EXPOSURE': 'Exposure Assessment',
 }
@@ -358,12 +357,6 @@ TYPE_PATTERNS = {
         r'biodistrib|organ\s+distribution|cellular\s+uptake|'
         r'bioaccumul|body\s+burden|tissue\s+burden|'
         r'uptake\s+(in|by)|accumul\w+\s+in\s+(tissue|organ)'
-    ),
-    'TYPE_POLICY': (
-        r'policy|regulation|regulatory|guideline|standard\s+setting|'
-        r'risk\s+communication|public\s+health\s+policy|'
-        r'environmental\s+policy|health\s+advisory|risk\s+governance|'
-        r'stakeholder|science\s+communication|translat\w+\s+research'
     ),
     'TYPE_ENVIRONMENTAL': (
         r'environmental\s+(monitoring|sampling|fate|transport|contamination)|'
@@ -1035,12 +1028,16 @@ def compute_cooccurrence(df: pd.DataFrame) -> dict:
 
 
 @st.cache_data
-def load_data(_cache_version: str = "v6_conference_fiscal_years") -> pd.DataFrame:
+def load_data(_cache_version: str = "v7_conference_2026") -> pd.DataFrame:
     """Load pre-filtered grant data (6,500 chemical exposure grants + conference abstracts)."""
     if not DATA_PATH.exists():
         return pd.DataFrame()
 
     df = pd.read_csv(DATA_PATH, low_memory=False)
+
+    # Set conference abstracts to fiscal year 2026
+    conf_mask = df['CORE_PROJECT_NUM'].astype(str).str.startswith('CONF_')
+    df.loc[conf_mask, 'FISCAL_YEAR'] = 2026
 
     # Create combined text field for searching
     df['_text'] = df['PROJECT_TITLE'].fillna('') + ' ' + df['ABSTRACT_TEXT'].fillna('')
