@@ -1547,6 +1547,17 @@ st.markdown("""
 tab1, tab_organ, tab_model, tab_mech, tab4 = st.tabs(["Results", "Organ Systems", "Model Systems", "Mechanisms", "Cross-Field Insights"])
 
 with tab1:
+    # About this database info box with hyperlinks
+    st.markdown("""
+    <div style="background-color: #f0f7f7; border-left: 4px solid #0D3B3C; padding: 12px 16px; margin-bottom: 16px; border-radius: 0 8px 8px 0;">
+        <strong>About this database:</strong> This explorer combines
+        <a href="https://reporter.nih.gov/" target="_blank" style="color: #0D3B3C;">NIH-funded research grants</a> (FY2022-2025)
+        focused on environmental chemical exposures with conference abstracts from the
+        <a href="https://hsc.unm.edu/pharmacy/research/areas/cmbm/mnp-conf/_docs/full-digital-program.pdf" target="_blank" style="color: #0D3B3C;">UNM Micro- and Nanoplastics Conference</a>.
+        Use the filters to explore research by exposure type, organ system, mechanism, and more.
+    </div>
+    """, unsafe_allow_html=True)
+
     # Use global toggle from sidebar
     show_unique = group_by_project
 
