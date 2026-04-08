@@ -5,5 +5,11 @@ toolbarMode = "minimal"
 [ui]
 hideTopBar = true
 
+[server]
+enableStaticServing = true
+
+[browser]
+gatherUsageStats = false
+
 [theme]
 base = "light"

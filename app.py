@@ -545,6 +545,12 @@ st.markdown("""
         font-size: 0.85rem;
         opacity: 0.7;
     }
+
+    /* Hide Streamlit branding */
+    footer {visibility: hidden;}
+    #MainMenu {visibility: hidden;}
+    header {visibility: hidden;}
+    .stDeployButton {display: none;}
 </style>
 """, unsafe_allow_html=True)
 
