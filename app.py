@@ -456,35 +456,43 @@ st.markdown("""
         font-size: 1.8rem !important;
     }
 
-    /* Tabs - refined styling matching engineeredresilience.org */
+    /* Tabs - styled as obvious clickable buttons */
     .stTabs [data-baseweb="tab-list"] {
-        gap: 4px;
-        background-color: #f0f2f1;
-        padding: 6px;
-        border-radius: 10px;
-        border: none;
+        gap: 8px;
+        background-color: #e8ebe9;
+        padding: 8px 10px;
+        border-radius: 12px;
+        border: 2px solid #d0d5d2;
+        box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
     }
 
     .stTabs [data-baseweb="tab"] {
-        background-color: transparent;
+        background-color: #ffffff;
         color: #0D3B3C;
         border-radius: 8px;
         font-family: 'Source Sans Pro', sans-serif;
         font-weight: 600;
         font-size: 0.95rem;
-        padding: 10px 20px;
-        border: none;
+        padding: 12px 24px;
+        border: 2px solid #c5cbc7;
         transition: all 0.2s ease;
+        cursor: pointer;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.08);
     }
 
     .stTabs [data-baseweb="tab"]:hover {
-        background-color: rgba(70, 179, 169, 0.15);
+        background-color: #f0f7f6;
+        border-color: #46B3A9;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 8px rgba(70, 179, 169, 0.2);
     }
 
     .stTabs [aria-selected="true"] {
         background-color: #0D3B3C !important;
         color: white !important;
-        box-shadow: 0 2px 8px rgba(13, 59, 60, 0.25);
+        border-color: #0D3B3C !important;
+        box-shadow: 0 4px 12px rgba(13, 59, 60, 0.35);
+        transform: translateY(-1px);
     }
 
     /* Remove the default bottom border/highlight */
@@ -1483,7 +1491,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # Main content - tabs
-tab1, tab5, tab4 = st.tabs(["Results", "STOMP Analysis", "Cross-Field Insights"])
+tab1, tab_organ, tab_model, tab_mech, tab4 = st.tabs(["Results", "Organ Systems", "Model Systems", "Mechanisms", "Cross-Field Insights"])
 
 with tab1:
     # Use global toggle from sidebar
@@ -2028,39 +2036,8 @@ with tab4:
     else:
         st.info(f"No grants found for {exp_label} + {mech_label}. Try a different combination.")
 
-with tab5:
-    st.subheader("STOMP-Style Analysis")
-
-    # Horizontal pill buttons instead of dropdown
-    stomp_options = ["Organ Systems", "Model Systems", "Mechanisms"]
-
-    # Initialize session state for STOMP category
-    if 'stomp_category' not in st.session_state:
-        st.session_state.stomp_category = stomp_options[0]
-
-    # Create pill button row
-    pill_cols = st.columns(len(stomp_options))
-    for i, (col, option) in enumerate(zip(pill_cols, stomp_options)):
-        with col:
-            is_selected = st.session_state.stomp_category == option
-            if is_selected:
-                st.markdown(f"""
-                <div style="background-color: #0D3B3C; color: white; padding: 10px 16px;
-                            border-radius: 20px; text-align: center; font-weight: 600;
-                            font-family: 'Source Sans Pro', sans-serif; cursor: pointer;
-                            box-shadow: 0 2px 8px rgba(13, 59, 60, 0.3);">
-                    {option}
-                </div>
-                """, unsafe_allow_html=True)
-            else:
-                if st.button(option, key=f"stomp_pill_{i}", use_container_width=True):
-                    st.session_state.stomp_category = option
-                    st.rerun()
-
-    stomp_category = st.session_state.stomp_category
-
-    st.markdown("<div style='height: 16px'></div>", unsafe_allow_html=True)  # Spacer
-
+# Organ Systems Tab
+with tab_organ:
     if len(filtered) > 0:
         # Run STOMP classification
         stomp_results = classify_stomp_categories(filtered)
@@ -2068,25 +2045,23 @@ with tab5:
         # Deduplicate for all STOMP views
         filtered_stomp = filtered.drop_duplicates(subset=['PROJECT_TITLE'], keep='first')
 
-        # ---- ORGAN SYSTEMS ----
-        if stomp_category == "Organ Systems":
-            st.markdown("#### Which body systems are being studied?")
+        st.markdown("#### Which body systems are being studied?")
 
-            organ_data = stomp_results['organs']
-            if organ_data:
-                # Sort by count
-                sorted_organs = sorted(organ_data.items(), key=lambda x: x[1]['count'], reverse=True)
+        organ_data = stomp_results['organs']
+        if organ_data:
+            # Sort by count
+            sorted_organs = sorted(organ_data.items(), key=lambda x: x[1]['count'], reverse=True)
 
-                col1, col2 = st.columns([2, 1])
-                with col1:
-                    chart_data = {k: v['count'] for k, v in sorted_organs if v['count'] > 0}
-                    chart = create_horizontal_bar_chart(chart_data, value_label="Projects")
-                    st.altair_chart(chart, use_container_width=True)
+            col1, col2 = st.columns([2, 1])
+            with col1:
+                chart_data = {k: v['count'] for k, v in sorted_organs if v['count'] > 0}
+                chart = create_horizontal_bar_chart(chart_data, value_label="Projects")
+                st.altair_chart(chart, use_container_width=True)
 
-                with col2:
-                    organ_table = [{'Organ System': k, 'Projects': v['count'], '%': f"{v['pct']}%"}
-                                  for k, v in sorted_organs[:8]]
-                    st.dataframe(pd.DataFrame(organ_table), hide_index=True, use_container_width=True)
+            with col2:
+                organ_table = [{'Organ System': k, 'Projects': v['count'], '%': f"{v['pct']}%"}
+                              for k, v in sorted_organs[:8]]
+                st.dataframe(pd.DataFrame(organ_table), hide_index=True, use_container_width=True)
 
             # Drill-down with selectbox
             st.markdown("---")
@@ -2179,72 +2154,196 @@ with tab5:
                             st.markdown("**Abstract:**")
                             st.write(abstract)
 
-        # ---- MODEL SYSTEMS ----
-        elif stomp_category == "Model Systems":
-            st.markdown("#### What model systems are being used?")
+    else:
+        st.info("Filter grants to see organ system analysis.")
 
-            # Model systems patterns
-            MODEL_SYSTEMS = {
-                'Mouse/Rat': r'\bmouse\b|\bmice\b|\brat\b|\brodent\b|\bmurine\b',
-                'Cell culture': r'cell\s+line|cell\s+culture|in\s+vitro|primary\s+cell',
-                'Human cohort': r'cohort|epidemiol|NHANES|population.based|human\s+subject',
-                'Zebrafish': r'\bzebrafish\b|\bdanio\b',
-                'C. elegans': r'c\.\s*elegans|caenorhabditis',
-            }
+# Model Systems Tab
+with tab_model:
+    if len(filtered) > 0:
+        # Run STOMP classification
+        stomp_results = classify_stomp_categories(filtered)
 
-            text = filtered_stomp['PROJECT_TITLE'].fillna('') + ' ' + filtered_stomp['ABSTRACT_TEXT'].fillna('')
-            n_total = len(filtered_stomp)
+        # Deduplicate for all STOMP views
+        filtered_stomp = filtered.drop_duplicates(subset=['PROJECT_TITLE'], keep='first')
 
-            model_counts = {}
-            for name, pattern in MODEL_SYSTEMS.items():
-                count = text.str.contains(pattern, regex=True, flags=re.IGNORECASE, na=False).sum()
-                model_counts[name] = {'count': count, 'pct': round(100 * count / n_total, 1) if n_total > 0 else 0}
+        st.markdown("#### What model systems are being used?")
 
-            sorted_models = sorted(model_counts.items(), key=lambda x: x[1]['count'], reverse=True)
+        # Model systems patterns
+        MODEL_SYSTEMS = {
+            'Mouse/Rat': r'\bmouse\b|\bmice\b|\brat\b|\brodent\b|\bmurine\b',
+            'Cell culture': r'cell\s+line|cell\s+culture|in\s+vitro|primary\s+cell',
+            'Human cohort': r'cohort|epidemiol|NHANES|population.based|human\s+subject',
+            'Zebrafish': r'\bzebrafish\b|\bdanio\b',
+            'C. elegans': r'c\.\s*elegans|caenorhabditis',
+        }
+
+        text = filtered_stomp['PROJECT_TITLE'].fillna('') + ' ' + filtered_stomp['ABSTRACT_TEXT'].fillna('')
+        n_total = len(filtered_stomp)
+
+        model_counts = {}
+        for name, pattern in MODEL_SYSTEMS.items():
+            count = text.str.contains(pattern, regex=True, flags=re.IGNORECASE, na=False).sum()
+            model_counts[name] = {'count': count, 'pct': round(100 * count / n_total, 1) if n_total > 0 else 0}
+
+        sorted_models = sorted(model_counts.items(), key=lambda x: x[1]['count'], reverse=True)
+
+        col1, col2 = st.columns([2, 1])
+        with col1:
+            chart_data = {k: v['count'] for k, v in sorted_models if v['count'] > 0}
+            if chart_data:
+                chart = create_horizontal_bar_chart(chart_data, value_label="Projects")
+                st.altair_chart(chart, use_container_width=True)
+
+        with col2:
+            model_table = [{'Model System': k, 'Projects': v['count'], '%': f"{v['pct']}%"}
+                          for k, v in sorted_models]
+            st.dataframe(pd.DataFrame(model_table), hide_index=True, use_container_width=True)
+
+        # Drill-down
+        st.markdown("---")
+        model_options = [f"{name} ({info['count']})" for name, info in sorted_models if info['count'] > 0]
+        if model_options:
+            selected_model_option = st.selectbox(
+                "Explore projects by model system",
+                ["Select a model system..."] + model_options,
+                key="model_select"
+            )
+            selected_model = selected_model_option.rsplit(" (", 1)[0] if selected_model_option != "Select a model system..." else None
+        else:
+            selected_model = None
+
+        if selected_model and selected_model in MODEL_SYSTEMS:
+            model_pattern = MODEL_SYSTEMS[selected_model]
+            model_matches = text.str.contains(model_pattern, regex=True, flags=re.IGNORECASE, na=False)
+            model_grants = filtered_stomp[model_matches].copy()
+
+            st.markdown(f"### {selected_model}")
+            st.markdown(f"**{len(model_grants):,} projects** using this model")
+
+            display_cols = ['PROJECT_TITLE', 'PI_NAMEs', 'ORG_NAME', 'FISCAL_YEAR']
+            display_cols = [c for c in display_cols if c in model_grants.columns]
+            if display_cols:
+                grants_display = model_grants[display_cols].head(50).copy()
+                if 'PI_NAMEs' in grants_display.columns:
+                    grants_display['PI_NAMEs'] = grants_display['PI_NAMEs'].apply(clean_pi_names)
+                col_names = {'PROJECT_TITLE': 'Title', 'PI_NAMEs': 'PI(s)', 'ORG_NAME': 'Organization', 'FISCAL_YEAR': 'FY'}
+                grants_display.columns = [col_names.get(c, c) for c in display_cols]
+                st.caption("Select a row to view abstract below")
+                model_selection = st.dataframe(
+                    grants_display,
+                    hide_index=True,
+                    use_container_width=True,
+                    height=300,
+                    on_select="rerun",
+                    selection_mode="single-row"
+                )
+
+                if len(model_grants) > 50:
+                    st.caption(f"Showing first 50 of {len(model_grants):,} projects")
+
+                # Download button for model system results
+                model_csv = model_grants.to_csv(index=False)
+                st.download_button(
+                    f"Download {selected_model} Projects (CSV)",
+                    model_csv,
+                    f"{selected_model.lower().replace(' ', '_').replace('/', '_')}_projects.csv",
+                    "text/csv",
+                    key="model_download"
+                )
+
+                if model_selection and model_selection.selection and model_selection.selection.rows:
+                    selected_idx = model_selection.selection.rows[0]
+                    grant_row = model_grants.iloc[selected_idx]
+                    st.markdown("---")
+                    st.markdown(f"**{grant_row['PROJECT_TITLE']}**")
+                    st.markdown(f"*PI:* {clean_pi_names(grant_row.get('PI_NAMEs', 'Unknown'))} | *Org:* {grant_row.get('ORG_NAME', 'Unknown')} | *FY:* {int(grant_row.get('FISCAL_YEAR', 0))}")
+                    abstract = grant_row.get('ABSTRACT_TEXT', 'No abstract available')
+                    if pd.isna(abstract):
+                        abstract = 'No abstract available'
+                    st.markdown("**Abstract:**")
+                    st.write(abstract)
+
+    with tab_mech:
+        st.markdown("#### What biological mechanisms are being studied?")
+        st.caption("*Using pre-classified mechanism columns (same as Cross-Field Insights)*")
+
+        # Use pre-classified MECH_* columns from CSV (same as Cross-Field Insights tab)
+        # This provides consistent categorization across both tabs
+        mech_name_to_key = {}
+        mech_data = {}
+        n_grants = len(filtered_stomp)
+
+        # Only show mechanisms from MECHANISMS dict (excludes oxidative, developmental, epigenetic)
+        for key, label in MECHANISMS.items():
+            # Use pre-classified column
+            if key in filtered_stomp.columns:
+                matches = filtered_stomp[key] == 1
+                count = int(matches.sum())
+            else:
+                count = 0
+            pct = round(100 * count / n_grants, 1) if n_grants > 0 else 0
+            mech_data[label] = {'count': count, 'pct': pct, 'key': key}
+            mech_name_to_key[label] = key
+
+        if mech_data:
+
+            sorted_mechs = sorted(mech_data.items(), key=lambda x: x[1]['count'], reverse=True)
 
             col1, col2 = st.columns([2, 1])
             with col1:
-                chart_data = {k: v['count'] for k, v in sorted_models if v['count'] > 0}
-                if chart_data:
-                    chart = create_horizontal_bar_chart(chart_data, value_label="Projects")
-                    st.altair_chart(chart, use_container_width=True)
+                chart_data = {k: v['count'] for k, v in sorted_mechs if v['count'] > 0}
+                chart = create_horizontal_bar_chart(chart_data, value_label="Projects")
+                st.altair_chart(chart, use_container_width=True)
 
             with col2:
-                model_table = [{'Model System': k, 'Projects': v['count'], '%': f"{v['pct']}%"}
-                              for k, v in sorted_models]
-                st.dataframe(pd.DataFrame(model_table), hide_index=True, use_container_width=True)
+                mech_table = [{'Mechanism': k, 'Projects': v['count'], '%': f"{v['pct']}%"}
+                              for k, v in sorted_mechs[:10]]
+                st.dataframe(pd.DataFrame(mech_table), hide_index=True, use_container_width=True)
 
-            # Drill-down
+            # Show how many projects have ANY mechanism (using pre-classified columns)
+            any_mech_mask = pd.Series(False, index=filtered_stomp.index)
+            for label, info in mech_data.items():
+                key = info['key']
+                if key in filtered_stomp.columns:
+                    any_mech_mask = any_mech_mask | (filtered_stomp[key] == 1)
+            any_mech = any_mech_mask.sum()
+            any_pct = round(100 * any_mech / n_grants, 1) if n_grants > 0 else 0
+            st.info(f"**{any_mech:,}** projects ({any_pct}%) have at least one mechanism identified")
+
+            # Drill-down with selectbox
             st.markdown("---")
-            model_options = [f"{name} ({info['count']})" for name, info in sorted_models if info['count'] > 0]
-            if model_options:
-                selected_model_option = st.selectbox(
-                    "Explore projects by model system",
-                    ["Select a model system..."] + model_options,
-                    key="model_select"
+            mech_options = [f"{name} ({info['count']})" for name, info in sorted_mechs if info['count'] > 0]
+            if mech_options:
+                selected_mech_option = st.selectbox(
+                    "Explore projects by mechanism",
+                    ["Select a mechanism..."] + mech_options,
+                    key="mech_select"
                 )
-                selected_model = selected_model_option.rsplit(" (", 1)[0] if selected_model_option != "Select a model system..." else None
+                selected_mech_stomp = selected_mech_option.rsplit(" (", 1)[0] if selected_mech_option != "Select a mechanism..." else None
             else:
-                selected_model = None
+                selected_mech_stomp = None
 
-            if selected_model and selected_model in MODEL_SYSTEMS:
-                model_pattern = MODEL_SYSTEMS[selected_model]
-                model_matches = text.str.contains(model_pattern, regex=True, flags=re.IGNORECASE, na=False)
-                model_grants = filtered_stomp[model_matches].copy()
+            if selected_mech_stomp and selected_mech_stomp in mech_name_to_key:
+                mech_key = mech_name_to_key[selected_mech_stomp]
+                # Use pre-classified column for drill-down (same as Cross-Field Insights)
+                if mech_key in filtered_stomp.columns:
+                    mech_grants = filtered_stomp[filtered_stomp[mech_key] == 1].copy()
+                else:
+                    mech_grants = pd.DataFrame()
 
-                st.markdown(f"### {selected_model}")
-                st.markdown(f"**{len(model_grants):,} projects** using this model")
+                st.markdown(f"### {selected_mech_stomp}")
+                st.markdown(f"**{len(mech_grants):,} projects** studying this mechanism")
 
                 display_cols = ['PROJECT_TITLE', 'PI_NAMEs', 'ORG_NAME', 'FISCAL_YEAR']
-                display_cols = [c for c in display_cols if c in model_grants.columns]
+                display_cols = [c for c in display_cols if c in mech_grants.columns]
                 if display_cols:
-                    grants_display = model_grants[display_cols].head(50).copy()
+                    grants_display = mech_grants[display_cols].head(50).copy()
                     if 'PI_NAMEs' in grants_display.columns:
                         grants_display['PI_NAMEs'] = grants_display['PI_NAMEs'].apply(clean_pi_names)
                     col_names = {'PROJECT_TITLE': 'Title', 'PI_NAMEs': 'PI(s)', 'ORG_NAME': 'Organization', 'FISCAL_YEAR': 'FY'}
                     grants_display.columns = [col_names.get(c, c) for c in display_cols]
                     st.caption("Select a row to view abstract below")
-                    model_selection = st.dataframe(
+                    mech_selection = st.dataframe(
                         grants_display,
                         hide_index=True,
                         use_container_width=True,
@@ -2253,22 +2352,23 @@ with tab5:
                         selection_mode="single-row"
                     )
 
-                    if len(model_grants) > 50:
-                        st.caption(f"Showing first 50 of {len(model_grants):,} projects")
+                    if len(mech_grants) > 50:
+                        st.caption(f"Showing first 50 of {len(mech_grants):,} projects")
 
-                    # Download button for model system results
-                    model_csv = model_grants.to_csv(index=False)
+                    # Download button for mechanism results
+                    mech_csv = mech_grants.to_csv(index=False)
                     st.download_button(
-                        f"Download {selected_model} Projects (CSV)",
-                        model_csv,
-                        f"{selected_model.lower().replace(' ', '_').replace('/', '_')}_projects.csv",
+                        f"Download {selected_mech_stomp} Projects (CSV)",
+                        mech_csv,
+                        f"{selected_mech_stomp.lower().replace(' ', '_').replace('/', '_')}_projects.csv",
                         "text/csv",
-                        key="model_download"
+                        key="mech_download"
                     )
 
-                    if model_selection and model_selection.selection and model_selection.selection.rows:
-                        selected_idx = model_selection.selection.rows[0]
-                        grant_row = model_grants.iloc[selected_idx]
+                    # Show abstract for selected row
+                    if mech_selection and mech_selection.selection and mech_selection.selection.rows:
+                        selected_idx = mech_selection.selection.rows[0]
+                        grant_row = mech_grants.iloc[selected_idx]
                         st.markdown("---")
                         st.markdown(f"**{grant_row['PROJECT_TITLE']}**")
                         st.markdown(f"*PI:* {clean_pi_names(grant_row.get('PI_NAMEs', 'Unknown'))} | *Org:* {grant_row.get('ORG_NAME', 'Unknown')} | *FY:* {int(grant_row.get('FISCAL_YEAR', 0))}")
@@ -2278,177 +2378,6 @@ with tab5:
                         st.markdown("**Abstract:**")
                         st.write(abstract)
 
-        # ---- MECHANISMS ----
-        elif stomp_category == "Mechanisms":
-            st.markdown("#### What biological mechanisms are being studied?")
-            st.caption("*Using pre-classified mechanism columns (same as Cross-Field Insights)*")
-
-            # Use pre-classified MECH_* columns from CSV (same as Cross-Field Insights tab)
-            # This provides consistent categorization across both tabs
-            mech_name_to_key = {}
-            mech_data = {}
-            n_grants = len(filtered_stomp)
-
-            # Only show mechanisms from MECHANISMS dict (excludes oxidative, developmental, epigenetic)
-            for key, label in MECHANISMS.items():
-                # Use pre-classified column
-                if key in filtered_stomp.columns:
-                    matches = filtered_stomp[key] == 1
-                    count = int(matches.sum())
-                else:
-                    count = 0
-                pct = round(100 * count / n_grants, 1) if n_grants > 0 else 0
-                mech_data[label] = {'count': count, 'pct': pct, 'key': key}
-                mech_name_to_key[label] = key
-
-            if mech_data:
-
-                sorted_mechs = sorted(mech_data.items(), key=lambda x: x[1]['count'], reverse=True)
-
-                col1, col2 = st.columns([2, 1])
-                with col1:
-                    chart_data = {k: v['count'] for k, v in sorted_mechs if v['count'] > 0}
-                    chart = create_horizontal_bar_chart(chart_data, value_label="Projects")
-                    st.altair_chart(chart, use_container_width=True)
-
-                with col2:
-                    mech_table = [{'Mechanism': k, 'Projects': v['count'], '%': f"{v['pct']}%"}
-                                  for k, v in sorted_mechs[:10]]
-                    st.dataframe(pd.DataFrame(mech_table), hide_index=True, use_container_width=True)
-
-                # Show how many projects have ANY mechanism (using pre-classified columns)
-                any_mech_mask = pd.Series(False, index=filtered_stomp.index)
-                for label, info in mech_data.items():
-                    key = info['key']
-                    if key in filtered_stomp.columns:
-                        any_mech_mask = any_mech_mask | (filtered_stomp[key] == 1)
-                any_mech = any_mech_mask.sum()
-                any_pct = round(100 * any_mech / n_grants, 1) if n_grants > 0 else 0
-                st.info(f"**{any_mech:,}** projects ({any_pct}%) have at least one mechanism identified")
-
-                # Drill-down with selectbox
-                st.markdown("---")
-                mech_options = [f"{name} ({info['count']})" for name, info in sorted_mechs if info['count'] > 0]
-                if mech_options:
-                    selected_mech_option = st.selectbox(
-                        "Explore projects by mechanism",
-                        ["Select a mechanism..."] + mech_options,
-                        key="mech_select"
-                    )
-                    selected_mech_stomp = selected_mech_option.rsplit(" (", 1)[0] if selected_mech_option != "Select a mechanism..." else None
-                else:
-                    selected_mech_stomp = None
-
-                if selected_mech_stomp and selected_mech_stomp in mech_name_to_key:
-                    mech_key = mech_name_to_key[selected_mech_stomp]
-                    # Use pre-classified column for drill-down (same as Cross-Field Insights)
-                    if mech_key in filtered_stomp.columns:
-                        mech_grants = filtered_stomp[filtered_stomp[mech_key] == 1].copy()
-                    else:
-                        mech_grants = pd.DataFrame()
-
-                    st.markdown(f"### {selected_mech_stomp}")
-                    st.markdown(f"**{len(mech_grants):,} projects** studying this mechanism")
-
-                    display_cols = ['PROJECT_TITLE', 'PI_NAMEs', 'ORG_NAME', 'FISCAL_YEAR']
-                    display_cols = [c for c in display_cols if c in mech_grants.columns]
-                    if display_cols:
-                        grants_display = mech_grants[display_cols].head(50).copy()
-                        if 'PI_NAMEs' in grants_display.columns:
-                            grants_display['PI_NAMEs'] = grants_display['PI_NAMEs'].apply(clean_pi_names)
-                        col_names = {'PROJECT_TITLE': 'Title', 'PI_NAMEs': 'PI(s)', 'ORG_NAME': 'Organization', 'FISCAL_YEAR': 'FY'}
-                        grants_display.columns = [col_names.get(c, c) for c in display_cols]
-                        st.caption("Select a row to view abstract below")
-                        mech_selection = st.dataframe(
-                            grants_display,
-                            hide_index=True,
-                            use_container_width=True,
-                            height=300,
-                            on_select="rerun",
-                            selection_mode="single-row"
-                        )
-
-                        if len(mech_grants) > 50:
-                            st.caption(f"Showing first 50 of {len(mech_grants):,} projects")
-
-                        # Download button for mechanism results
-                        mech_csv = mech_grants.to_csv(index=False)
-                        st.download_button(
-                            f"Download {selected_mech_stomp} Projects (CSV)",
-                            mech_csv,
-                            f"{selected_mech_stomp.lower().replace(' ', '_').replace('/', '_')}_projects.csv",
-                            "text/csv",
-                            key="mech_download"
-                        )
-
-                        # Show abstract for selected row
-                        if mech_selection and mech_selection.selection and mech_selection.selection.rows:
-                            selected_idx = mech_selection.selection.rows[0]
-                            grant_row = mech_grants.iloc[selected_idx]
-                            st.markdown("---")
-                            st.markdown(f"**{grant_row['PROJECT_TITLE']}**")
-                            st.markdown(f"*PI:* {clean_pi_names(grant_row.get('PI_NAMEs', 'Unknown'))} | *Org:* {grant_row.get('ORG_NAME', 'Unknown')} | *FY:* {int(grant_row.get('FISCAL_YEAR', 0))}")
-                            abstract = grant_row.get('ABSTRACT_TEXT', 'No abstract available')
-                            if pd.isna(abstract):
-                                abstract = 'No abstract available'
-                            st.markdown("**Abstract:**")
-                            st.write(abstract)
-
-                # Funding Institute breakdown within mechanisms tab
-                st.markdown("---")
-                st.markdown("#### Funding Institutes")
-
-                ic_col = None
-                for possible_col in ['ADMINISTERING_IC', 'IC_NAME', 'ADMIN_IC']:
-                    if possible_col in filtered_stomp.columns:
-                        ic_col = possible_col
-                        break
-
-                if ic_col:
-                    ic_counts = filtered_stomp[ic_col].value_counts().head(10)
-                    if len(ic_counts) > 0:
-                        col1, col2 = st.columns([2, 1])
-                        with col1:
-                            chart_data = dict(ic_counts)
-                            chart = create_horizontal_bar_chart(chart_data, value_label="Projects")
-                            st.altair_chart(chart, use_container_width=True)
-                        with col2:
-                            ic_table = [{'Institute': ic, 'Projects': count}
-                                       for ic, count in ic_counts.head(8).items()]
-                            st.dataframe(pd.DataFrame(ic_table), hide_index=True, use_container_width=True)
-                else:
-                    st.info("Funding institute data not available.")
-            else:
-                st.info("No mechanism patterns matched in the current dataset.")
-
-        # ---- CROSS-EXPOSURE COMPARISON (outside tabs, at bottom) ----
-        if selected_exposures and len(selected_exposures) > 1:
-            st.markdown("---")
-            st.markdown("### Compare STOMP Categories Across Selected Exposures")
-
-            comparison_data = []
-            for exp in selected_exposures:
-                if exp in filtered_stomp.columns:
-                    exp_grants = filtered_stomp[filtered_stomp[exp] == 1]
-                    if len(exp_grants) > 0:
-                        exp_stomp = classify_stomp_categories(exp_grants)
-
-                        # Get top organ, phase, and research type for this exposure
-                        top_organ = max(exp_stomp['organs'].items(), key=lambda x: x[1]['count'])[0] if exp_stomp['organs'] else 'N/A'
-                        top_phase = max(exp_stomp['phases'].items(), key=lambda x: x[1]['count'])[0] if exp_stomp['phases'] else 'N/A'
-                        top_type = max(exp_stomp['research_types'].items(), key=lambda x: x[1]['count'])[0] if exp_stomp['research_types'] else 'N/A'
-
-                        comparison_data.append({
-                            'Exposure': EXPOSURES.get(exp, exp)[:25],
-                            'Projects': len(exp_grants),
-                            'Top Organ': top_organ[:20],
-                            'Top Phase': top_phase[:18],
-                            'Research Type': top_type[:20],
-                        })
-
-            if comparison_data:
-                st.dataframe(pd.DataFrame(comparison_data), hide_index=True, use_container_width=True)
-
-    else:
-        st.info("Filter grants to see STOMP-style analysis.")
+        else:
+            st.info("No mechanism patterns matched in the current dataset.")
 
