@@ -1555,7 +1555,8 @@ with tab1:
         focused on environmental chemical exposures, combined with conference abstracts from the
         <a href="https://hsc.unm.edu/pharmacy/research/areas/cmbm/mnp-conf/_docs/full-digital-program.pdf" target="_blank" style="color: #0D3B3C;">UNM Micro- and Nanoplastics Conference</a>.
         Use the filters to explore research by exposure type, organ system, mechanism, and more.
-        <em>If there's demand, this tool could be expanded to other pollutant exposures.</em>
+        <br><br>
+        <em>This tool is in beta and we'd love your feedback! <a href="https://biotechstrategygroup.com/contact" target="_blank" style="color: #0D3B3C;">Drop us a line</a> to report any issues or let us know what pollutants you'd like to see added next.</em>
     </div>
     """, unsafe_allow_html=True)
 
