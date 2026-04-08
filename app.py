@@ -1511,12 +1511,8 @@ filtered = filter_grants(df, selected_exposures, selected_mechanisms, "", select
 # Sidebar stats
 st.sidebar.markdown("---")
 
-# Global "Group by project" toggle
-group_by_project = st.sidebar.checkbox(
-    "Group by project",
-    value=True,
-    help="Count unique projects instead of individual fiscal year records"
-)
+# Always show all grants (no deduplication) - checkbox removed per user request
+group_by_project = False
 
 # Count NIH grants and conference abstracts (used elsewhere)
 nih_count = (~df['CORE_PROJECT_NUM'].astype(str).str.startswith('CONF_')).sum()
@@ -2139,8 +2135,10 @@ with tab_organ:
                               for k, v in sorted_organs[:8]]
                 st.dataframe(pd.DataFrame(organ_table), hide_index=True, use_container_width=True)
 
-            # Summary stat below the graphs (like mechanisms tab)
-            st.info(f"**{any_organ:,}** projects ({any_organ_pct}%) have at least one organ system identified")
+            # Summary stat below the graphs
+            not_categorized = n_grants - any_organ
+            not_categorized_pct = round(100 * not_categorized / n_grants, 1) if n_grants > 0 else 0
+            st.info(f"**{any_organ:,}** projects ({any_organ_pct}%) have at least one organ system identified (remaining {not_categorized_pct}% are general toxicity, environmental monitoring, or methods development studies)")
 
             # Drill-down with selectbox
             st.markdown("---")
@@ -2259,7 +2257,6 @@ with tab_model:
                 any_model_mask = any_model_mask | (filtered_stomp[col] == 1)
         any_model = any_model_mask.sum()
         any_model_pct = round(100 * any_model / n_grants, 1) if n_grants > 0 else 0
-        st.info(f"**{any_model:,}** projects ({any_model_pct}%) have at least one model system identified")
 
         # Model systems patterns
         MODEL_SYSTEMS = {
@@ -2291,6 +2288,11 @@ with tab_model:
             model_table = [{'Model System': k, 'Projects': v['count'], '%': f"{v['pct']}%"}
                           for k, v in sorted_models]
             st.dataframe(pd.DataFrame(model_table), hide_index=True, use_container_width=True)
+
+        # Summary stat below the graphs
+        not_categorized = n_grants - any_model
+        not_categorized_pct = round(100 * not_categorized / n_grants, 1) if n_grants > 0 else 0
+        st.info(f"**{any_model:,}** projects ({any_model_pct}%) have at least one model system identified (remaining {not_categorized_pct}% are environmental monitoring, methods development, or epidemiological studies)")
 
         # Drill-down
         st.markdown("---")
@@ -2404,7 +2406,9 @@ with tab_model:
                     any_mech_mask = any_mech_mask | (filtered_stomp[key] == 1)
             any_mech = any_mech_mask.sum()
             any_pct = round(100 * any_mech / n_grants, 1) if n_grants > 0 else 0
-            st.info(f"**{any_mech:,}** projects ({any_pct}%) have at least one mechanism identified")
+            not_categorized = n_grants - any_mech
+            not_categorized_pct = round(100 * not_categorized / n_grants, 1) if n_grants > 0 else 0
+            st.info(f"**{any_mech:,}** projects ({any_pct}%) have at least one mechanism identified (remaining {not_categorized_pct}% are exposure assessment, environmental fate, or detection methods studies)")
 
             # Drill-down with selectbox
             st.markdown("---")
