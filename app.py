@@ -132,20 +132,54 @@ def search_grants_for_chat(df: pd.DataFrame, query: str, max_results: int = 20) 
 
     num_keywords = len(keywords)
 
+    # Identify health/biology keywords vs chemical keywords
+    chemical_keywords = {'microplastic', 'nanoplastic', 'plastic', 'pfas', 'phthalate', 'bpa',
+                        'pesticide', 'metal', 'lead', 'mercury', 'arsenic', 'cadmium',
+                        'pollution', 'pollutant', 'chemical', 'exposure', 'contaminant'}
+
+    # Find which keywords are health topics (not chemicals)
+    health_keywords = []
+    for kw in keywords:
+        stem = keyword_stems.get(kw, kw)
+        if stem not in chemical_keywords and not any(c in stem for c in chemical_keywords):
+            health_keywords.append(stem)
+
     # Prioritize grants matching ALL keywords, then most keywords
     if num_keywords > 1:
         # First try to get grants matching all keywords
         all_match = df[df['_match_score'] >= num_keywords]
         if len(all_match) >= 5:
-            results = all_match.sort_values('_match_score', ascending=False).head(max_results)
+            primary_results = all_match.sort_values('_match_score', ascending=False).head(max_results // 2)
         else:
             # Get grants matching at least half the keywords, sorted by score
             min_score = max(1, num_keywords // 2)
-            results = df[df['_match_score'] >= min_score].sort_values('_match_score', ascending=False).head(max_results)
+            primary_results = df[df['_match_score'] >= min_score].sort_values('_match_score', ascending=False).head(max_results // 2)
+
+        # Also get "related research" - grants matching health topic but with OTHER chemicals
+        if health_keywords:
+            # Find grants matching health keywords but not already in primary results
+            related_mask = pd.Series([False] * len(df), index=df.index)
+            for hk in health_keywords:
+                related_mask = related_mask | text.str.contains(hk, regex=False)
+                # Also check expansions
+                for base, expansions in keyword_expansions.items():
+                    if hk.startswith(base) or base.startswith(hk):
+                        for exp in expansions:
+                            related_mask = related_mask | text.str.contains(exp, regex=False)
+                        break
+
+            # Exclude primary results
+            related_mask = related_mask & ~df.index.isin(primary_results.index)
+            related_results = df[related_mask].head(max_results // 2)
+
+            # Combine: primary first, then related
+            results = pd.concat([primary_results, related_results]).drop(columns=['_match_score'], errors='ignore')
+        else:
+            results = primary_results.drop(columns=['_match_score'])
     else:
         results = df[df['_match_score'] > 0].sort_values('_match_score', ascending=False).head(max_results)
+        results = results.drop(columns=['_match_score'])
 
-    results = results.drop(columns=['_match_score'])
     return results
 
 def format_grants_for_context(grants_df: pd.DataFrame) -> str:
@@ -184,12 +218,13 @@ def get_chat_response(query: str, df: pd.DataFrame) -> str:
 You help users discover NIH-funded research grants and conference abstracts.
 
 IMPORTANT INSTRUCTIONS:
-- You will be given a list of grants from the database that match the user's query
-- ALWAYS reference specific grants, PIs, and institutions from the provided data
-- List the most relevant researchers and their work with specific details
-- If grants are provided, summarize what research is being done and by whom
-- Only say "no relevant research found" if the grants list is truly empty
-- Be specific: mention PI names, institutions, and grant titles"""
+- You will be given grants from the database - some directly matching the query, some related
+- Organize your response into TWO sections:
+  1. **Direct Matches**: Grants that specifically match ALL aspects of the query (e.g., microplastics AND placenta)
+  2. **Related Research**: Grants on the same health topic but with different chemicals/exposures
+- ALWAYS cite specific PI names, institutions, and grant titles
+- Be specific and detailed about what each researcher is studying
+- Only say "no research found" if the grants list is truly empty"""
 
         user_prompt = f"""User question: {query}
 
