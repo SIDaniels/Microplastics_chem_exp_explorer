@@ -98,7 +98,7 @@ def search_grants_for_chat(df: pd.DataFrame, query: str, max_results: int = 20) 
 def format_grants_for_context(grants_df: pd.DataFrame) -> str:
     """Format grants data as context for the AI."""
     if len(grants_df) == 0:
-        return "No relevant grants found."
+        return "No relevant grants found in the database."
 
     context_parts = []
     for _, grant in grants_df.iterrows():
@@ -106,11 +106,11 @@ def format_grants_for_context(grants_df: pd.DataFrame) -> str:
         pi = grant.get('PI_NAMEs', 'Unknown')
         org = grant.get('ORG_NAME', 'Unknown')
         fy = grant.get('FISCAL_YEAR', 'N/A')
-        abstract = grant.get('ABSTRACT_TEXT', '')[:500]  # Truncate abstracts
+        abstract = str(grant.get('ABSTRACT_TEXT', ''))[:800]  # More context
 
-        context_parts.append(f"- **{title}** (FY{fy})\n  PI: {pi} | Org: {org}\n  Abstract: {abstract}...")
+        context_parts.append(f"**{title}** (FY{fy})\nPI: {pi} | Institution: {org}\nAbstract: {abstract}")
 
-    return "\n\n".join(context_parts)
+    return f"Found {len(grants_df)} relevant grants:\n\n" + "\n\n---\n\n".join(context_parts)
 
 def get_chat_response(query: str, df: pd.DataFrame) -> str:
     """Get AI response for a chat query."""
@@ -127,22 +127,23 @@ def get_chat_response(query: str, df: pd.DataFrame) -> str:
         context = format_grants_for_context(relevant_grants)
 
         # Build the prompt
-        system_prompt = """You are a helpful research assistant for the Microplastics & Chemical Exposure Grant Explorer.
-You help users find and understand NIH-funded research grants and conference abstracts related to microplastics and chemical exposures.
+        system_prompt = """You are a research assistant for the Microplastics & Chemical Exposure Grant Explorer database.
+You help users discover NIH-funded research grants and conference abstracts.
 
-When answering:
-- Be concise and direct
-- Reference specific grants, PIs, and institutions when relevant
-- If the data doesn't contain what the user is asking about, say so
-- Focus on the research findings, mechanisms, and who is doing the work"""
+IMPORTANT INSTRUCTIONS:
+- You will be given a list of grants from the database that match the user's query
+- ALWAYS reference specific grants, PIs, and institutions from the provided data
+- List the most relevant researchers and their work with specific details
+- If grants are provided, summarize what research is being done and by whom
+- Only say "no relevant research found" if the grants list is truly empty
+- Be specific: mention PI names, institutions, and grant titles"""
 
         user_prompt = f"""User question: {query}
 
-Here are the most relevant grants/abstracts from the database:
-
+DATABASE RESULTS:
 {context}
 
-Based on this data, please answer the user's question. If the relevant information isn't in the provided grants, let them know."""
+Based on these grants from our database, answer the user's question. Cite specific PIs, institutions, and grant titles."""
 
         response = client.chat.completions.create(
             model="gpt-4o",
