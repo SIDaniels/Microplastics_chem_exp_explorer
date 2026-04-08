@@ -547,10 +547,16 @@ st.markdown("""
     }
 
     /* Hide Streamlit branding */
-    footer {visibility: hidden;}
-    #MainMenu {visibility: hidden;}
-    header {visibility: hidden;}
-    .stDeployButton {display: none;}
+    footer {visibility: hidden !important;}
+    #MainMenu {visibility: hidden !important;}
+    header {visibility: hidden !important;}
+    .stDeployButton {display: none !important;}
+    [data-testid="stDecoration"] {display: none !important;}
+    .viewerBadge_container__r5tak {display: none !important;}
+    .viewerBadge_link__qRIco {display: none !important;}
+    [data-testid="stToolbar"] {display: none !important;}
+    .stApp > footer {display: none !important;}
+    div[data-testid="stStatusWidget"] {display: none !important;}
 </style>
 """, unsafe_allow_html=True)
 
