@@ -1550,11 +1550,12 @@ with tab1:
     # About this database info box with hyperlinks
     st.markdown("""
     <div style="background-color: #f0f7f7; border-left: 4px solid #0D3B3C; padding: 12px 16px; margin-bottom: 16px; border-radius: 0 8px 8px 0;">
-        <strong>About this database:</strong> This explorer combines
-        <a href="https://reporter.nih.gov/" target="_blank" style="color: #0D3B3C;">NIH-funded research grants</a> (FY2022-2025)
-        focused on environmental chemical exposures with conference abstracts from the
+        <strong>About this database:</strong> This explorer highlights <strong>microplastics research</strong> against
+        <a href="https://reporter.nih.gov/" target="_blank" style="color: #0D3B3C;">NIH-funded grants</a> (FY2022-2025)
+        focused on environmental chemical exposures, combined with conference abstracts from the
         <a href="https://hsc.unm.edu/pharmacy/research/areas/cmbm/mnp-conf/_docs/full-digital-program.pdf" target="_blank" style="color: #0D3B3C;">UNM Micro- and Nanoplastics Conference</a>.
         Use the filters to explore research by exposure type, organ system, mechanism, and more.
+        <em>If there's demand, this tool could be expanded to other pollutant exposures.</em>
     </div>
     """, unsafe_allow_html=True)
 
@@ -1645,13 +1646,14 @@ with tab1:
         table_df.columns = [col_names.get(c, c) for c in display_cols]
 
         # Show grants with row selection enabled
-        st.caption("Select a row to view abstract below")
+        st.caption("Click the checkbox next to a grant to view its abstract below")
         selection = st.dataframe(
             table_df,
             use_container_width=True,
             hide_index=True,
             on_select="rerun",
             selection_mode="single-row",
+            height=300,
             column_config={
                 "Title": st.column_config.TextColumn("Title", width="large"),
             }
@@ -1695,18 +1697,6 @@ with tab1:
                 <p style="color: #666; margin: 0; font-size: 0.9rem;">PI: {clean_pi_names(grant.get('PI_NAMEs', 'Unknown'))}</p>
             </div>
             """, unsafe_allow_html=True)
-
-            # Show tags
-            tags = []
-            for exp, label in EXPOSURES.items():
-                if exp in grant and grant[exp] == 1:
-                    tags.append(f"🧪 {label}")
-            for mech, label in MECHANISMS.items():
-                if mech in grant and grant[mech] == 1:
-                    tags.append(f"⚙️ {label}")
-
-            if tags:
-                st.markdown("**Tags:** " + " | ".join(tags))
 
             # Show full abstract - no truncation
             abstract = grant.get('ABSTRACT_TEXT', 'No abstract available')
