@@ -551,10 +551,9 @@ EXPOSURES = {
     'EXP_NITRATES': 'Nitrates & Nitrites',
 }
 
-# Mechanism categories (excluding Inflammation - poor classification accuracy)
+# Mechanism categories (excluding Inflammation & Oxidative Stress - poor classification accuracy)
 MECHANISMS = {
     'MECH_NEURODEGENERATION': 'Neurodegeneration',
-    'MECH_OXIDATIVE_MITOCHONDRIAL': 'Oxidative Stress / Mitochondrial',
     'MECH_ENDOCRINE': 'Endocrine Disruption',
     'MECH_MICROBIOME': 'Microbiome / Gut-Brain',
     'MECH_IMMUNE_DYSFUNCTION': 'Immune Dysfunction',
@@ -564,38 +563,51 @@ MECHANISMS = {
     'MECH_BARRIER_DISRUPTION': 'Barrier Disruption (BBB, Gut)',
 }
 
+# Pre-written summaries for each research category (for Cross-Field Insights expander)
+# Updated based on analysis of actual grants in each category
+CATEGORY_SUMMARIES = {
+    'MECH_NEURODEGENERATION': """NIH-funded microplastics neurodegeneration research examines nanoplastic transport mechanisms in the brain, nasal uptake pathways into the CNS, and links between plastic particle exposure and brain aging/dementia. Key projects include studies on alpha-synuclein membrane disruption (Parkinson's relevance), airborne microplastic neurotoxicity in urban environments, and BBB penetration mechanisms. Model systems include murine nasal uptake models and human neural cultures.""",
+
+    'MECH_ENDOCRINE': """Microplastics endocrine research focuses on plastic food container leaching, PXR-mediated cardiovascular effects of EDCs, and reproductive toxicity from micro/nanoplastic exposure. Studies examine how weathered plastics release hormone-disrupting additives (phthalates, BPA), effects on genomic integrity, and developmental toxicity using whole-animal models. Key endpoints include estrogen receptor activation and thyroid hormone interference.""",
+
+    'MECH_MICROBIOME': """NIH microbiome research investigates microplastics' effects on gastrointestinal health, including gut barrier disruption, microbiome composition changes, and interactions with gut bacteria (e.g., pks+ E. coli in early-onset colorectal cancer). Studies use 3D human intestinal organoids, Xenopus models, and mouse gut models. Research links microplastic ingestion to intestinal inflammation and altered microbial metabolites.""",
+
+    'MECH_IMMUNE_DYSFUNCTION': """Microplastics immune research examines inflammatory responses triggered by plastic particles, macrophage activation by nanoplastics, and effects on mucosal barriers (including gynecological tissues). Studies investigate how environmentally weathered plastics with adsorbed pollutants affect cytokine profiles, cardiovascular inflammation, and innate immune responses. Biodistribution studies track how particles translocate and trigger systemic inflammation.""",
+
+    'MECH_DNA_DAMAGE': """Genotoxicity research focuses on microplastic interactions with gut bacteria that produce DNA-damaging toxins (pks+ E. coli), effects on genomic integrity from ingested nanoplastic mixtures, and potential carcinogenic effects. Studies examine airborne microplastic toxicology and use whole-animal models to assess mutagenic potential. Links between early-life plastic exposure and cancer risk are under investigation.""",
+
+    'MECH_RECEPTOR_SIGNALING': """Receptor signaling research investigates how nanoplastic particles affect intracellular signaling dynamics and respiratory functions. Studies examine silicon microslit filter methods for microplastic testing, PET nanoplastic characterization, and how particle surface properties influence receptor binding and downstream cellular responses.""",
+
+    'MECH_SENESCENCE_CELL_DEATH': """Cell death research examines how photoaged microplastics impair endothelial mechanosensitive ion channels, affecting calcium flux and Notch signaling. Studies investigate nanoplastic-pesticide co-exposure neurotoxicity, mitochondrial dysfunction pathways, and links between MNP exposure and Alzheimer's disease pathology. Research uses in vitro models to test apoptosis and senescence endpoints.""",
+
+    'MECH_BARRIER_DISRUPTION': """Barrier disruption research investigates how microplastics compromise intestinal barrier function and promote colorectal cancer progression. Studies examine MNP effects across the lifespan on human colons, tight junction disruption using 3D intestinal models, and particle translocation mechanisms. Key projects use in vitro barrier models and human tissue studies to assess permeability changes.""",
+
+    'TYPE_METHODS': """Detection methods research develops Raman spectroscopy, Py-GC/MS, and FTIR techniques for identifying micro/nanoplastics in biological samples. Key projects include machine learning pipelines for microplastic quantification, blank-corrected Py-GC methods for human reproductive tissues, and nanoparticle tracking analysis. Studies address detection limits in CSF, lung lavage, brain tissue, and atmospheric samples.""",
+
+    'TYPE_EXPOSURE': """Exposure assessment research develops biomonitoring frameworks for human microplastic exposure via dietary, inhalation, and dermal routes. Studies measure MNPs in human tissues and body fluids, develop exposure biomarkers, and quantify plastic particle doses from food containers and ambient air. Population-based studies and exposomic analytical frameworks are key research approaches.""",
+}
+
 # Non-mechanism TYPE categories (for conference abstracts without mechanism focus)
 # Note: These are separate from RESEARCH_TYPES which are regex-based
 CONF_TYPE_CATEGORIES = {
-    'TYPE_METHODS': 'Methods / Detection',
-    'TYPE_ACCUMULATION': 'Tissue Accumulation',
-    'TYPE_ENVIRONMENTAL': 'Environmental Studies',
+    'TYPE_METHODS': 'Detection Methods',
     'TYPE_EXPOSURE': 'Exposure Assessment',
 }
 
 # Regex patterns for TYPE_ categories (used for dynamic classification in Cross-Field Insights)
+# TYPE_METHODS tightened to detection-only (reduced from 83 to ~47 matches)
 TYPE_PATTERNS = {
     'TYPE_METHODS': (
-        r'method\s+(development|validation)|assay\s+(development|optimization)|'
-        r'detection\s+(method|limit|technique)|quantif\w+\s+(method|assay)|'
-        r'analytical\s+(method|technique)|sensor\s+(development|design)|'
-        r'biomarker\s+(discovery|development|validation)|spectro\w+\s+analys|'
-        r'mass\s+spectro|HPLC|chromatograph|immunoassay'
-    ),
-    'TYPE_ACCUMULATION': (
-        r'tissue\s+(accumul|distribution|concentration|level)|'
-        r'biodistrib|organ\s+distribution|cellular\s+uptake|'
-        r'bioaccumul|body\s+burden|tissue\s+burden|'
-        r'uptake\s+(in|by)|accumul\w+\s+in\s+(tissue|organ)'
-    ),
-    'TYPE_ENVIRONMENTAL': (
-        r'environmental\s+(monitoring|sampling|fate|transport|contamination)|'
-        r'water\s+quality|soil\s+contamination|air\s+quality|sediment|'
-        r'ecosystem|ecological\s+(risk|assessment)|wildlife|'
-        r'environ\w+\s+occurrence|ambient\s+(concentration|level)'
+        r'detection\s+(?:method|limit|technique|system)|'
+        r'detect\w+\s+(?:microplastic|nanoplastic|plastic\s+particle|MNP)|'
+        r'sensor\s+(?:development|design|for\s+(?:microplastic|plastic))|'
+        r'biosensor|spectro\w+\s+(?:detection|identification)|'
+        r'FTIR\s+(?:spectro|analys|identif|detection)|Raman\s+spectro|'
+        r'particle\s+(?:detection|identification|characterization)|'
+        r'nanoparticle\s+track|pyrolysis.GC|Py-GC'
     ),
     'TYPE_EXPOSURE': (
-        r'exposure\s+(assessment|pathway|route|scenario)|'
+        r'exposure\s+(?:assessment|pathway|route|scenario)|'
         r'biomonitor|human\s+biomonitoring|exposure\s+biomarker|'
         r'dietary\s+exposure|occupational\s+exposure|residential\s+exposure|'
         r'inhalation\s+exposure|dermal\s+exposure|aggregate\s+exposure'
@@ -1503,7 +1515,7 @@ st.markdown(f"""
 """, unsafe_allow_html=True)
 
 # Main content - tabs
-tab1, tab4, tab5 = st.tabs(["Results", "Cross-Field Insights", "STOMP Analysis"])
+tab1, tab5, tab4 = st.tabs(["Results", "STOMP Analysis", "Cross-Field Insights"])
 
 with tab1:
     # Use global toggle from sidebar
@@ -1654,6 +1666,23 @@ with tab4:
     # Fixed chemical exposure to Microplastics
     my_exposure = 'EXP_MICROPLASTICS'
 
+    # Pre-compute microplastics grant counts for each category
+    text_combined = df['PROJECT_TITLE'].fillna('') + ' ' + df['ABSTRACT_TEXT'].fillna('')
+    mp_mask = (df[my_exposure] == 1)
+
+    category_mp_counts = {}
+    for cat_key in MECHANISMS_AND_TYPES.keys():
+        if cat_key.startswith('TYPE_') and cat_key in TYPE_PATTERNS:
+            # TYPE_ categories use regex
+            pattern = TYPE_PATTERNS[cat_key]
+            cat_mask = mp_mask & text_combined.str.contains(pattern, regex=True, flags=re.IGNORECASE, na=False)
+        elif cat_key in df.columns:
+            # MECH_ categories use pre-classified columns
+            cat_mask = mp_mask & (df[cat_key] == 1)
+        else:
+            cat_mask = mp_mask
+        category_mp_counts[cat_key] = cat_mask.sum()
+
     # Category selection with pill buttons (like STOMP)
     st.markdown("#### Select a Research Category")
     category_options_list = list(MECHANISMS_AND_TYPES.keys())
@@ -1663,13 +1692,14 @@ with tab4:
     if 'crossfield_category' not in st.session_state:
         st.session_state.crossfield_category = category_options_list[0] if category_options_list else None
 
-    # Show pills in rows of 4
+    # Show pills in rows of 4 with grant counts
     for row_start in range(0, len(category_options_list), 4):
         row_items = category_options_list[row_start:row_start + 4]
         cols = st.columns(len(row_items))
         for i, (col, cat_key) in enumerate(zip(cols, row_items)):
             with col:
                 cat_label = MECHANISMS_AND_TYPES.get(cat_key, cat_key)
+                mp_count = category_mp_counts.get(cat_key, 0)
                 is_selected = st.session_state.crossfield_category == cat_key
                 if is_selected:
                     st.markdown(f"""
@@ -1677,11 +1707,11 @@ with tab4:
                                 border-radius: 20px; text-align: center; font-weight: 600;
                                 font-family: 'Source Sans Pro', sans-serif; font-size: 0.85rem;
                                 box-shadow: 0 2px 8px rgba(13, 59, 60, 0.3); margin-bottom: 8px;">
-                        {cat_label}
+                        {cat_label} <span style="background: rgba(255,255,255,0.2); padding: 2px 6px; border-radius: 10px; font-size: 0.75rem; margin-left: 4px;">{mp_count}</span>
                     </div>
                     """, unsafe_allow_html=True)
                 else:
-                    if st.button(cat_label, key=f"cf_pill_{row_start}_{i}", use_container_width=True):
+                    if st.button(f"{cat_label} ({mp_count})", key=f"cf_pill_{row_start}_{i}", use_container_width=True):
                         st.session_state.crossfield_category = cat_key
                         st.rerun()
 
@@ -1826,6 +1856,29 @@ with tab4:
                 my_models.append((model_name, round(pct, 0)))
         my_models.sort(key=lambda x: x[1], reverse=True)
 
+        # Thematic Summary for Microplastics Grants in this category (using premade summaries)
+        with st.expander(f"About Microplastics Research in {mech_label} ({len(my_grants)} grants)", expanded=False):
+            # Show organ systems tags
+            if my_organs:
+                organ_tags = ' '.join([f"`{org[0]}`" for org in my_organs[:4]])
+                st.markdown(f"**Organ Systems:** {organ_tags}")
+
+            # Show model systems tags
+            if my_models:
+                model_tags = ' '.join([f"`{mod[0]}`" for mod in my_models[:4]])
+                st.markdown(f"**Model Systems:** {model_tags}")
+
+            # Add a divider if we have tags
+            if my_organs or my_models:
+                st.markdown("---")
+
+            # Get the static summary for this category
+            summary = CATEGORY_SUMMARIES.get(my_mechanism, "")
+            if summary:
+                st.markdown(summary)
+            else:
+                st.markdown(f"*{len(my_grants)} microplastics grants studying {mech_label}.*")
+
         # Results section header
         st.markdown(f"### Experts Studying {mech_label} with Other Chemicals")
         st.markdown(f"*These researchers already have expertise in **{mech_label}** using established chemical models.*")
@@ -1901,6 +1954,21 @@ with tab4:
 
                     if len(inspiring) > 25:
                         st.caption(f"Showing top 25 of {len(inspiring):,} unique projects, ranked by thematic similarity")
+
+                    # CSV download button for all expert studies
+                    export_cols = ['PI_NAMEs', 'ORG_NAME', 'PROJECT_TITLE', 'Chemical(s)', 'model_system', 'ABSTRACT_TEXT', 'similarity_score']
+                    export_cols = [c for c in export_cols if c in inspiring.columns]
+                    export_df = inspiring[export_cols].copy()
+                    export_df.columns = ['PI', 'Institution', 'Project Title', 'Chemical Field', 'Model System', 'Abstract', 'Relevance Score'][:len(export_cols)]
+                    csv_data = export_df.to_csv(index=False)
+                    cat_slug = mech_label.lower().replace(' ', '_').replace('/', '_')[:20]
+                    st.download_button(
+                        label=f"Download All {len(inspiring):,} Expert Studies (CSV)",
+                        data=csv_data,
+                        file_name=f"crossfield_experts_{cat_slug}.csv",
+                        mime="text/csv",
+                        key=f"cf_download_{cat_slug}"
+                    )
 
                 # Show grant details for selected row
                 if inspiring_selection and inspiring_selection.selection and inspiring_selection.selection.rows:
@@ -2088,6 +2156,16 @@ with tab5:
                         if len(organ_grants) > 50:
                             st.caption(f"Showing first 50 of {len(organ_grants):,} projects")
 
+                        # Download button for organ system results
+                        organ_csv = organ_grants.to_csv(index=False)
+                        st.download_button(
+                            f"Download {selected_organ} Projects (CSV)",
+                            organ_csv,
+                            f"{selected_organ.lower().replace(' ', '_')}_projects.csv",
+                            "text/csv",
+                            key="organ_download"
+                        )
+
                         # Show abstract for selected row
                         if organ_selection and organ_selection.selection and organ_selection.selection.rows:
                             selected_idx = organ_selection.selection.rows[0]
@@ -2178,6 +2256,16 @@ with tab5:
                     if len(model_grants) > 50:
                         st.caption(f"Showing first 50 of {len(model_grants):,} projects")
 
+                    # Download button for model system results
+                    model_csv = model_grants.to_csv(index=False)
+                    st.download_button(
+                        f"Download {selected_model} Projects (CSV)",
+                        model_csv,
+                        f"{selected_model.lower().replace(' ', '_').replace('/', '_')}_projects.csv",
+                        "text/csv",
+                        key="model_download"
+                    )
+
                     if model_selection and model_selection.selection and model_selection.selection.rows:
                         selected_idx = model_selection.selection.rows[0]
                         grant_row = model_grants.iloc[selected_idx]
@@ -2264,6 +2352,16 @@ with tab5:
 
                     if len(route_grants) > 50:
                         st.caption(f"Showing first 50 of {len(route_grants):,} projects")
+
+                    # Download button for exposure route results
+                    route_csv = route_grants.to_csv(index=False)
+                    st.download_button(
+                        f"Download {selected_route} Projects (CSV)",
+                        route_csv,
+                        f"{selected_route.lower().replace(' ', '_').replace('/', '_')}_projects.csv",
+                        "text/csv",
+                        key="route_download"
+                    )
 
                     if route_selection and route_selection.selection and route_selection.selection.rows:
                         selected_idx = route_selection.selection.rows[0]
@@ -2371,6 +2469,16 @@ with tab5:
 
                         if len(mech_grants) > 50:
                             st.caption(f"Showing first 50 of {len(mech_grants):,} projects")
+
+                        # Download button for mechanism results
+                        mech_csv = mech_grants.to_csv(index=False)
+                        st.download_button(
+                            f"Download {selected_mech_stomp} Projects (CSV)",
+                            mech_csv,
+                            f"{selected_mech_stomp.lower().replace(' ', '_').replace('/', '_')}_projects.csv",
+                            "text/csv",
+                            key="mech_download"
+                        )
 
                         # Show abstract for selected row
                         if mech_selection and mech_selection.selection and mech_selection.selection.rows:
