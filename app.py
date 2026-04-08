@@ -1558,17 +1558,44 @@ with tab1:
     </div>
     """, unsafe_allow_html=True)
 
+    # Text search box with regex support
+    search_col1, search_col2 = st.columns([4, 1])
+    with search_col1:
+        search_query = st.text_input(
+            "Search grants",
+            placeholder="Search titles and abstracts (supports regex, e.g., 'nano.*plastic')",
+            key="grant_search",
+            label_visibility="collapsed"
+        )
+    with search_col2:
+        use_regex = st.checkbox("Regex", value=False, help="Enable regular expression search")
+
     # Use global toggle from sidebar
     show_unique = group_by_project
 
-    if len(filtered) > 0:
+    # Apply text search filter
+    search_filtered = filtered.copy()
+    if search_query:
+        # Create combined text for searching
+        search_text = filtered['PROJECT_TITLE'].fillna('') + ' ' + filtered['ABSTRACT_TEXT'].fillna('')
+        try:
+            if use_regex:
+                mask = search_text.str.contains(search_query, case=False, na=False, regex=True)
+            else:
+                mask = search_text.str.contains(search_query, case=False, na=False, regex=False)
+            search_filtered = filtered[mask]
+        except Exception as e:
+            st.error(f"Invalid search pattern: {e}")
+            search_filtered = filtered
+
+    if len(search_filtered) > 0:
         # Calculate tag count for each grant (exposures + mechanisms)
-        exp_cols = [c for c in EXPOSURES.keys() if c in filtered.columns]
-        mech_cols = [c for c in MECHANISMS.keys() if c in filtered.columns]
+        exp_cols = [c for c in EXPOSURES.keys() if c in search_filtered.columns]
+        mech_cols = [c for c in MECHANISMS.keys() if c in search_filtered.columns]
         tag_cols = exp_cols + mech_cols
 
         # Sort by total tag count (most prevalent first)
-        filtered_sorted = filtered.copy()
+        filtered_sorted = search_filtered.copy()
         if tag_cols:
             filtered_sorted['_tag_count'] = filtered_sorted[tag_cols].sum(axis=1)
             filtered_sorted = filtered_sorted.sort_values('_tag_count', ascending=False)
@@ -1606,7 +1633,7 @@ with tab1:
         else:
             display_df = filtered_sorted
             display_cols = ['Source', 'FISCAL_YEAR', 'PROJECT_TITLE', 'ORG_NAME', 'PI_NAMEs']
-            st.subheader(f"Matching Grants: {len(filtered):,}")
+            st.subheader(f"Matching Grants: {len(search_filtered):,}")
 
         display_cols = [c for c in display_cols if c in display_df.columns]
 
