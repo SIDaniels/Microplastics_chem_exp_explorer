@@ -274,7 +274,7 @@ def create_horizontal_bar_chart(data: dict, title: str = "", value_label: str = 
         y=alt.Y('category:N',
                 sort='-x',
                 title=None,
-                axis=alt.Axis(labelLimit=300)),
+                axis=alt.Axis(labelLimit=500)),
         color=alt.Color('value:Q',
                        scale=alt.Scale(range=[ER_COLORS['soft_teal'], ER_COLORS['dark_teal']]),
                        legend=None),
