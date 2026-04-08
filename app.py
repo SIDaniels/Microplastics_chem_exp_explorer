@@ -83,16 +83,50 @@ def search_grants_for_chat(df: pd.DataFrame, query: str, max_results: int = 20) 
             df['PI_NAMEs'].fillna('') + ' ' +
             df['ORG_NAME'].fillna('')).str.lower()
 
+    # Expand keywords with related terms
+    keyword_expansions = {
+        'reproduction': ['reproduct', 'fertility', 'pregnant', 'prenatal', 'fetal', 'embryo', 'ovary', 'ovarian', 'sperm', 'testis', 'testicular', 'uterus', 'uterine', 'placenta'],
+        'gut': ['intestin', 'gastrointest', 'digestive', 'microbiome', 'colon', 'bowel'],
+        'brain': ['neural', 'neuron', 'cognitive', 'neurolog', 'cerebr'],
+        'heart': ['cardiac', 'cardiovascular', 'cardio'],
+        'lung': ['pulmonary', 'respiratory', 'airway'],
+        'liver': ['hepat', 'hepatic'],
+        'kidney': ['renal', 'nephro'],
+    }
+
     # Score each grant by how many keywords it matches
     df = df.copy()
     df['_match_score'] = 0
+
     for keyword in keywords:
-        df['_match_score'] += text.str.contains(keyword, regex=False).astype(int)
+        # Check main keyword
+        matches = text.str.contains(keyword, regex=False).astype(int)
 
-    # Filter to grants that match at least one keyword, sort by score
-    results = df[df['_match_score'] > 0].sort_values('_match_score', ascending=False).head(max_results)
+        # Also check expanded terms if available
+        for base, expansions in keyword_expansions.items():
+            if keyword.startswith(base) or base.startswith(keyword):
+                for exp in expansions:
+                    matches = matches | text.str.contains(exp, regex=False).astype(int)
+                break
+
+        df['_match_score'] += matches
+
+    num_keywords = len(keywords)
+
+    # Prioritize grants matching ALL keywords, then most keywords
+    if num_keywords > 1:
+        # First try to get grants matching all keywords
+        all_match = df[df['_match_score'] >= num_keywords]
+        if len(all_match) >= 5:
+            results = all_match.sort_values('_match_score', ascending=False).head(max_results)
+        else:
+            # Get grants matching at least half the keywords, sorted by score
+            min_score = max(1, num_keywords // 2)
+            results = df[df['_match_score'] >= min_score].sort_values('_match_score', ascending=False).head(max_results)
+    else:
+        results = df[df['_match_score'] > 0].sort_values('_match_score', ascending=False).head(max_results)
+
     results = results.drop(columns=['_match_score'])
-
     return results
 
 def format_grants_for_context(grants_df: pd.DataFrame) -> str:
