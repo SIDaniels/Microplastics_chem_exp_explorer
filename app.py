@@ -11,6 +11,8 @@ import pandas as pd
 import altair as alt
 import re
 from pathlib import Path
+from openai import OpenAI
+from datetime import datetime, timedelta
 
 # Engineered Resilience color palette
 ER_COLORS = {
@@ -24,6 +26,115 @@ ER_COLORS = {
 
 # Gradient palette for charts
 ER_GRADIENT = ['#0D3B3C', '#1a5455', '#2d7170', '#46B3A9', '#5FA872', '#D4A84B']
+
+# ============== CHATBOT FUNCTIONS ==============
+
+# Rate limiting settings
+MAX_QUESTIONS_PER_SESSION = 20
+RATE_LIMIT_WINDOW_HOURS = 1
+
+def init_chat_state():
+    """Initialize chat session state."""
+    if 'chat_messages' not in st.session_state:
+        st.session_state.chat_messages = []
+    if 'question_count' not in st.session_state:
+        st.session_state.question_count = 0
+    if 'rate_limit_reset' not in st.session_state:
+        st.session_state.rate_limit_reset = datetime.now()
+
+def check_rate_limit() -> tuple[bool, str]:
+    """Check if user is within rate limits. Returns (allowed, message)."""
+    now = datetime.now()
+
+    # Reset counter if window has passed
+    if now > st.session_state.rate_limit_reset + timedelta(hours=RATE_LIMIT_WINDOW_HOURS):
+        st.session_state.question_count = 0
+        st.session_state.rate_limit_reset = now
+
+    if st.session_state.question_count >= MAX_QUESTIONS_PER_SESSION:
+        mins_left = int((st.session_state.rate_limit_reset + timedelta(hours=RATE_LIMIT_WINDOW_HOURS) - now).seconds / 60)
+        return False, f"Rate limit reached ({MAX_QUESTIONS_PER_SESSION} questions/hour). Try again in {mins_left} minutes."
+
+    return True, ""
+
+def search_grants_for_chat(df: pd.DataFrame, query: str, max_results: int = 15) -> pd.DataFrame:
+    """Search grants relevant to a chat query."""
+    query_lower = query.lower()
+
+    # Search in title and abstract
+    mask = (
+        df['PROJECT_TITLE'].fillna('').str.lower().str.contains(query_lower, regex=False) |
+        df['ABSTRACT_TEXT'].fillna('').str.lower().str.contains(query_lower, regex=False) |
+        df['PI_NAMEs'].fillna('').str.lower().str.contains(query_lower, regex=False) |
+        df['ORG_NAME'].fillna('').str.lower().str.contains(query_lower, regex=False)
+    )
+
+    results = df[mask].head(max_results)
+    return results
+
+def format_grants_for_context(grants_df: pd.DataFrame) -> str:
+    """Format grants data as context for the AI."""
+    if len(grants_df) == 0:
+        return "No relevant grants found."
+
+    context_parts = []
+    for _, grant in grants_df.iterrows():
+        title = grant.get('PROJECT_TITLE', 'Unknown')
+        pi = grant.get('PI_NAMEs', 'Unknown')
+        org = grant.get('ORG_NAME', 'Unknown')
+        fy = grant.get('FISCAL_YEAR', 'N/A')
+        abstract = grant.get('ABSTRACT_TEXT', '')[:500]  # Truncate abstracts
+
+        context_parts.append(f"- **{title}** (FY{fy})\n  PI: {pi} | Org: {org}\n  Abstract: {abstract}...")
+
+    return "\n\n".join(context_parts)
+
+def get_chat_response(query: str, df: pd.DataFrame) -> str:
+    """Get AI response for a chat query."""
+    try:
+        # Check for API key
+        api_key = st.secrets.get("OPENAI_API_KEY", None)
+        if not api_key:
+            return "⚠️ Chat is not configured. Please add OPENAI_API_KEY to Streamlit secrets."
+
+        client = OpenAI(api_key=api_key)
+
+        # Search for relevant grants
+        relevant_grants = search_grants_for_chat(df, query)
+        context = format_grants_for_context(relevant_grants)
+
+        # Build the prompt
+        system_prompt = """You are a helpful research assistant for the Microplastics & Chemical Exposure Grant Explorer.
+You help users find and understand NIH-funded research grants and conference abstracts related to microplastics and chemical exposures.
+
+When answering:
+- Be concise and direct
+- Reference specific grants, PIs, and institutions when relevant
+- If the data doesn't contain what the user is asking about, say so
+- Focus on the research findings, mechanisms, and who is doing the work"""
+
+        user_prompt = f"""User question: {query}
+
+Here are the most relevant grants/abstracts from the database:
+
+{context}
+
+Based on this data, please answer the user's question. If the relevant information isn't in the provided grants, let them know."""
+
+        response = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt}
+            ],
+            max_tokens=500,
+            temperature=0.7
+        )
+
+        return response.choices[0].message.content
+
+    except Exception as e:
+        return f"⚠️ Error: {str(e)}"
 
 
 def create_horizontal_bar_chart(data: dict, title: str = "", value_label: str = "Grants") -> alt.Chart:
@@ -1092,6 +1203,61 @@ def filter_grants(df: pd.DataFrame, exposures: list, mechanisms: list,
 
 # Load data first to get counts for header
 df = load_data()
+
+# Initialize chat state
+init_chat_state()
+
+# ============== CHAT INTERFACE ==============
+st.markdown("""
+<div style="background: linear-gradient(135deg, #0D3B3C 0%, #1a5455 100%); padding: 1.5rem; border-radius: 12px; margin-bottom: 1.5rem;">
+    <h3 style="color: #D4A84B !important; margin: 0 0 0.5rem 0; font-family: 'Spectral', serif;">💬 Ask about the research</h3>
+    <p style="color: #FAFAF8; opacity: 0.9; margin: 0; font-size: 0.9rem;">
+        Ask questions like "Who is studying microplastics and gut health?" or "What research focuses on reproductive effects?"
+    </p>
+</div>
+""", unsafe_allow_html=True)
+
+# Chat input
+chat_col1, chat_col2 = st.columns([5, 1])
+with chat_col1:
+    user_question = st.text_input(
+        "Your question",
+        placeholder="e.g., Who is researching microplastics in drinking water?",
+        label_visibility="collapsed",
+        key="chat_input"
+    )
+with chat_col2:
+    ask_button = st.button("Ask", type="primary", use_container_width=True)
+
+# Handle chat submission
+if ask_button and user_question:
+    allowed, limit_msg = check_rate_limit()
+    if not allowed:
+        st.warning(limit_msg)
+    else:
+        st.session_state.question_count += 1
+        with st.spinner("Searching grants and thinking..."):
+            response = get_chat_response(user_question, df)
+            st.session_state.chat_messages.append({"role": "user", "content": user_question})
+            st.session_state.chat_messages.append({"role": "assistant", "content": response})
+
+# Display chat history (most recent first, limit to last 3 exchanges)
+if st.session_state.chat_messages:
+    with st.expander(f"💬 Chat history ({len(st.session_state.chat_messages)//2} questions)", expanded=True):
+        # Show messages in reverse order (most recent first)
+        messages = st.session_state.chat_messages[-6:]  # Last 3 Q&A pairs
+        for i in range(len(messages) - 1, -1, -2):
+            if i >= 1:
+                # Assistant response
+                st.markdown(f"**🤖 Assistant:** {messages[i]['content']}")
+                # User question
+                st.markdown(f"**You:** {messages[i-1]['content']}")
+                st.markdown("---")
+
+        remaining = MAX_QUESTIONS_PER_SESSION - st.session_state.question_count
+        st.caption(f"💡 {remaining} questions remaining this session")
+
+st.markdown("<div style='height: 1rem'></div>", unsafe_allow_html=True)
 
 # Count totals for header display
 total_entries = len(df)
