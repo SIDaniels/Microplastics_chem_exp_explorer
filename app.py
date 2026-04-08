@@ -266,49 +266,10 @@ st.markdown("""
         display: none;
     }
 
-    /* DataFrames - white/light background with dark text */
+    /* DataFrames */
     .stDataFrame {
         border-radius: 8px;
         overflow: hidden;
-        background-color: white !important;
-    }
-
-    .stDataFrame [data-testid="stDataFrameResizable"] {
-        background-color: white !important;
-    }
-
-    /* Table cells and rows */
-    .stDataFrame table {
-        background-color: white !important;
-    }
-
-    .stDataFrame th {
-        background-color: #f8f9fa !important;
-        color: #0D3B3C !important;
-    }
-
-    .stDataFrame td {
-        background-color: white !important;
-        color: #0D3B3C !important;
-    }
-
-    /* Glide Data Grid (Streamlit's dataframe component) */
-    [data-testid="stDataFrame"] > div {
-        background-color: white !important;
-    }
-
-    .dvn-scroller {
-        background-color: white !important;
-    }
-
-    /* Ensure all text in dataframes is dark */
-    [data-testid="stDataFrame"] * {
-        color: #0D3B3C !important;
-    }
-
-    /* Fix header text specifically */
-    [data-testid="stDataFrame"] [data-testid="glideDataEditor"] * {
-        color: #0D3B3C !important;
     }
 
     /* Multiselect tags */
@@ -1140,39 +1101,7 @@ total_entries = len(df)
 nih_grants_total = (~df['CORE_PROJECT_NUM'].astype(str).str.startswith('CONF_')).sum() if len(df) > 0 else 0
 conf_abstracts_total = (df['CORE_PROJECT_NUM'].astype(str).str.startswith('CONF_')).sum() if len(df) > 0 else 0
 
-# Custom header matching engineeredresilience.org
-st.markdown(f"""
-<div style="background-color: #0D3B3C; padding: 1rem 2rem; margin: -1rem -1rem 2rem -1rem; border-radius: 0 0 8px 8px;">
-    <div style="display: flex; align-items: center; justify-content: space-between;">
-        <div>
-            <h1 style="color: #FAFAF8 !important; font-family: 'Spectral', Georgia, serif; margin: 0; font-size: 1.8rem;">
-                Chemical Exposure Grant Explorer
-            </h1>
-            <p style="color: #46B3A9; font-family: 'Source Sans Pro', sans-serif; margin: 0.25rem 0 0 0; font-size: 0.95rem;">
-                <strong>{total_entries:,} entries</strong>: {nih_grants_total:,} NIH grants + {conf_abstracts_total:,} conference abstracts
-            </p>
-        </div>
-        <div style="text-align: right;">
-            <span style="color: #D4A84B; font-family: 'Spectral', serif; font-size: 1.1rem; font-weight: 600;">
-                Engineered Resilience
-            </span>
-        </div>
-    </div>
-</div>
-""", unsafe_allow_html=True)
 
-# Description section
-st.markdown("""
-<div style="background-color: #f8f9fa; padding: 1rem; border-radius: 8px; margin-bottom: 1rem; border-left: 4px solid #46B3A9;">
-    <p style="margin: 0; font-size: 0.95rem; color: #333;">
-        <strong>About this database:</strong> This explorer combines <strong>NIH-funded research grants</strong> (FY2022-2025)
-        focused on environmental chemical exposures with <strong>conference abstracts</strong> from the
-        <a href="https://hsc.unm.edu/pharmacy/research/areas/cmbm/mnp-conf/" target="_blank" style="color: #0D3B3C;">
-        UNM Micro- and Nanoplastics Conference</a>. Use the filters to explore research by exposure type,
-        organ system, mechanism, and more.
-    </p>
-</div>
-""", unsafe_allow_html=True)
 
 if len(df) == 0:
     st.error("No data found. Make sure chemical_exposure_grants.csv exists in the data/ folder.")
@@ -2375,28 +2304,3 @@ with tab6:
     else:
         st.info("No microplastic grants found. Make sure EXP_MICROPLASTICS column exists in the data.")
 
-# Footer matching engineeredresilience.org style
-st.markdown("""
-<div style="background-color: #0D3B3C; padding: 2rem; margin: 3rem -1rem -1rem -1rem; border-radius: 8px 8px 0 0;">
-    <div style="max-width: 1200px; margin: 0 auto;">
-        <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 2rem;">
-            <div>
-                <h3 style="color: #D4A84B !important; font-family: 'Spectral', serif; margin: 0 0 0.5rem 0; font-size: 1.2rem;">
-                    Engineered Resilience
-                </h3>
-                <p style="color: #FAFAF8; opacity: 0.8; font-family: 'Source Sans Pro', sans-serif; font-size: 0.9rem; margin: 0;">
-                    Mapping exposures → mechanisms → targets
-                </p>
-            </div>
-            <div style="text-align: right;">
-                <p style="color: #46B3A9; font-family: 'Source Sans Pro', sans-serif; font-size: 0.85rem; margin: 0;">
-                    Data: <a href="https://reporter.nih.gov/" style="color: #46B3A9;">NIH RePORTER</a> | FY2022-2025
-                </p>
-                <p style="color: #FAFAF8; opacity: 0.6; font-family: 'Source Sans Pro', sans-serif; font-size: 0.8rem; margin: 0.5rem 0 0 0;">
-                    <a href="https://engineeredresilience.org" style="color: #FAFAF8; text-decoration: none;">engineeredresilience.org</a>
-                </p>
-            </div>
-        </div>
-    </div>
-</div>
-""", unsafe_allow_html=True)

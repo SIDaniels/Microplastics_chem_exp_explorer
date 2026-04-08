@@ -4,3 +4,6 @@ toolbarMode = "minimal"
 
 [ui]
 hideTopBar = true
+
+[theme]
+base = "light"
