@@ -456,6 +456,12 @@ st.markdown("""
         font-size: 1.8rem !important;
     }
 
+    /* Hide sidebar collapse button (keyboard_double_arrow icon) */
+    [data-testid="stSidebar"] [data-testid="stSidebarCollapseButton"],
+    [data-testid="collapsedControl"] {
+        display: none !important;
+    }
+
     /* Tabs - styled as obvious clickable buttons */
     .stTabs [data-baseweb="tab-list"] {
         gap: 8px;
@@ -1410,12 +1416,7 @@ if len(df) == 0:
     st.error("No data found. Make sure chemical_exposure_grants.csv exists in the data/ folder.")
     st.stop()
 
-# Sidebar filters with branding
-st.sidebar.markdown("""
-<div style="text-align: center; padding: 0.5rem 0 1rem 0; border-bottom: 1px solid rgba(250,250,248,0.2); margin-bottom: 1rem;">
-    <span style="font-family: 'Spectral', serif; font-size: 1.1rem; color: #D4A84B;">🔬 Grant Explorer</span>
-</div>
-""", unsafe_allow_html=True)
+# Sidebar filters
 st.sidebar.header("Filters")
 
 # Source filter (NIH Grants vs Conference Abstracts)
