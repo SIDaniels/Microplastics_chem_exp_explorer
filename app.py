@@ -550,6 +550,19 @@ st.markdown("""
     footer {visibility: hidden !important; height: 0 !important; position: fixed !important;}
     #MainMenu {visibility: hidden !important; height: 0 !important;}
     header {visibility: hidden !important; height: 0 !important;}
+
+    /* Reduce top padding for embedded iframe view */
+    [data-testid="stAppViewContainer"] {
+        padding-top: 0 !important;
+    }
+    [data-testid="stAppViewContainer"] > .main {
+        padding-top: 0 !important;
+    }
+    .block-container {
+        padding-top: 1rem !important;
+        padding-bottom: 1rem !important;
+    }
+
     .stDeployButton {display: none !important;}
     [data-testid="stDecoration"] {visibility: hidden !important; height: 0 !important; position: fixed !important;}
     [data-testid="stToolbar"] {visibility: hidden !important; height: 0 !important; position: fixed !important;}
