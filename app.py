@@ -738,14 +738,6 @@ ORGAN_SYSTEMS = {
         r'inflamm\w+\s+(response|marker|cytokine)|cytokine\s+(storm|release)|'
         r'T\s*cell|B\s*cell\s+(function|response)|macrophage\s+(activation|function)|'
         r'allerg\w+\s+(response|sensitization)|hypersensitiv'),
-    'ORGAN_SKIN': ('Skin/Dermal',
-        r'dermal\s+toxicity|skin\s+toxicity|cutaneous\s+toxicity|'
-        r'skin\s+(damage|sensitization|irritation|barrier\s+dysfunction|disease|disorder)|'
-        r'epidermal\s+(damage|barrier|toxicity)|dermatitis|contact\s+dermatitis|'
-        r'keratinocyte\s+(toxicity|damage)|melanocyte\s+(toxicity|damage)|'
-        r'skin\s+carcinoma|skin\s+melanoma|skin\s+cancer|'
-        r'atopic\s+dermatitis|psoriasis|eczema|'
-        r'skin\s+sensitiz|skin\s+allerg|skin\s+inflammat'),
 }
 
 # 1b. Mechanism Pattern Classification
@@ -1484,33 +1476,10 @@ cooccur_filtered = compute_cooccurrence(filtered) if len(filtered) > 0 else {}
 # Get deduplicated data for summary
 filtered_unique = filtered.drop_duplicates(subset=['PROJECT_TITLE'], keep='first') if group_by_project else filtered
 
-# Active filters display
-active_filters = []
-if selected_source != "All Sources":
-    active_filters.append(selected_source.replace(" Only", ""))
-if selected_years and len(selected_years) < len(available_years):
-    if len(selected_years) <= 2:
-        active_filters.append(f"FY {', '.join(map(str, selected_years))}")
-    else:
-        active_filters.append(f"FY {min(selected_years)}-{max(selected_years)}")
-active_filters.append("Microplastics")  # Always active
-
-# Summary card
-st.markdown(f"""
+# Summary card (simplified header bar)
+st.markdown("""
 <div style="background: linear-gradient(135deg, #0D3B3C 0%, #1a5455 100%);
-            padding: 1.25rem 1.5rem; border-radius: 10px; margin-bottom: 1.5rem;
-            display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
-    <div>
-        <div style="color: #D4A84B; font-family: 'Spectral', serif; font-size: 1.8rem; font-weight: 600;">
-            {len(filtered_unique):,}
-        </div>
-        <div style="color: #FAFAF8; font-size: 0.9rem; opacity: 0.9;">
-            {"unique projects" if group_by_project else "total records"}
-        </div>
-    </div>
-    <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
-        {"".join([f'<span style="background: rgba(70,179,169,0.3); color: #FAFAF8; padding: 0.35rem 0.75rem; border-radius: 20px; font-size: 0.8rem; font-family: Source Sans Pro, sans-serif;">{f}</span>' for f in active_filters])}
-    </div>
+            padding: 0.75rem 1.5rem; border-radius: 10px; margin-bottom: 1.5rem;">
 </div>
 """, unsafe_allow_html=True)
 
@@ -1888,16 +1857,12 @@ with tab4:
     # Show top chemical fields for this category
     if sorted_chemicals:
         top_chems = sorted_chemicals[:5]
-        chem_badges = " ".join([
-            f'<span style="background-color: rgba(70,179,169,0.15); color: #0D3B3C; padding: 4px 10px; border-radius: 12px; font-size: 0.85rem; margin-right: 4px;">{name} ({count})</span>'
-            for name, count in top_chems
-        ])
-        st.markdown(f"""
-        <div style="margin-bottom: 1rem;">
-            <span style="color: #666; font-size: 0.85rem; margin-right: 8px;">Top fields studying {mech_label}:</span>
-            {chem_badges}
-        </div>
-        """, unsafe_allow_html=True)
+        chem_items = []
+        for name, count in top_chems:
+            grant_word = "grant" if count == 1 else "grants"
+            chem_items.append(f'<span style="display: inline-block; background: rgba(70,179,169,0.2); padding: 6px 12px; border-radius: 16px; margin: 3px 6px 3px 0; font-size: 0.9rem;"><strong>{name}</strong> <span style="background: rgba(70,179,169,0.4); padding: 2px 6px; border-radius: 10px; margin-left: 4px; font-size: 0.8rem;">{count:,} {grant_word}</span></span>')
+        chem_badges = " ".join(chem_items)
+        st.markdown(f'<div style="margin-bottom: 1rem; padding: 12px 16px; background: #f8f9fa; border-radius: 8px; border-left: 4px solid #46B3A9;"><div style="font-weight: 600; margin-bottom: 8px;">Top research fields also studying {mech_label}:</div><div>{chem_badges}</div></div>', unsafe_allow_html=True)
 
     if len(my_grants) > 0:
         my_text = my_grants['PROJECT_TITLE'].fillna('') + ' ' + my_grants['ABSTRACT_TEXT'].fillna('')
@@ -1919,29 +1884,6 @@ with tab4:
             if pct >= 10:
                 my_models.append((model_name, round(pct, 0)))
         my_models.sort(key=lambda x: x[1], reverse=True)
-
-        # Thematic Summary for Microplastics Grants in this category (using premade summaries)
-        with st.expander(f"About Microplastics Research in {mech_label} ({len(my_grants)} grants)", expanded=False):
-            # Show organ systems tags
-            if my_organs:
-                organ_tags = ' '.join([f"`{org[0]}`" for org in my_organs[:4]])
-                st.markdown(f"**Organ Systems:** {organ_tags}")
-
-            # Show model systems tags
-            if my_models:
-                model_tags = ' '.join([f"`{mod[0]}`" for mod in my_models[:4]])
-                st.markdown(f"**Model Systems:** {model_tags}")
-
-            # Add a divider if we have tags
-            if my_organs or my_models:
-                st.markdown("---")
-
-            # Get the static summary for this category
-            summary = CATEGORY_SUMMARIES.get(my_mechanism, "")
-            if summary:
-                st.markdown(summary)
-            else:
-                st.markdown(f"*{len(my_grants)} microplastics grants studying {mech_label}.*")
 
         if len(other_grants) > 0:
             # Compute similarity scores with enhanced weighting
