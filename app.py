@@ -2032,7 +2032,7 @@ with tab5:
     st.subheader("STOMP-Style Analysis")
 
     # Horizontal pill buttons instead of dropdown
-    stomp_options = ["🫀 Organ Systems", "🧬 Model Systems", "🛣️ Exposure Routes", "⚙️ Mechanisms"]
+    stomp_options = ["Organ Systems", "Model Systems", "Mechanisms"]
 
     # Initialize session state for STOMP category
     if 'stomp_category' not in st.session_state:
@@ -2069,7 +2069,7 @@ with tab5:
         filtered_stomp = filtered.drop_duplicates(subset=['PROJECT_TITLE'], keep='first')
 
         # ---- ORGAN SYSTEMS ----
-        if stomp_category == "🫀 Organ Systems":
+        if stomp_category == "Organ Systems":
             st.markdown("#### Which body systems are being studied?")
 
             organ_data = stomp_results['organs']
@@ -2180,7 +2180,7 @@ with tab5:
                             st.write(abstract)
 
         # ---- MODEL SYSTEMS ----
-        elif stomp_category == "🧬 Model Systems":
+        elif stomp_category == "Model Systems":
             st.markdown("#### What model systems are being used?")
 
             # Model systems patterns
@@ -2278,129 +2278,27 @@ with tab5:
                         st.markdown("**Abstract:**")
                         st.write(abstract)
 
-        # ---- EXPOSURE ROUTES ----
-        elif stomp_category == "🛣️ Exposure Routes":
-            st.markdown("#### What exposure routes are being studied?")
-
-            # Exposure route patterns
-            EXPOSURE_ROUTES = {
-                'Ingestion/Oral': r'ingest|oral\s+exposure|dietary|drinking\s+water|food',
-                'Inhalation': r'inhal|airborne|air\s+pollution',
-                'Dermal': r'dermal|skin\s+exposure',
-            }
-
-            text = filtered_stomp['PROJECT_TITLE'].fillna('') + ' ' + filtered_stomp['ABSTRACT_TEXT'].fillna('')
-            n_total = len(filtered_stomp)
-
-            route_counts = {}
-            for name, pattern in EXPOSURE_ROUTES.items():
-                count = text.str.contains(pattern, regex=True, flags=re.IGNORECASE, na=False).sum()
-                route_counts[name] = {'count': count, 'pct': round(100 * count / n_total, 1) if n_total > 0 else 0}
-
-            sorted_routes = sorted(route_counts.items(), key=lambda x: x[1]['count'], reverse=True)
-
-            col1, col2 = st.columns([2, 1])
-            with col1:
-                chart_data = {k: v['count'] for k, v in sorted_routes if v['count'] > 0}
-                if chart_data:
-                    chart = create_horizontal_bar_chart(chart_data, value_label="Projects")
-                    st.altair_chart(chart, use_container_width=True)
-
-            with col2:
-                route_table = [{'Exposure Route': k, 'Projects': v['count'], '%': f"{v['pct']}%"}
-                              for k, v in sorted_routes]
-                st.dataframe(pd.DataFrame(route_table), hide_index=True, use_container_width=True)
-
-            # Drill-down
-            st.markdown("---")
-            route_options = [f"{name} ({info['count']})" for name, info in sorted_routes if info['count'] > 0]
-            if route_options:
-                selected_route_option = st.selectbox(
-                    "Explore projects by exposure route",
-                    ["Select an exposure route..."] + route_options,
-                    key="route_select"
-                )
-                selected_route = selected_route_option.rsplit(" (", 1)[0] if selected_route_option != "Select an exposure route..." else None
-            else:
-                selected_route = None
-
-            if selected_route and selected_route in EXPOSURE_ROUTES:
-                route_pattern = EXPOSURE_ROUTES[selected_route]
-                route_matches = text.str.contains(route_pattern, regex=True, flags=re.IGNORECASE, na=False)
-                route_grants = filtered_stomp[route_matches].copy()
-
-                st.markdown(f"### {selected_route}")
-                st.markdown(f"**{len(route_grants):,} projects** studying this route")
-
-                display_cols = ['PROJECT_TITLE', 'PI_NAMEs', 'ORG_NAME', 'FISCAL_YEAR']
-                display_cols = [c for c in display_cols if c in route_grants.columns]
-                if display_cols:
-                    grants_display = route_grants[display_cols].head(50).copy()
-                    if 'PI_NAMEs' in grants_display.columns:
-                        grants_display['PI_NAMEs'] = grants_display['PI_NAMEs'].apply(clean_pi_names)
-                    col_names = {'PROJECT_TITLE': 'Title', 'PI_NAMEs': 'PI(s)', 'ORG_NAME': 'Organization', 'FISCAL_YEAR': 'FY'}
-                    grants_display.columns = [col_names.get(c, c) for c in display_cols]
-                    st.caption("Select a row to view abstract below")
-                    route_selection = st.dataframe(
-                        grants_display,
-                        hide_index=True,
-                        use_container_width=True,
-                        height=300,
-                        on_select="rerun",
-                        selection_mode="single-row"
-                    )
-
-                    if len(route_grants) > 50:
-                        st.caption(f"Showing first 50 of {len(route_grants):,} projects")
-
-                    # Download button for exposure route results
-                    route_csv = route_grants.to_csv(index=False)
-                    st.download_button(
-                        f"Download {selected_route} Projects (CSV)",
-                        route_csv,
-                        f"{selected_route.lower().replace(' ', '_').replace('/', '_')}_projects.csv",
-                        "text/csv",
-                        key="route_download"
-                    )
-
-                    if route_selection and route_selection.selection and route_selection.selection.rows:
-                        selected_idx = route_selection.selection.rows[0]
-                        grant_row = route_grants.iloc[selected_idx]
-                        st.markdown("---")
-                        st.markdown(f"**{grant_row['PROJECT_TITLE']}**")
-                        st.markdown(f"*PI:* {clean_pi_names(grant_row.get('PI_NAMEs', 'Unknown'))} | *Org:* {grant_row.get('ORG_NAME', 'Unknown')} | *FY:* {int(grant_row.get('FISCAL_YEAR', 0))}")
-                        abstract = grant_row.get('ABSTRACT_TEXT', 'No abstract available')
-                        if pd.isna(abstract):
-                            abstract = 'No abstract available'
-                        st.markdown("**Abstract:**")
-                        st.write(abstract)
-
         # ---- MECHANISMS ----
-        elif stomp_category == "⚙️ Mechanisms":
+        elif stomp_category == "Mechanisms":
             st.markdown("#### What biological mechanisms are being studied?")
-            st.caption("*Using tightened patterns that require mechanism to be a research focus*")
+            st.caption("*Using pre-classified mechanism columns (same as Cross-Field Insights)*")
 
-            # Use MECHANISM_SYSTEMS tightened patterns (same approach as ORGAN_SYSTEMS)
-            # Build mechanism data using runtime pattern matching
+            # Use pre-classified MECH_* columns from CSV (same as Cross-Field Insights tab)
+            # This provides consistent categorization across both tabs
             mech_name_to_key = {}
             mech_data = {}
             n_grants = len(filtered_stomp)
-            text = filtered_stomp['PROJECT_TITLE'].fillna('') + ' ' + filtered_stomp['ABSTRACT_TEXT'].fillna('')
 
-            for key, (label, pattern) in MECHANISM_SYSTEMS.items():
-                # Use tightened pattern matching (may also check CSV column as fallback)
-                keyword_match = text.str.contains(pattern, regex=True, flags=re.IGNORECASE, na=False)
-                # Optionally combine with pre-classified column for broader coverage
-                # (but prefer pattern match for precision)
+            # Only show mechanisms from MECHANISMS dict (excludes oxidative, developmental, epigenetic)
+            for key, label in MECHANISMS.items():
+                # Use pre-classified column
                 if key in filtered_stomp.columns:
-                    # Use pattern match AND CSV column (intersection for precision)
-                    # Or use pattern match only for tighter classification
-                    matches = keyword_match  # Use tightened pattern only
+                    matches = filtered_stomp[key] == 1
+                    count = int(matches.sum())
                 else:
-                    matches = keyword_match
-                count = int(matches.sum())
+                    count = 0
                 pct = round(100 * count / n_grants, 1) if n_grants > 0 else 0
-                mech_data[label] = {'count': count, 'pct': pct, 'key': key, 'pattern': pattern}
+                mech_data[label] = {'count': count, 'pct': pct, 'key': key}
                 mech_name_to_key[label] = key
 
             if mech_data:
@@ -2418,10 +2316,12 @@ with tab5:
                                   for k, v in sorted_mechs[:10]]
                     st.dataframe(pd.DataFrame(mech_table), hide_index=True, use_container_width=True)
 
-                # Show how many projects have ANY mechanism (using pattern matching)
+                # Show how many projects have ANY mechanism (using pre-classified columns)
                 any_mech_mask = pd.Series(False, index=filtered_stomp.index)
                 for label, info in mech_data.items():
-                    any_mech_mask = any_mech_mask | text.str.contains(info['pattern'], regex=True, flags=re.IGNORECASE, na=False)
+                    key = info['key']
+                    if key in filtered_stomp.columns:
+                        any_mech_mask = any_mech_mask | (filtered_stomp[key] == 1)
                 any_mech = any_mech_mask.sum()
                 any_pct = round(100 * any_mech / n_grants, 1) if n_grants > 0 else 0
                 st.info(f"**{any_mech:,}** projects ({any_pct}%) have at least one mechanism identified")
@@ -2441,10 +2341,11 @@ with tab5:
 
                 if selected_mech_stomp and selected_mech_stomp in mech_name_to_key:
                     mech_key = mech_name_to_key[selected_mech_stomp]
-                    mech_pattern = mech_data[selected_mech_stomp]['pattern']
-                    # Use pattern matching for drill-down
-                    mech_matches = text.str.contains(mech_pattern, regex=True, flags=re.IGNORECASE, na=False)
-                    mech_grants = filtered_stomp[mech_matches].copy()
+                    # Use pre-classified column for drill-down (same as Cross-Field Insights)
+                    if mech_key in filtered_stomp.columns:
+                        mech_grants = filtered_stomp[filtered_stomp[mech_key] == 1].copy()
+                    else:
+                        mech_grants = pd.DataFrame()
 
                     st.markdown(f"### {selected_mech_stomp}")
                     st.markdown(f"**{len(mech_grants):,} projects** studying this mechanism")
