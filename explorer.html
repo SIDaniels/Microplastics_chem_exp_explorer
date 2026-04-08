@@ -1,0 +1,65 @@
+{% extends "base_splash.html" %}
+
+{% block head %}
+<style>
+    .explorer-container {
+        padding: 2rem 1rem;
+        max-width: 1400px;
+        margin: 0 auto;
+    }
+
+    .explorer-header {
+        text-align: center;
+        margin-bottom: 1.5rem;
+    }
+
+    .explorer-header h1 {
+        font-family: var(--font-serif);
+        color: var(--color-primary);
+        font-size: 2.5rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .explorer-header p {
+        color: var(--color-text-muted);
+        font-size: 1.1rem;
+        max-width: 700px;
+        margin: 0 auto;
+    }
+
+    .explorer-iframe {
+        width: 100%;
+        height: 900px;
+        border: none;
+        border-radius: 8px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    }
+
+    @media (max-width: 768px) {
+        .explorer-iframe {
+            height: 700px;
+        }
+
+        .explorer-header h1 {
+            font-size: 1.8rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="explorer-container">
+    <div class="explorer-header">
+        <h1>Microplastic Research Trendspotter</h1>
+        <p>Explore the latest microplastics research through recent NIH grants and conference proceedings. Use Cross-Field Insights to find methods and techniques funded for other pollutants that could accelerate your work.</p>
+        <p style="font-size: 0.95rem; color: var(--color-text-muted); margin-top: 0.75rem;"><em>This tool is in beta and we'd love your feedback! <a href="/contact" style="color: var(--color-primary);">Drop us a line</a> to report any issues or let us know what pollutants you'd like to see added next.</em></p>
+    </div>
+
+    <iframe
+        src="https://microplasticschemexpexplorer.streamlit.app?embedded=true"
+        class="explorer-iframe"
+        title="Microplastics Research Explorer"
+        loading="lazy"
+    ></iframe>
+</div>
+{% endblock %}
