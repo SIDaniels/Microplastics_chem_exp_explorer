@@ -2125,7 +2125,6 @@ with tab_organ:
                     any_organ_mask = any_organ_mask | (filtered_stomp[col] == 1)
             any_organ = any_organ_mask.sum()
             any_organ_pct = round(100 * any_organ / n_grants, 1) if n_grants > 0 else 0
-            st.info(f"**{any_organ:,}** projects ({any_organ_pct}%) have at least one organ system identified")
             # Sort by count
             sorted_organs = sorted(organ_data.items(), key=lambda x: x[1]['count'], reverse=True)
 
@@ -2139,6 +2138,9 @@ with tab_organ:
                 organ_table = [{'Organ System': k, 'Projects': v['count'], '%': f"{v['pct']}%"}
                               for k, v in sorted_organs[:8]]
                 st.dataframe(pd.DataFrame(organ_table), hide_index=True, use_container_width=True)
+
+            # Summary stat below the graphs (like mechanisms tab)
+            st.info(f"**{any_organ:,}** projects ({any_organ_pct}%) have at least one organ system identified")
 
             # Drill-down with selectbox
             st.markdown("---")
