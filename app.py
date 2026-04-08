@@ -11,7 +11,7 @@ import pandas as pd
 import altair as alt
 import re
 from pathlib import Path
-import anthropic
+# import anthropic  # Commented out to avoid API costs
 from datetime import datetime, timedelta
 
 # Engineered Resilience color palette
@@ -200,52 +200,60 @@ def format_grants_for_context(grants_df: pd.DataFrame) -> str:
     return f"Found {len(grants_df)} relevant grants:\n\n" + "\n\n---\n\n".join(context_parts)
 
 def get_chat_response(query: str, df: pd.DataFrame) -> str:
-    """Get AI response for a chat query using Claude."""
-    try:
-        # Check for API key
-        api_key = st.secrets.get("ANTHROPIC_API_KEY", None)
-        if not api_key:
-            return "⚠️ Chat is not configured. Please add ANTHROPIC_API_KEY to Streamlit secrets."
+    """Get AI response for a chat query using Claude.
 
-        client = anthropic.Anthropic(api_key=api_key)
+    NOTE: Anthropic API integration is currently disabled to avoid API costs.
+    To re-enable, uncomment the import and the code below.
+    """
+    # Chat feature temporarily disabled to avoid API costs
+    return "⚠️ AI Chat is temporarily disabled. Please use the search filters and keyword search below to explore the grants database."
 
-        # Search for relevant grants
-        relevant_grants = search_grants_for_chat(df, query)
-        context = format_grants_for_context(relevant_grants)
-
-        # Build the prompt
-        system_prompt = """You are a research assistant for the Microplastics & Chemical Exposure Grant Explorer database.
-You help users discover NIH-funded research grants and conference abstracts.
-
-IMPORTANT INSTRUCTIONS:
-- You will be given grants from the database - some directly matching the query, some related
-- Organize your response into TWO sections:
-  1. **Direct Matches**: Grants that specifically match ALL aspects of the query (e.g., microplastics AND placenta)
-  2. **Related Research**: Grants on the same health topic but with different chemicals/exposures
-- ALWAYS cite specific PI names, institutions, and grant titles
-- Be specific and detailed about what each researcher is studying
-- Only say "no research found" if the grants list is truly empty"""
-
-        user_prompt = f"""User question: {query}
-
-DATABASE RESULTS:
-{context}
-
-Based on these grants from our database, answer the user's question. Cite specific PIs, institutions, and grant titles."""
-
-        response = client.messages.create(
-            model="claude-sonnet-4-20250514",
-            max_tokens=500,
-            system=system_prompt,
-            messages=[
-                {"role": "user", "content": user_prompt}
-            ]
-        )
-
-        return response.content[0].text
-
-    except Exception as e:
-        return f"⚠️ Error: {str(e)}"
+    # --- COMMENTED OUT ANTHROPIC API CODE ---
+    # try:
+    #     # Check for API key
+    #     api_key = st.secrets.get("ANTHROPIC_API_KEY", None)
+    #     if not api_key:
+    #         return "⚠️ Chat is not configured. Please add ANTHROPIC_API_KEY to Streamlit secrets."
+    #
+    #     client = anthropic.Anthropic(api_key=api_key)
+    #
+    #     # Search for relevant grants
+    #     relevant_grants = search_grants_for_chat(df, query)
+    #     context = format_grants_for_context(relevant_grants)
+    #
+    #     # Build the prompt
+    #     system_prompt = """You are a research assistant for the Microplastics & Chemical Exposure Grant Explorer database.
+    # You help users discover NIH-funded research grants and conference abstracts.
+    #
+    # IMPORTANT INSTRUCTIONS:
+    # - You will be given grants from the database - some directly matching the query, some related
+    # - Organize your response into TWO sections:
+    #   1. **Direct Matches**: Grants that specifically match ALL aspects of the query (e.g., microplastics AND placenta)
+    #   2. **Related Research**: Grants on the same health topic but with different chemicals/exposures
+    # - ALWAYS cite specific PI names, institutions, and grant titles
+    # - Be specific and detailed about what each researcher is studying
+    # - Only say "no research found" if the grants list is truly empty"""
+    #
+    #     user_prompt = f"""User question: {query}
+    #
+    # DATABASE RESULTS:
+    # {context}
+    #
+    # Based on these grants from our database, answer the user's question. Cite specific PIs, institutions, and grant titles."""
+    #
+    #     response = client.messages.create(
+    #         model="claude-sonnet-4-20250514",
+    #         max_tokens=500,
+    #         system=system_prompt,
+    #         messages=[
+    #             {"role": "user", "content": user_prompt}
+    #         ]
+    #     )
+    #
+    #     return response.content[0].text
+    #
+    # except Exception as e:
+    #     return f"⚠️ Error: {str(e)}"
 
 
 def create_horizontal_bar_chart(data: dict, title: str = "", value_label: str = "Grants") -> alt.Chart:
@@ -1079,13 +1087,23 @@ def compute_grant_similarity(source_grants: pd.DataFrame, target_grants: pd.Data
         score = 0
 
         # HIGHEST PRIORITY: Keyword filter match (+10)
+        # Supports regex patterns - user can enter patterns like "inflam.*" or "gut|intestin"
         if keyword_filter and keyword_filter.strip():
-            keywords = [k.strip() for k in keyword_filter.split(',')]
-            for kw in keywords:
-                if kw and re.search(re.escape(kw), text, re.IGNORECASE):
+            try:
+                # Try to use input as regex pattern directly
+                pattern = re.compile(keyword_filter.strip(), re.IGNORECASE)
+                match = pattern.search(text)
+                if match:
                     score += 10
-                    matches.insert(0, f"Keyword: {kw}")
-                    break  # Only count once
+                    matches.insert(0, f"Keyword: {match.group()}")
+            except re.error:
+                # If invalid regex, fall back to literal comma-separated keywords
+                keywords = [k.strip() for k in keyword_filter.split(',')]
+                for kw in keywords:
+                    if kw and re.search(re.escape(kw), text, re.IGNORECASE):
+                        score += 10
+                        matches.insert(0, f"Keyword: {kw}")
+                        break  # Only count once
 
         # HIGH PRIORITY: Selected category match (+5)
         if selected_pattern and re.search(selected_pattern, text, re.IGNORECASE):
@@ -1315,60 +1333,60 @@ def filter_grants(df: pd.DataFrame, exposures: list, mechanisms: list,
 # Load data first to get counts for header
 df = load_data()
 
-# Initialize chat state
-init_chat_state()
-
-# ============== CHAT INTERFACE ==============
-st.markdown("""
-<div style="background: linear-gradient(135deg, #0D3B3C 0%, #1a5455 100%); padding: 1.5rem; border-radius: 12px; margin-bottom: 1.5rem;">
-    <h3 style="color: #D4A84B !important; margin: 0 0 0.5rem 0; font-family: 'Spectral', serif;">💬 Ask about the research</h3>
-    <p style="color: #FAFAF8; opacity: 0.9; margin: 0; font-size: 0.9rem;">
-        Ask questions like "Who is studying microplastics and gut health?" or "What research focuses on reproductive effects?"
-    </p>
-</div>
-""", unsafe_allow_html=True)
-
-# Chat input
-chat_col1, chat_col2 = st.columns([5, 1])
-with chat_col1:
-    user_question = st.text_input(
-        "Your question",
-        placeholder="e.g., Who is researching microplastics in drinking water?",
-        label_visibility="collapsed",
-        key="chat_input"
-    )
-with chat_col2:
-    ask_button = st.button("Ask", type="primary", use_container_width=True)
-
-# Handle chat submission
-if ask_button and user_question:
-    allowed, limit_msg = check_rate_limit()
-    if not allowed:
-        st.warning(limit_msg)
-    else:
-        st.session_state.question_count += 1
-        with st.spinner("Searching grants and thinking..."):
-            response = get_chat_response(user_question, df)
-            st.session_state.chat_messages.append({"role": "user", "content": user_question})
-            st.session_state.chat_messages.append({"role": "assistant", "content": response})
-
-# Display chat history (most recent first, limit to last 3 exchanges)
-if st.session_state.chat_messages:
-    with st.expander(f"💬 Chat history ({len(st.session_state.chat_messages)//2} questions)", expanded=True):
-        # Show messages in reverse order (most recent first)
-        messages = st.session_state.chat_messages[-6:]  # Last 3 Q&A pairs
-        for i in range(len(messages) - 1, -1, -2):
-            if i >= 1:
-                # Assistant response
-                st.markdown(f"**🤖 Assistant:** {messages[i]['content']}")
-                # User question
-                st.markdown(f"**You:** {messages[i-1]['content']}")
-                st.markdown("---")
-
-        remaining = MAX_QUESTIONS_PER_SESSION - st.session_state.question_count
-        st.caption(f"💡 {remaining} questions remaining this session")
-
-st.markdown("<div style='height: 1rem'></div>", unsafe_allow_html=True)
+# # Initialize chat state - COMMENTED OUT (Anthropic API disabled)
+# init_chat_state()
+#
+# # ============== CHAT INTERFACE ==============
+# st.markdown("""
+# <div style="background: linear-gradient(135deg, #0D3B3C 0%, #1a5455 100%); padding: 1.5rem; border-radius: 12px; margin-bottom: 1.5rem;">
+#     <h3 style="color: #D4A84B !important; margin: 0 0 0.5rem 0; font-family: 'Spectral', serif;">💬 Ask about the research</h3>
+#     <p style="color: #FAFAF8; opacity: 0.9; margin: 0; font-size: 0.9rem;">
+#         Ask questions like "Who is studying microplastics and gut health?" or "What research focuses on reproductive effects?"
+#     </p>
+# </div>
+# """, unsafe_allow_html=True)
+#
+# # Chat input
+# chat_col1, chat_col2 = st.columns([5, 1])
+# with chat_col1:
+#     user_question = st.text_input(
+#         "Your question",
+#         placeholder="e.g., Who is researching microplastics in drinking water?",
+#         label_visibility="collapsed",
+#         key="chat_input"
+#     )
+# with chat_col2:
+#     ask_button = st.button("Ask", type="primary", use_container_width=True)
+#
+# # Handle chat submission
+# if ask_button and user_question:
+#     allowed, limit_msg = check_rate_limit()
+#     if not allowed:
+#         st.warning(limit_msg)
+#     else:
+#         st.session_state.question_count += 1
+#         with st.spinner("Searching grants and thinking..."):
+#             response = get_chat_response(user_question, df)
+#             st.session_state.chat_messages.append({"role": "user", "content": user_question})
+#             st.session_state.chat_messages.append({"role": "assistant", "content": response})
+#
+# # Display chat history (most recent first, limit to last 3 exchanges)
+# if st.session_state.chat_messages:
+#     with st.expander(f"💬 Chat history ({len(st.session_state.chat_messages)//2} questions)", expanded=True):
+#         # Show messages in reverse order (most recent first)
+#         messages = st.session_state.chat_messages[-6:]  # Last 3 Q&A pairs
+#         for i in range(len(messages) - 1, -1, -2):
+#             if i >= 1:
+#                 # Assistant response
+#                 st.markdown(f"**🤖 Assistant:** {messages[i]['content']}")
+#                 # User question
+#                 st.markdown(f"**You:** {messages[i-1]['content']}")
+#                 st.markdown("---")
+#
+#         remaining = MAX_QUESTIONS_PER_SESSION - st.session_state.question_count
+#         st.caption(f"💡 {remaining} questions remaining this session")
+#
+# st.markdown("<div style='height: 1rem'></div>", unsafe_allow_html=True)
 
 # Count totals for header display
 total_entries = len(df)
@@ -1485,7 +1503,7 @@ st.markdown(f"""
 """, unsafe_allow_html=True)
 
 # Main content - tabs
-tab1, tab4, tab5, tab6 = st.tabs(["Results", "Cross-Field Insights", "STOMP Analysis", "Microplastics Focus"])
+tab1, tab4, tab5 = st.tabs(["Results", "Cross-Field Insights", "STOMP Analysis"])
 
 with tab1:
     # Use global toggle from sidebar
@@ -1682,9 +1700,9 @@ with tab4:
     with col2:
         # Keyword search field
         keyword_search = st.text_input(
-            "Search by keyword(s):",
-            placeholder="e.g., gut barrier, inflammasome, zebrafish",
-            help="Enter keywords to find grants containing these terms.",
+            "Search by keyword (regex supported):",
+            placeholder="e.g., gut|intestin, inflam.*, NF.?kB",
+            help="Supports regex patterns: 'gut|intestin' (OR), 'inflam.*' (wildcard), 'NF.?kB' (optional char). Plain text also works.",
             key='crossfield_keyword'
         )
 
@@ -1820,6 +1838,13 @@ with tab4:
                 keyword_filter=keyword_search
             )
 
+            # Apply keyword filter - exclude grants that don't match the keyword regex
+            if keyword_search and keyword_search.strip():
+                # Filter to only grants that matched the keyword (have "Keyword:" in matching_features)
+                scored_grants = scored_grants[scored_grants['matching_features'].str.contains('Keyword:', na=False)]
+                if len(scored_grants) == 0:
+                    st.warning(f"No grants matched keyword filter: '{keyword_search}'")
+
             # Group by project and keep highest similarity score
             if 'CORE_PROJECT_NUM' in scored_grants.columns:
                 # For grouping, we need to get the best matching themes per project
@@ -1843,6 +1868,9 @@ with tab4:
                     return ', '.join(exps[:2]) + ('...' if len(exps) > 2 else '')
 
                 inspiring['Chemical(s)'] = inspiring.apply(get_exposures, axis=1)
+
+                # Initialize selection variable before conditional
+                inspiring_selection = None
 
                 if len(inspiring) == 0:
                     st.info(f"No grants found with model system: {model_filter}")
@@ -1935,7 +1963,7 @@ with tab5:
     st.subheader("STOMP-Style Analysis")
 
     # Horizontal pill buttons instead of dropdown
-    stomp_options = ["🫀 Organ Systems", "🔬 Research Phase", "📊 Research Type", "⚙️ Mechanisms"]
+    stomp_options = ["🫀 Organ Systems", "🧬 Model Systems", "🛣️ Exposure Routes", "⚙️ Mechanisms"]
 
     # Initialize session state for STOMP category
     if 'stomp_category' not in st.session_state:
@@ -2073,181 +2101,181 @@ with tab5:
                             st.markdown("**Abstract:**")
                             st.write(abstract)
 
-        # ---- RESEARCH PHASES ----
-        elif stomp_category == "🔬 Research Phase":
-            st.markdown("#### Where are projects in the research pipeline?")
+        # ---- MODEL SYSTEMS ----
+        elif stomp_category == "🧬 Model Systems":
+            st.markdown("#### What model systems are being used?")
 
-            phase_data = stomp_results['phases']
-            if phase_data:
-                sorted_phases = sorted(phase_data.items(), key=lambda x: x[1]['count'], reverse=True)
+            # Model systems patterns
+            MODEL_SYSTEMS = {
+                'Mouse/Rat': r'\bmouse\b|\bmice\b|\brat\b|\brodent\b|\bmurine\b',
+                'Cell culture': r'cell\s+line|cell\s+culture|in\s+vitro|primary\s+cell',
+                'Human cohort': r'cohort|epidemiol|NHANES|population.based|human\s+subject',
+                'Zebrafish': r'\bzebrafish\b|\bdanio\b',
+                'C. elegans': r'c\.\s*elegans|caenorhabditis',
+            }
 
-                col1, col2 = st.columns([2, 1])
-                with col1:
-                    chart_data = {k: v['count'] for k, v in sorted_phases if v['count'] > 0}
+            text = filtered_stomp['PROJECT_TITLE'].fillna('') + ' ' + filtered_stomp['ABSTRACT_TEXT'].fillna('')
+            n_total = len(filtered_stomp)
+
+            model_counts = {}
+            for name, pattern in MODEL_SYSTEMS.items():
+                count = text.str.contains(pattern, regex=True, flags=re.IGNORECASE, na=False).sum()
+                model_counts[name] = {'count': count, 'pct': round(100 * count / n_total, 1) if n_total > 0 else 0}
+
+            sorted_models = sorted(model_counts.items(), key=lambda x: x[1]['count'], reverse=True)
+
+            col1, col2 = st.columns([2, 1])
+            with col1:
+                chart_data = {k: v['count'] for k, v in sorted_models if v['count'] > 0}
+                if chart_data:
                     chart = create_horizontal_bar_chart(chart_data, value_label="Projects")
                     st.altair_chart(chart, use_container_width=True)
 
-                with col2:
-                    phase_table = [{'Research Phase': k, 'Projects': v['count'], '%': f"{v['pct']}%"}
-                                  for k, v in sorted_phases]
-                    st.dataframe(pd.DataFrame(phase_table), hide_index=True, use_container_width=True)
+            with col2:
+                model_table = [{'Model System': k, 'Projects': v['count'], '%': f"{v['pct']}%"}
+                              for k, v in sorted_models]
+                st.dataframe(pd.DataFrame(model_table), hide_index=True, use_container_width=True)
 
-                # Drill-down with selectbox
-                st.markdown("---")
-                phase_options = [f"{name} ({info['count']})" for name, info in sorted_phases if info['count'] > 0]
-                if phase_options:
-                    selected_phase_option = st.selectbox(
-                        "Explore projects by research phase",
-                        ["Select a research phase..."] + phase_options,
-                        key="phase_select"
+            # Drill-down
+            st.markdown("---")
+            model_options = [f"{name} ({info['count']})" for name, info in sorted_models if info['count'] > 0]
+            if model_options:
+                selected_model_option = st.selectbox(
+                    "Explore projects by model system",
+                    ["Select a model system..."] + model_options,
+                    key="model_select"
+                )
+                selected_model = selected_model_option.rsplit(" (", 1)[0] if selected_model_option != "Select a model system..." else None
+            else:
+                selected_model = None
+
+            if selected_model and selected_model in MODEL_SYSTEMS:
+                model_pattern = MODEL_SYSTEMS[selected_model]
+                model_matches = text.str.contains(model_pattern, regex=True, flags=re.IGNORECASE, na=False)
+                model_grants = filtered_stomp[model_matches].copy()
+
+                st.markdown(f"### {selected_model}")
+                st.markdown(f"**{len(model_grants):,} projects** using this model")
+
+                display_cols = ['PROJECT_TITLE', 'PI_NAMEs', 'ORG_NAME', 'FISCAL_YEAR']
+                display_cols = [c for c in display_cols if c in model_grants.columns]
+                if display_cols:
+                    grants_display = model_grants[display_cols].head(50).copy()
+                    if 'PI_NAMEs' in grants_display.columns:
+                        grants_display['PI_NAMEs'] = grants_display['PI_NAMEs'].apply(clean_pi_names)
+                    col_names = {'PROJECT_TITLE': 'Title', 'PI_NAMEs': 'PI(s)', 'ORG_NAME': 'Organization', 'FISCAL_YEAR': 'FY'}
+                    grants_display.columns = [col_names.get(c, c) for c in display_cols]
+                    st.caption("Select a row to view abstract below")
+                    model_selection = st.dataframe(
+                        grants_display,
+                        hide_index=True,
+                        use_container_width=True,
+                        height=300,
+                        on_select="rerun",
+                        selection_mode="single-row"
                     )
-                    selected_phase = selected_phase_option.rsplit(" (", 1)[0] if selected_phase_option != "Select a research phase..." else None
-                else:
-                    selected_phase = None
 
-                if selected_phase:
-                    phase_pattern = None
-                    for key, (label, pattern) in RESEARCH_PHASES.items():
-                        if label == selected_phase:
-                            phase_pattern = pattern
-                            break
+                    if len(model_grants) > 50:
+                        st.caption(f"Showing first 50 of {len(model_grants):,} projects")
 
-                    if phase_pattern:
-                        text = filtered_stomp['PROJECT_TITLE'].fillna('') + ' ' + filtered_stomp['ABSTRACT_TEXT'].fillna('')
-                        phase_matches = text.str.contains(phase_pattern, regex=True, flags=re.IGNORECASE, na=False)
-                        phase_grants = filtered_stomp[phase_matches].copy()
+                    if model_selection and model_selection.selection and model_selection.selection.rows:
+                        selected_idx = model_selection.selection.rows[0]
+                        grant_row = model_grants.iloc[selected_idx]
+                        st.markdown("---")
+                        st.markdown(f"**{grant_row['PROJECT_TITLE']}**")
+                        st.markdown(f"*PI:* {clean_pi_names(grant_row.get('PI_NAMEs', 'Unknown'))} | *Org:* {grant_row.get('ORG_NAME', 'Unknown')} | *FY:* {int(grant_row.get('FISCAL_YEAR', 0))}")
+                        abstract = grant_row.get('ABSTRACT_TEXT', 'No abstract available')
+                        if pd.isna(abstract):
+                            abstract = 'No abstract available'
+                        st.markdown("**Abstract:**")
+                        st.write(abstract)
 
-                        st.markdown(f"### {selected_phase}")
-                        st.markdown(f"**{len(phase_grants):,} projects** in this phase")
+        # ---- EXPOSURE ROUTES ----
+        elif stomp_category == "🛣️ Exposure Routes":
+            st.markdown("#### What exposure routes are being studied?")
 
-                        display_cols = ['PROJECT_TITLE', 'PI_NAMEs', 'ORG_NAME', 'FISCAL_YEAR']
-                        display_cols = [c for c in display_cols if c in phase_grants.columns]
-                        if display_cols:
-                            grants_display = phase_grants[display_cols].head(50).copy()
-                            if 'PI_NAMEs' in grants_display.columns:
-                                grants_display['PI_NAMEs'] = grants_display['PI_NAMEs'].apply(clean_pi_names)
-                            col_names = {'PROJECT_TITLE': 'Title', 'PI_NAMEs': 'PI(s)', 'ORG_NAME': 'Organization', 'FISCAL_YEAR': 'FY'}
-                            grants_display.columns = [col_names.get(c, c) for c in display_cols]
-                            st.caption("Select a row to view abstract below")
-                            phase_selection = st.dataframe(
-                                grants_display,
-                                hide_index=True,
-                                use_container_width=True,
-                                height=300,
-                                on_select="rerun",
-                                selection_mode="single-row"
-                            )
+            # Exposure route patterns
+            EXPOSURE_ROUTES = {
+                'Ingestion/Oral': r'ingest|oral\s+exposure|dietary|drinking\s+water|food',
+                'Inhalation': r'inhal|airborne|air\s+pollution',
+                'Dermal': r'dermal|skin\s+exposure',
+            }
 
-                            if len(phase_grants) > 50:
-                                st.caption(f"Showing first 50 of {len(phase_grants):,} projects")
+            text = filtered_stomp['PROJECT_TITLE'].fillna('') + ' ' + filtered_stomp['ABSTRACT_TEXT'].fillna('')
+            n_total = len(filtered_stomp)
 
-                            # Show abstract for selected row
-                            if phase_selection and phase_selection.selection and phase_selection.selection.rows:
-                                selected_idx = phase_selection.selection.rows[0]
-                                grant_row = phase_grants.iloc[selected_idx]
-                                st.markdown("---")
-                                st.markdown(f"**{grant_row['PROJECT_TITLE']}**")
-                                st.markdown(f"*PI:* {clean_pi_names(grant_row.get('PI_NAMEs', 'Unknown'))} | *Org:* {grant_row.get('ORG_NAME', 'Unknown')} | *FY:* {int(grant_row.get('FISCAL_YEAR', 0))}")
-                                abstract = grant_row.get('ABSTRACT_TEXT', 'No abstract available')
-                                if pd.isna(abstract):
-                                    abstract = 'No abstract available'
-                                st.markdown("**Abstract:**")
-                                st.write(abstract)
+            route_counts = {}
+            for name, pattern in EXPOSURE_ROUTES.items():
+                count = text.str.contains(pattern, regex=True, flags=re.IGNORECASE, na=False).sum()
+                route_counts[name] = {'count': count, 'pct': round(100 * count / n_total, 1) if n_total > 0 else 0}
 
-        # ---- RESEARCH TYPES ----
-        elif stomp_category == "📊 Research Type":
-            st.markdown("#### What type of research methodology?")
+            sorted_routes = sorted(route_counts.items(), key=lambda x: x[1]['count'], reverse=True)
 
-            type_data = stomp_results['research_types']
-            if type_data:
-                sorted_types = sorted(type_data.items(), key=lambda x: x[1]['count'], reverse=True)
-
-                col1, col2 = st.columns([2, 1])
-                with col1:
-                    chart_data = {k: v['count'] for k, v in sorted_types if v['count'] > 0}
+            col1, col2 = st.columns([2, 1])
+            with col1:
+                chart_data = {k: v['count'] for k, v in sorted_routes if v['count'] > 0}
+                if chart_data:
                     chart = create_horizontal_bar_chart(chart_data, value_label="Projects")
                     st.altair_chart(chart, use_container_width=True)
 
-                with col2:
-                    type_table = [{'Research Type': k, 'Projects': v['count'], '%': f"{v['pct']}%"}
-                                  for k, v in sorted_types]
-                    st.dataframe(pd.DataFrame(type_table), hide_index=True, use_container_width=True)
+            with col2:
+                route_table = [{'Exposure Route': k, 'Projects': v['count'], '%': f"{v['pct']}%"}
+                              for k, v in sorted_routes]
+                st.dataframe(pd.DataFrame(route_table), hide_index=True, use_container_width=True)
 
-                # Drill-down with selectbox
-                st.markdown("---")
-                type_options = [f"{name} ({info['count']})" for name, info in sorted_types if info['count'] > 0]
-                if type_options:
-                    selected_type_option = st.selectbox(
-                        "Explore projects by research type",
-                        ["Select a research type..."] + type_options,
-                        key="type_select"
+            # Drill-down
+            st.markdown("---")
+            route_options = [f"{name} ({info['count']})" for name, info in sorted_routes if info['count'] > 0]
+            if route_options:
+                selected_route_option = st.selectbox(
+                    "Explore projects by exposure route",
+                    ["Select an exposure route..."] + route_options,
+                    key="route_select"
+                )
+                selected_route = selected_route_option.rsplit(" (", 1)[0] if selected_route_option != "Select an exposure route..." else None
+            else:
+                selected_route = None
+
+            if selected_route and selected_route in EXPOSURE_ROUTES:
+                route_pattern = EXPOSURE_ROUTES[selected_route]
+                route_matches = text.str.contains(route_pattern, regex=True, flags=re.IGNORECASE, na=False)
+                route_grants = filtered_stomp[route_matches].copy()
+
+                st.markdown(f"### {selected_route}")
+                st.markdown(f"**{len(route_grants):,} projects** studying this route")
+
+                display_cols = ['PROJECT_TITLE', 'PI_NAMEs', 'ORG_NAME', 'FISCAL_YEAR']
+                display_cols = [c for c in display_cols if c in route_grants.columns]
+                if display_cols:
+                    grants_display = route_grants[display_cols].head(50).copy()
+                    if 'PI_NAMEs' in grants_display.columns:
+                        grants_display['PI_NAMEs'] = grants_display['PI_NAMEs'].apply(clean_pi_names)
+                    col_names = {'PROJECT_TITLE': 'Title', 'PI_NAMEs': 'PI(s)', 'ORG_NAME': 'Organization', 'FISCAL_YEAR': 'FY'}
+                    grants_display.columns = [col_names.get(c, c) for c in display_cols]
+                    st.caption("Select a row to view abstract below")
+                    route_selection = st.dataframe(
+                        grants_display,
+                        hide_index=True,
+                        use_container_width=True,
+                        height=300,
+                        on_select="rerun",
+                        selection_mode="single-row"
                     )
-                    selected_type = selected_type_option.rsplit(" (", 1)[0] if selected_type_option != "Select a research type..." else None
-                else:
-                    selected_type = None
 
-                if selected_type:
-                    type_pattern = None
-                    type_col = None
-                    type_col_map = {
-                        'TYPE_EPIDEMIOLOGY': None,
-                        'TYPE_MECHANISTIC': 'TYPE_MECHANISTIC',
-                        'TYPE_CLINICAL': None,
-                        'TYPE_METHODS': 'TYPE_METHODS',
-                    }
-                    for key, (label, pattern) in RESEARCH_TYPES.items():
-                        if label == selected_type:
-                            type_pattern = pattern
-                            type_col = type_col_map.get(key)
-                            break
+                    if len(route_grants) > 50:
+                        st.caption(f"Showing first 50 of {len(route_grants):,} projects")
 
-                    if type_pattern:
-                        text = filtered_stomp['PROJECT_TITLE'].fillna('') + ' ' + filtered_stomp['ABSTRACT_TEXT'].fillna('')
-                        keyword_matches = text.str.contains(type_pattern, regex=True, flags=re.IGNORECASE, na=False)
-                        # Also check pre-classified column
-                        if type_col and type_col in filtered_stomp.columns:
-                            preclassified = filtered_stomp[type_col] == 1
-                            type_matches = keyword_matches | preclassified
-                        else:
-                            type_matches = keyword_matches
-                        type_grants = filtered_stomp[type_matches].copy()
-
-                        st.markdown(f"### {selected_type}")
-                        st.markdown(f"**{len(type_grants):,} projects** of this type")
-
-                        display_cols = ['PROJECT_TITLE', 'PI_NAMEs', 'ORG_NAME', 'FISCAL_YEAR']
-                        display_cols = [c for c in display_cols if c in type_grants.columns]
-                        if display_cols:
-                            grants_display = type_grants[display_cols].head(50).copy()
-                            if 'PI_NAMEs' in grants_display.columns:
-                                grants_display['PI_NAMEs'] = grants_display['PI_NAMEs'].apply(clean_pi_names)
-                            col_names = {'PROJECT_TITLE': 'Title', 'PI_NAMEs': 'PI(s)', 'ORG_NAME': 'Organization', 'FISCAL_YEAR': 'FY'}
-                            grants_display.columns = [col_names.get(c, c) for c in display_cols]
-                            st.caption("Select a row to view abstract below")
-                            type_selection = st.dataframe(
-                                grants_display,
-                                hide_index=True,
-                                use_container_width=True,
-                                height=300,
-                                on_select="rerun",
-                                selection_mode="single-row"
-                            )
-
-                            if len(type_grants) > 50:
-                                st.caption(f"Showing first 50 of {len(type_grants):,} projects")
-
-                            # Show abstract for selected row
-                            if type_selection and type_selection.selection and type_selection.selection.rows:
-                                selected_idx = type_selection.selection.rows[0]
-                                grant_row = type_grants.iloc[selected_idx]
-                                st.markdown("---")
-                                st.markdown(f"**{grant_row['PROJECT_TITLE']}**")
-                                st.markdown(f"*PI:* {clean_pi_names(grant_row.get('PI_NAMEs', 'Unknown'))} | *Org:* {grant_row.get('ORG_NAME', 'Unknown')} | *FY:* {int(grant_row.get('FISCAL_YEAR', 0))}")
-                                abstract = grant_row.get('ABSTRACT_TEXT', 'No abstract available')
-                                if pd.isna(abstract):
-                                    abstract = 'No abstract available'
-                                st.markdown("**Abstract:**")
-                                st.write(abstract)
+                    if route_selection and route_selection.selection and route_selection.selection.rows:
+                        selected_idx = route_selection.selection.rows[0]
+                        grant_row = route_grants.iloc[selected_idx]
+                        st.markdown("---")
+                        st.markdown(f"**{grant_row['PROJECT_TITLE']}**")
+                        st.markdown(f"*PI:* {clean_pi_names(grant_row.get('PI_NAMEs', 'Unknown'))} | *Org:* {grant_row.get('ORG_NAME', 'Unknown')} | *FY:* {int(grant_row.get('FISCAL_YEAR', 0))}")
+                        abstract = grant_row.get('ABSTRACT_TEXT', 'No abstract available')
+                        if pd.isna(abstract):
+                            abstract = 'No abstract available'
+                        st.markdown("**Abstract:**")
+                        st.write(abstract)
 
         # ---- MECHANISMS ----
         elif stomp_category == "⚙️ Mechanisms":
@@ -2414,167 +2442,4 @@ with tab5:
 
     else:
         st.info("Filter grants to see STOMP-style analysis.")
-
-with tab6:
-    st.subheader("Microplastics Research Landscape")
-    st.markdown("""
-    <div style="background: linear-gradient(135deg, rgba(70,179,169,0.1) 0%, rgba(13,59,60,0.05) 100%);
-                padding: 1rem; border-radius: 8px; border-left: 4px solid #46B3A9; margin-bottom: 1.5rem;">
-        <p style="margin: 0; color: #0D3B3C;">
-            Analysis of <strong>247 microplastic-focused grants</strong> using high-confidence keyword matching.
-            Categories are based on explicit terms in abstracts (e.g., "lung", "zebrafish", "ingestion").
-        </p>
-    </div>
-    """, unsafe_allow_html=True)
-
-    # Filter to microplastics grants
-    mp_grants = df[df['EXP_MICROPLASTICS'] == 1].copy() if 'EXP_MICROPLASTICS' in df.columns else pd.DataFrame()
-
-    if len(mp_grants) > 0:
-        mp_text = mp_grants['PROJECT_TITLE'].fillna('') + ' ' + mp_grants['ABSTRACT_TEXT'].fillna('')
-        n_mp = len(mp_grants)
-
-        # High-confidence classifications
-        MP_TISSUES = {
-            'Blood/Cardiovascular': r'\bblood\b|\bcardiovasc|\bheart\b',
-            'Brain': r'\bbrain\b',
-            'Gut/Intestine': r'\bgut\b|\bintestin',
-            'Placenta': r'\bplacent',
-            'Lung': r'\blung\b|\bpulmonary\b',
-            'Liver': r'\bliver\b|\bhepat',
-            'Reproductive': r'\btestes\b|\bovary\b|\bsperm\b|\buterus\b|\bfertil',
-            'Kidney': r'\bkidney\b|\brenal\b',
-        }
-
-        MP_MODELS = {
-            'Mouse/Rat': r'\bmouse\b|\bmice\b|\brat\b|\brodent\b|\bmurine\b',
-            'Cell culture': r'cell\s+line|cell\s+culture|in\s+vitro|primary\s+cell',
-            'Human cohort': r'cohort|epidemiol|NHANES|population.based|human\s+subject',
-            'Zebrafish': r'\bzebrafish\b|\bdanio\b',
-            'C. elegans': r'c\.\s*elegans|caenorhabditis',
-        }
-
-        MP_ROUTES = {
-            'Ingestion/Oral': r'ingest|oral\s+exposure|dietary|drinking\s+water|food',
-            'Inhalation': r'inhal|airborne|air\s+pollution',
-            'Dermal': r'dermal|skin\s+exposure',
-        }
-
-        MP_MECHANISMS = {
-            'Oxidative stress': r'oxidative|ROS|reactive\s+oxygen|antioxidant',
-            'Inflammation': r'inflamm|cytokine|IL-\d|TNF',
-            'Barrier disruption': r'barrier|permeab|tight\s+junction|BBB',
-            'Microbiome effects': r'microbiome|dysbiosis|microbiota',
-            'Apoptosis/Cell death': r'apoptos|cell\s+death|necrosis',
-            'Endocrine disruption': r'endocrine|hormone|estrogen|thyroid',
-        }
-
-        # Calculate counts
-        def count_matches(patterns_dict):
-            results = {}
-            for name, pattern in patterns_dict.items():
-                count = mp_text.str.contains(pattern, flags=re.IGNORECASE, na=False).sum()
-                results[name] = count
-            return results
-
-        tissue_counts = count_matches(MP_TISSUES)
-        model_counts = count_matches(MP_MODELS)
-        route_counts = count_matches(MP_ROUTES)
-        mech_counts = count_matches(MP_MECHANISMS)
-
-        # Particle size
-        nano_count = mp_text.str.contains(r'nanoplastic|nano-plastic|nano.sized\s+plastic', flags=re.IGNORECASE, na=False).sum()
-        micro_count = mp_text.str.contains(r'microplastic|micro-plastic', flags=re.IGNORECASE, na=False).sum()
-
-        # Display metrics row
-        col1, col2, col3 = st.columns(3)
-        with col1:
-            st.metric("Total MP Grants", f"{n_mp}")
-        with col2:
-            st.metric("Mention Microplastic", f"{micro_count} ({100*micro_count//n_mp}%)")
-        with col3:
-            st.metric("Mention Nanoplastic", f"{nano_count} ({100*nano_count//n_mp}%)")
-
-        st.markdown("---")
-
-        # Charts in 2x2 grid
-        col1, col2 = st.columns(2)
-
-        with col1:
-            st.markdown("#### Tissues Studied")
-            chart = create_horizontal_bar_chart(tissue_counts, value_label="Grants")
-            st.altair_chart(chart, use_container_width=True)
-
-            st.markdown("#### Exposure Routes")
-            chart = create_horizontal_bar_chart(route_counts, value_label="Grants")
-            st.altair_chart(chart, use_container_width=True)
-
-        with col2:
-            st.markdown("#### Model Systems")
-            chart = create_horizontal_bar_chart(model_counts, value_label="Grants")
-            st.altair_chart(chart, use_container_width=True)
-
-            st.markdown("#### Mechanisms (medium confidence)")
-            chart = create_horizontal_bar_chart(mech_counts, value_label="Grants")
-            st.altair_chart(chart, use_container_width=True)
-
-        # Grant browser
-        st.markdown("---")
-        st.markdown("### Browse Microplastic Grants")
-
-        # Filter options
-        filter_col1, filter_col2 = st.columns(2)
-        with filter_col1:
-            tissue_filter = st.selectbox("Filter by tissue:", ["All"] + list(MP_TISSUES.keys()), key='mp_tissue_filter')
-        with filter_col2:
-            model_filter = st.selectbox("Filter by model:", ["All"] + list(MP_MODELS.keys()), key='mp_model_filter')
-
-        # Apply filters
-        mp_filtered = mp_grants.copy()
-        if tissue_filter != "All":
-            pattern = MP_TISSUES[tissue_filter]
-            mask = mp_text.str.contains(pattern, flags=re.IGNORECASE, na=False)
-            mp_filtered = mp_grants[mask.values]
-        if model_filter != "All":
-            pattern = MP_MODELS[model_filter]
-            mp_text_filtered = mp_filtered['PROJECT_TITLE'].fillna('') + ' ' + mp_filtered['ABSTRACT_TEXT'].fillna('')
-            mask = mp_text_filtered.str.contains(pattern, flags=re.IGNORECASE, na=False)
-            mp_filtered = mp_filtered[mask.values]
-
-        st.markdown(f"**{len(mp_filtered)} grants** match filters")
-
-        display_cols = ['PROJECT_TITLE', 'PI_NAMEs', 'ORG_NAME', 'FISCAL_YEAR']
-        display_cols = [c for c in display_cols if c in mp_filtered.columns]
-        if display_cols and len(mp_filtered) > 0:
-            mp_display = mp_filtered[display_cols].head(50).copy()
-            if 'PI_NAMEs' in mp_display.columns:
-                mp_display['PI_NAMEs'] = mp_display['PI_NAMEs'].apply(clean_pi_names)
-            col_names = {'PROJECT_TITLE': 'Title', 'PI_NAMEs': 'PI(s)', 'ORG_NAME': 'Organization', 'FISCAL_YEAR': 'FY'}
-            mp_display.columns = [col_names.get(c, c) for c in display_cols]
-            st.caption("Select a row to view abstract below")
-            mp_selection = st.dataframe(
-                mp_display,
-                hide_index=True,
-                use_container_width=True,
-                on_select="rerun",
-                selection_mode="single-row"
-            )
-
-            if len(mp_filtered) > 50:
-                st.caption(f"Showing first 50 of {len(mp_filtered):,} grants")
-
-            # Show abstract for selected row
-            if mp_selection and mp_selection.selection and mp_selection.selection.rows:
-                selected_idx = mp_selection.selection.rows[0]
-                row = mp_filtered.iloc[selected_idx]
-                st.markdown("---")
-                st.markdown(f"**{row['PROJECT_TITLE']}**")
-                st.markdown(f"*PI:* {clean_pi_names(row.get('PI_NAMEs', 'Unknown'))} | *Org:* {row.get('ORG_NAME', 'Unknown')}")
-                abstract = row.get('ABSTRACT_TEXT', 'No abstract available')
-                if pd.isna(abstract):
-                    abstract = 'No abstract available'
-                st.markdown("**Abstract:**")
-                st.write(abstract)
-    else:
-        st.info("No microplastic grants found. Make sure EXP_MICROPLASTICS column exists in the data.")
 
