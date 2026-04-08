@@ -83,11 +83,27 @@ def search_grants_for_chat(df: pd.DataFrame, query: str, max_results: int = 20) 
             df['PI_NAMEs'].fillna('') + ' ' +
             df['ORG_NAME'].fillna('')).str.lower()
 
+    # Map keywords to stem/prefix for partial matching
+    keyword_stems = {
+        'reproduction': 'reproduct',
+        'reproductive': 'reproduct',
+        'microplastics': 'microplastic',
+        'microplastic': 'microplastic',
+        'nanoplastics': 'nanoplastic',
+        'nanoplastic': 'nanoplastic',
+        'inflammation': 'inflammat',
+        'inflammatory': 'inflammat',
+        'oxidative': 'oxidat',
+        'fertility': 'fertil',
+        'pregnant': 'pregnan',
+        'pregnancy': 'pregnan',
+    }
+
     # Expand keywords with related terms
     keyword_expansions = {
-        'reproduction': ['reproduct', 'fertility', 'pregnant', 'prenatal', 'fetal', 'embryo', 'ovary', 'ovarian', 'sperm', 'testis', 'testicular', 'uterus', 'uterine', 'placenta'],
+        'reproduct': ['fertility', 'fertil', 'pregnant', 'pregnan', 'prenatal', 'fetal', 'embryo', 'ovary', 'ovarian', 'sperm', 'testis', 'testicular', 'uterus', 'uterine', 'placenta', 'gestation'],
         'gut': ['intestin', 'gastrointest', 'digestive', 'microbiome', 'colon', 'bowel'],
-        'brain': ['neural', 'neuron', 'cognitive', 'neurolog', 'cerebr'],
+        'brain': ['neural', 'neuron', 'cognitive', 'neurolog', 'cerebr', 'neurodev'],
         'heart': ['cardiac', 'cardiovascular', 'cardio'],
         'lung': ['pulmonary', 'respiratory', 'airway'],
         'liver': ['hepat', 'hepatic'],
@@ -99,12 +115,15 @@ def search_grants_for_chat(df: pd.DataFrame, query: str, max_results: int = 20) 
     df['_match_score'] = 0
 
     for keyword in keywords:
-        # Check main keyword
-        matches = text.str.contains(keyword, regex=False).astype(int)
+        # Use stem if available
+        search_term = keyword_stems.get(keyword, keyword)
+
+        # Check main keyword/stem
+        matches = text.str.contains(search_term, regex=False).astype(int)
 
         # Also check expanded terms if available
         for base, expansions in keyword_expansions.items():
-            if keyword.startswith(base) or base.startswith(keyword):
+            if search_term.startswith(base) or base.startswith(search_term):
                 for exp in expansions:
                     matches = matches | text.str.contains(exp, regex=False).astype(int)
                 break
