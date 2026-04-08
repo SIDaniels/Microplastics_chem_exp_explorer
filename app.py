@@ -122,7 +122,7 @@ Here are the most relevant grants/abstracts from the database:
 Based on this data, please answer the user's question. If the relevant information isn't in the provided grants, let them know."""
 
         response = client.chat.completions.create(
-            model="gpt-4o-mini",
+            model="gpt-4o",
             messages=[
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": user_prompt}
