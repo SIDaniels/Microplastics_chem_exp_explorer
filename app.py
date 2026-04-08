@@ -934,7 +934,6 @@ def classify_stomp_categories(df: pd.DataFrame, deduplicate: bool = True) -> dic
         'ORGAN_LUNG': 'ORGAN_RESPIRATORY',
         'ORGAN_REPRODUCTIVE': 'ORGAN_REPRODUCTIVE',
         'ORGAN_IMMUNE': 'ORGAN_IMMUNE',
-        'ORGAN_SKIN': 'ORGAN_SKIN',
     }
 
     # Organ systems - use pre-classified columns OR keyword matching
@@ -2115,7 +2114,6 @@ with tab5:
                     'ORGAN_LUNG': 'ORGAN_RESPIRATORY',
                     'ORGAN_REPRODUCTIVE': 'ORGAN_REPRODUCTIVE',
                     'ORGAN_IMMUNE': 'ORGAN_IMMUNE',
-                    'ORGAN_SKIN': 'ORGAN_SKIN',
                 }
                 for key, (label, pattern) in ORGAN_SYSTEMS.items():
                     if label == selected_organ:
