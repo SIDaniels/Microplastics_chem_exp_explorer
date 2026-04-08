@@ -570,6 +570,22 @@ st.markdown("""
     /* Hide any fixed position badges */
     div[style*="position: fixed"][style*="bottom"] a {display: none !important;}
     div[style*="position: fixed"][style*="right"] {display: none !important;}
+
+    /* Wrap text in dataframe tables so titles are fully visible */
+    [data-testid="stDataFrame"] td {
+        white-space: normal !important;
+        word-wrap: break-word !important;
+        max-width: 400px;
+    }
+    [data-testid="stDataFrame"] th {
+        white-space: normal !important;
+        word-wrap: break-word !important;
+    }
+    .stDataFrame td div {
+        white-space: normal !important;
+        word-wrap: break-word !important;
+        overflow-wrap: break-word !important;
+    }
 </style>
 """, unsafe_allow_html=True)
 
