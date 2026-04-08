@@ -1465,18 +1465,15 @@ group_by_project = st.sidebar.checkbox(
     help="Count unique projects instead of individual fiscal year records"
 )
 
-# Count NIH grants and conference abstracts
+# Count NIH grants and conference abstracts (used elsewhere)
 nih_count = (~df['CORE_PROJECT_NUM'].astype(str).str.startswith('CONF_')).sum()
 conf_count = (df['CORE_PROJECT_NUM'].astype(str).str.startswith('CONF_')).sum()
 
-# Show counts based on grouping preference
+# Calculate filtered_display for use elsewhere
 if group_by_project:
     filtered_display = filtered.drop_duplicates(subset=['PROJECT_TITLE'], keep='first')
-    st.sidebar.metric("Unique Projects", f"{len(filtered_display):,}")
 else:
-    st.sidebar.metric("Total Records", f"{len(filtered):,}")
-
-st.sidebar.caption(f"NIH: {nih_count:,} | Conf: {conf_count:,}")
+    filtered_display = filtered
 
 # Compute co-occurrence stats (full dataset for suggestions)
 cooccur = compute_cooccurrence(df)
@@ -1545,7 +1542,7 @@ with tab1:
             display_cols = ['Source', 'Years', 'PROJECT_TITLE', 'ORG_NAME', 'PI_NAMEs']
             unique_projects = len(grouped)
             total_records = len(filtered_sorted)
-            st.subheader(f"Unique Projects: {unique_projects:,} ({total_records:,} total records)")
+            st.subheader(f"Unique Projects: {unique_projects:,}")
         else:
             display_df = filtered_sorted
             display_cols = ['Source', 'FISCAL_YEAR', 'PROJECT_TITLE', 'ORG_NAME', 'PI_NAMEs']
