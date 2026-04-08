@@ -546,17 +546,30 @@ st.markdown("""
         opacity: 0.7;
     }
 
-    /* Hide Streamlit branding */
-    footer {visibility: hidden !important;}
-    #MainMenu {visibility: hidden !important;}
-    header {visibility: hidden !important;}
+    /* Hide Streamlit branding - comprehensive selectors for Cloud deployment */
+    footer {visibility: hidden !important; height: 0 !important; position: fixed !important;}
+    #MainMenu {visibility: hidden !important; height: 0 !important;}
+    header {visibility: hidden !important; height: 0 !important;}
     .stDeployButton {display: none !important;}
-    [data-testid="stDecoration"] {display: none !important;}
+    [data-testid="stDecoration"] {visibility: hidden !important; height: 0 !important; position: fixed !important;}
+    [data-testid="stToolbar"] {visibility: hidden !important; height: 0 !important; position: fixed !important;}
+    [data-testid="stStatusWidget"] {visibility: hidden !important; height: 0 !important; position: fixed !important;}
+    .stApp > footer {display: none !important;}
+
+    /* Hide "Made with Streamlit" badge variants */
     .viewerBadge_container__r5tak {display: none !important;}
     .viewerBadge_link__qRIco {display: none !important;}
-    [data-testid="stToolbar"] {display: none !important;}
-    .stApp > footer {display: none !important;}
-    div[data-testid="stStatusWidget"] {display: none !important;}
+    [class*="viewerBadge"] {display: none !important;}
+    [class*="stBadge"] {display: none !important;}
+    a[href*="streamlit.io"] {display: none !important;}
+
+    /* Hide bottom right corner elements */
+    .stApp > div:last-child > div:last-child a[href*="streamlit"] {display: none !important;}
+    div[data-testid="stAppViewContainer"] ~ div a {display: none !important;}
+
+    /* Hide any fixed position badges */
+    div[style*="position: fixed"][style*="bottom"] a {display: none !important;}
+    div[style*="position: fixed"][style*="right"] {display: none !important;}
 </style>
 """, unsafe_allow_html=True)
 
