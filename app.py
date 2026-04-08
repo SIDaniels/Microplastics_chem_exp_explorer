@@ -2320,7 +2320,7 @@ with tab_model:
         # Summary stat below the graphs
         not_categorized = n_grants - any_model
         not_categorized_pct = round(100 * not_categorized / n_grants, 1) if n_grants > 0 else 0
-        st.info(f"**{any_model:,}** projects ({any_model_pct}%) have at least one model system identified (remaining {not_categorized_pct}% are environmental monitoring, methods development, or epidemiological studies)")
+        st.info(f"**{any_model:,}** projects ({any_model_pct}%) have at least one model system identified (remaining {not_categorized_pct}% are environmental monitoring or methods development)")
 
         # Drill-down
         st.markdown("---")
