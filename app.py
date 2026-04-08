@@ -11,7 +11,7 @@ import pandas as pd
 import altair as alt
 import re
 from pathlib import Path
-from openai import OpenAI
+import anthropic
 from datetime import datetime, timedelta
 
 # Engineered Resilience color palette
@@ -113,14 +113,14 @@ def format_grants_for_context(grants_df: pd.DataFrame) -> str:
     return f"Found {len(grants_df)} relevant grants:\n\n" + "\n\n---\n\n".join(context_parts)
 
 def get_chat_response(query: str, df: pd.DataFrame) -> str:
-    """Get AI response for a chat query."""
+    """Get AI response for a chat query using Claude."""
     try:
         # Check for API key
-        api_key = st.secrets.get("OPENAI_API_KEY", None)
+        api_key = st.secrets.get("ANTHROPIC_API_KEY", None)
         if not api_key:
-            return "⚠️ Chat is not configured. Please add OPENAI_API_KEY to Streamlit secrets."
+            return "⚠️ Chat is not configured. Please add ANTHROPIC_API_KEY to Streamlit secrets."
 
-        client = OpenAI(api_key=api_key)
+        client = anthropic.Anthropic(api_key=api_key)
 
         # Search for relevant grants
         relevant_grants = search_grants_for_chat(df, query)
@@ -145,17 +145,16 @@ DATABASE RESULTS:
 
 Based on these grants from our database, answer the user's question. Cite specific PIs, institutions, and grant titles."""
 
-        response = client.chat.completions.create(
-            model="gpt-4o",
-            messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": user_prompt}
-            ],
+        response = client.messages.create(
+            model="claude-3-5-haiku-latest",
             max_tokens=500,
-            temperature=0.7
+            system=system_prompt,
+            messages=[
+                {"role": "user", "content": user_prompt}
+            ]
         )
 
-        return response.choices[0].message.content
+        return response.content[0].text
 
     except Exception as e:
         return f"⚠️ Error: {str(e)}"
