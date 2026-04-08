@@ -266,7 +266,7 @@ st.markdown("""
         display: none;
     }
 
-    /* DataFrames - white/light background */
+    /* DataFrames - white/light background with dark text */
     .stDataFrame {
         border-radius: 8px;
         overflow: hidden;
@@ -289,6 +289,7 @@ st.markdown("""
 
     .stDataFrame td {
         background-color: white !important;
+        color: #0D3B3C !important;
     }
 
     /* Glide Data Grid (Streamlit's dataframe component) */
@@ -298,6 +299,16 @@ st.markdown("""
 
     .dvn-scroller {
         background-color: white !important;
+    }
+
+    /* Ensure all text in dataframes is dark */
+    [data-testid="stDataFrame"] * {
+        color: #0D3B3C !important;
+    }
+
+    /* Fix header text specifically */
+    [data-testid="stDataFrame"] [data-testid="glideDataEditor"] * {
+        color: #0D3B3C !important;
     }
 
     /* Multiselect tags */
