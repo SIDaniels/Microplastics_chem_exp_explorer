@@ -328,7 +328,7 @@ def clean_pi_names(pi_str):
 
 # Page config
 st.set_page_config(
-    page_title="Chemical Exposure Grant Explorer | Engineered Resilience",
+    page_title="Microplastic Research Trendspotter | Engineered Resilience",
     page_icon="🔬",
     layout="wide"
 )
