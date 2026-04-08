@@ -566,10 +566,29 @@ st.markdown("""
     .stDeployButton {display: none !important;}
     [data-testid="stDecoration"] {visibility: hidden !important; height: 0 !important; position: fixed !important;}
 
-    /* Hide the running/loading progress bar */
+    /* Hide the running/loading progress bar - comprehensive selectors */
     .stApp > div[data-testid="stDecoration"] {display: none !important;}
     .stSpinner {display: none !important;}
     div[data-testid="stAppViewBlockContainer"] > div:first-child > div[style*="position: fixed"] {display: none !important;}
+
+    /* Target the green running indicator bar at top of page */
+    .stApp header {display: none !important;}
+    .stApp > header {display: none !important;}
+    div[data-testid="stHeader"] {display: none !important;}
+    .stAppHeader {display: none !important;}
+
+    /* Hide running/rerunning status indicators */
+    .stRunning, .stRerun {display: none !important;}
+    [data-testid="stNotification"] {display: none !important;}
+
+    /* Hide the colored line at top (both green running and red error) */
+    .stApp > div:first-child > div:first-child {
+        background: transparent !important;
+        height: 0 !important;
+    }
+    .stApp [style*="background-color: rgb(0, 128, 0)"] {display: none !important;}
+    .stApp [style*="background-color: rgb(46, 134, 193)"] {display: none !important;}
+    .stApp [style*="background: linear-gradient"] {display: none !important;}
     [data-testid="stToolbar"] {visibility: hidden !important; height: 0 !important; position: fixed !important;}
     [data-testid="stStatusWidget"] {visibility: hidden !important; height: 0 !important; position: fixed !important;}
     .stApp > footer {display: none !important;}
