@@ -1729,11 +1729,11 @@ with tab1:
         font-weight: normal;
     }
     </style>
-    <div class="regex-label">Search grants (regex supported)<span class="help-icon" data-tooltip="'gut|intestin' (OR), 'inflam.*' (wildcard), 'NF.?kB' (optional char)">?</span></div>
+    <div class="regex-label">Search by keyword for titles and abstracts (regex supported)<span class="help-icon" data-tooltip="'gut|intestin' (OR), 'inflam.*' (wildcard), 'NF.?kB' (optional char)">?</span></div>
     """, unsafe_allow_html=True)
     search_query = st.text_input(
-        "Search grants (regex supported):",
-        placeholder="Search titles and abstracts (e.g., 'nano.*plastic')",
+        "Search by keyword for titles and abstracts (regex supported):",
+        placeholder="e.g., -omic.*, gut|intestin, inflam.*",
         key="grant_search",
         label_visibility="collapsed"
     )
@@ -1881,11 +1881,11 @@ with tab4:
 
     st.markdown("""
     <div style="background-color: #f0f7f7; border-left: 4px solid #0D3B3C; padding: 12px 16px; margin-bottom: 16px; border-radius: 0 8px 8px 0;">
-Understanding microplastics toxicity doesn't require starting from scratch. By identifying research in adjacent fields that studies the same biological mechanisms, you can discover established methods, model systems, and expert collaborators whose work directly informs microplastics research.
+Microplastics research is in its infancy but can be accelerated by work in adjacent fields. Build new collaborations by identifying researchers funded to study other pollutants using similar mechanisms, techniques, or model systems.
         <br><br>
-        <strong>Step 1:</strong> Choose a studied microplastics research category (e.g., detection, microbiome) to view the overall summary of what's currently studied in this microplastics subfield.
+        <strong>Step 1:</strong> Choose a microplastics research category (e.g., detection methods, microbiome effects) to view a summary of what's currently studied in this subfield.
         <br>
-        <strong>Step 2:</strong> Query and export the resulting list of researchers who have been recently funded to work on the same mechanism but in the context of other pollutants.
+        <strong>Step 2:</strong> Browse and export researchers who have been recently funded to study the same mechanism in the context of other pollutants.
     </div>
     """, unsafe_allow_html=True)
 
@@ -2122,9 +2122,9 @@ Understanding microplastics toxicity doesn't require starting from scratch. By i
         with col2:
             # Keyword search field
             keyword_search = st.text_input(
-                "Search by keyword (regex supported):",
-                placeholder="e.g., gut|intestin, inflam.*, NF.?kB",
-                help="Supports regex patterns: 'gut|intestin' (OR), 'inflam.*' (wildcard), 'NF.?kB' (optional char). Plain text also works.",
+                "Search by keyword for titles and abstracts (regex supported):",
+                placeholder="e.g., -omic.*, gut|intestin, inflam.*",
+                help="Supports regex patterns: 'gut|intestin' (OR), 'inflam.*' (wildcard), '-omic.*' (omics terms). Plain text also works.",
                 key='crossfield_keyword'
             )
 
@@ -2212,7 +2212,7 @@ Understanding microplastics toxicity doesn't require starting from scratch. By i
                             full_display_df['PI_NAMEs'] = full_display_df['PI_NAMEs'].apply(clean_pi_names)
                         col_rename = {
                             'PI_NAMEs': 'Expert / Contact Researcher',
-                            'Chemical(s)': 'Chemical Field',
+                            'Chemical(s)': 'Pollutants',
                             'PROJECT_TITLE': 'Project Title',
                             'model_system': 'Model',
                             'ORG_NAME': 'Institution'
@@ -2232,7 +2232,7 @@ Understanding microplastics toxicity doesn't require starting from scratch. By i
                             selection_mode="single-row",
                             column_config={
                                 "Project Title": st.column_config.TextColumn("Project Title", width="large"),
-                                "Chemical Field": st.column_config.TextColumn("Chemical Field", width="medium"),
+                                "Pollutants": st.column_config.TextColumn("Pollutants", width="medium"),
                                 "Expert / Contact Researcher": st.column_config.TextColumn("Expert / Contact Researcher", width="medium"),
                             }
                         )
@@ -2241,7 +2241,7 @@ Understanding microplastics toxicity doesn't require starting from scratch. By i
                         export_cols = ['PI_NAMEs', 'ORG_NAME', 'PROJECT_TITLE', 'Chemical(s)', 'model_system', 'ABSTRACT_TEXT', 'similarity_score']
                         export_cols = [c for c in export_cols if c in inspiring.columns]
                         export_df = inspiring[export_cols].copy()
-                        export_df.columns = ['PI', 'Institution', 'Project Title', 'Chemical Field', 'Model Organism', 'Abstract', 'Relevance Score'][:len(export_cols)]
+                        export_df.columns = ['PI', 'Institution', 'Project Title', 'Pollutants', 'Model Organism', 'Abstract', 'Relevance Score'][:len(export_cols)]
                         csv_data = export_df.to_csv(index=False)
                         cat_slug = mech_label.lower().replace(' ', '_').replace('/', '_')[:20]
                         st.download_button(
