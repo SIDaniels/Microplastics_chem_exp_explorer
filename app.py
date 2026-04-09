@@ -523,10 +523,15 @@ st.markdown("""
         display: none !important;
     }
 
-    /* Reduce spacing around info boxes */
+    /* Reduce spacing around info boxes and make lighter blue */
     .stAlert {
         margin-top: 0.5rem !important;
         margin-bottom: 0.5rem !important;
+    }
+
+    /* Lighter blue background for info boxes */
+    .stAlert [data-baseweb="notification"] {
+        background-color: #f0f7fa !important;
     }
 
     /* Tabs - styled as obvious clickable buttons spanning full width */
@@ -2341,12 +2346,7 @@ with tab_organ:
             # Sort by count
             sorted_organs = sorted(organ_data.items(), key=lambda x: x[1]['count'], reverse=True)
 
-            # Title and compact stat side by side
-            title_col, info_col = st.columns([1, 1])
-            with title_col:
-                st.markdown("#### Which body systems are being studied?")
-            with info_col:
-                st.markdown(f"<div style='background:#e8f4f8; border-left:3px solid #1f77b4; padding:8px 12px; border-radius:4px; font-size:0.9rem; margin-top:0.5rem;'><strong>{any_organ:,}</strong> projects ({any_organ_pct}%) have organ systems identified</div>", unsafe_allow_html=True)
+            st.markdown("#### Which body systems are being studied?")
 
             col1, col2 = st.columns([2, 1])
             with col1:
@@ -2358,6 +2358,9 @@ with tab_organ:
                 organ_table = [{'Organ System': k, 'Projects': v['count'], '%': f"{v['pct']}%"}
                               for k, v in sorted_organs[:8]]
                 st.dataframe(pd.DataFrame(organ_table), hide_index=True, use_container_width=True)
+
+            st.info(f"{any_organ:,} projects ({any_organ_pct}%) have at least one organ system identified (remaining {not_categorized_pct}% are general toxicity, environmental monitoring, or methods development studies)")
+            st.markdown("---")
 
             # Drill-down with selectbox
             organ_options = [f"{name} ({info['count']})" for name, info in sorted_organs if info['count'] > 0]
@@ -2475,12 +2478,7 @@ with tab_model:
         any_model = any_model_mask.sum()
         any_model_pct = round(100 * any_model / n_grants, 1) if n_grants > 0 else 0
 
-        # Title and compact stat side by side
-        title_col, info_col = st.columns([1, 1])
-        with title_col:
-            st.markdown("#### What model organisms are being used?")
-        with info_col:
-            st.markdown(f"<div style='background:#e8f4f8; border-left:3px solid #1f77b4; padding:8px 12px; border-radius:4px; font-size:0.9rem; margin-top:0.5rem;'><strong>{any_model:,}</strong> projects ({any_model_pct}%) have model organisms identified</div>", unsafe_allow_html=True)
+        st.markdown("#### What model organisms are being used?")
 
         # Model systems - use pre-classified columns from CSV
         MODEL_COL_MAP = {
@@ -2515,6 +2513,9 @@ with tab_model:
             model_table = [{'Model Organism': k, 'Projects': v['count'], '%': f"{v['pct']}%"}
                           for k, v in sorted_models]
             st.dataframe(pd.DataFrame(model_table), hide_index=True, use_container_width=True)
+
+        st.info(f"{any_model:,} projects ({any_model_pct}%) have at least one model organism identified (many projects use multiple model systems)")
+        st.markdown("---")
 
         # Drill-down
         model_options = [f"{name} ({info['count']})" for name, info in sorted_models if info['count'] > 0]
@@ -2612,12 +2613,7 @@ with tab_model:
             any_mech = any_mech_mask.sum()
             any_pct = round(100 * any_mech / n_grants, 1) if n_grants > 0 else 0
 
-            # Title and compact stat side by side
-            title_col, info_col = st.columns([1, 1])
-            with title_col:
-                st.markdown("#### What biological mechanisms are being studied?")
-            with info_col:
-                st.markdown(f"<div style='background:#e8f4f8; border-left:3px solid #1f77b4; padding:8px 12px; border-radius:4px; font-size:0.9rem; margin-top:0.5rem;'><strong>{any_mech:,}</strong> projects ({any_pct}%) have mechanisms identified</div>", unsafe_allow_html=True)
+            st.markdown("#### What biological mechanisms are being studied?")
 
             sorted_mechs = sorted(mech_data.items(), key=lambda x: x[1]['count'], reverse=True)
 
@@ -2631,6 +2627,9 @@ with tab_model:
                 mech_table = [{'Mechanism': k, 'Projects': v['count'], '%': f"{v['pct']}%"}
                               for k, v in sorted_mechs[:10]]
                 st.dataframe(pd.DataFrame(mech_table), hide_index=True, use_container_width=True)
+
+            st.info(f"{any_mech:,} projects ({any_pct}%) have at least one mechanism identified (many projects study multiple mechanisms)")
+            st.markdown("---")
 
             # Drill-down with selectbox
             mech_options = [f"{name} ({info['count']})" for name, info in sorted_mechs if info['count'] > 0]
