@@ -716,7 +716,7 @@ EXPOSURES = {
 # LLM classifications done via Claude Sonnet in April 2026
 MECHANISMS = {
     'LLM_MECH_INFLAMMATION': 'Inflammation',
-    'LLM_MECH_BARRIER': 'Barrier Disruption (BBB, Gut)',
+    'LLM_MECH_BARRIER': 'Barrier Disruption (e.g. blood-brain)',
     'LLM_MECH_OXIDATIVE': 'Oxidative Stress',
     'LLM_MECH_NEURODEGENERATION': 'Neurodegeneration',
     'LLM_MECH_METABOLIC': 'Metabolic / Cardiovascular',
@@ -731,31 +731,31 @@ MECHANISMS = {
 # Pre-written summaries for each research category (for Cross-Field Insights expander)
 # Updated to use LLM classification keys (April 2026) - based on actual grant content
 CATEGORY_SUMMARIES = {
-    'LLM_MECH_INFLAMMATION': """**Cardiovascular & GI Inflammation** (25 grants): Research spans cardiovascular inflammatory responses to environmental pollutants, gastrointestinal inflammation from microplastic ingestion, and systemic inflammatory effects. Key themes include biodistribution-triggered inflammation, plastic food container leaching effects, and PET-based tracking of inflammatory responses. Studies use comparative models (Xenopus, organoids, rodents) to assess tissue-specific inflammatory pathways.""",
+    'LLM_MECH_INFLAMMATION': """<strong>Cardiovascular & GI Inflammation</strong> (25 grants): Research spans cardiovascular inflammatory responses to environmental pollutants, gastrointestinal inflammation from microplastic ingestion, and systemic inflammatory effects. Key themes include biodistribution-triggered inflammation, plastic food container leaching effects, and PET-based tracking of inflammatory responses. Studies use comparative models (Xenopus, organoids, rodents) to assess tissue-specific inflammatory pathways.""",
 
-    'LLM_MECH_OXIDATIVE': """**ROS Generation & Mitochondrial Stress** (19 grants): Research examines oxidative damage from environmentally relevant nanoplastics, mitochondrial dysfunction in liver and neural tissues, and ROS-mediated colorectal tumor progression. Key projects investigate weathered/photoaged plastics, hepatic oxidative stress using cell models, and airborne microplastic-induced oxidative pathways. Studies link alpha-synuclein membrane disruption to oxidative mechanisms.""",
+    'LLM_MECH_OXIDATIVE': """<strong>ROS Generation & Mitochondrial Stress</strong> (19 grants): Research examines oxidative damage from environmentally relevant nanoplastics, mitochondrial dysfunction in liver and neural tissues, and ROS-mediated colorectal tumor progression. Key projects investigate weathered/photoaged plastics, hepatic oxidative stress using cell models, and airborne microplastic-induced oxidative pathways. Studies link alpha-synuclein membrane disruption to oxidative mechanisms.""",
 
-    'LLM_MECH_NEURODEGENERATION': """**Brain Aging, Alzheimer's & Parkinson's** (19 grants): Research focuses on nasal-to-brain uptake pathways, alpha-synuclein membrane disruption (Parkinson's), amyloid-β aggregation (Alzheimer's), and PINK1/Parkin-mediated mitophagy. Key projects track nanoplastic lifecycle in brain tissue, kinesin-mediated axonal transport, and neurotoxicity modeling. Studies span whole-body to cellular scales using murine and human neural models.""",
+    'LLM_MECH_NEURODEGENERATION': """<strong>Brain Aging, Alzheimer's & Parkinson's</strong> (19 grants): Research focuses on nasal-to-brain uptake pathways, alpha-synuclein membrane disruption (Parkinson's), amyloid-β aggregation (Alzheimer's), and PINK1/Parkin-mediated mitophagy. Key projects track nanoplastic lifecycle in brain tissue, kinesin-mediated axonal transport, and neurotoxicity modeling. Studies span whole-body to cellular scales using murine and human neural models.""",
 
-    'LLM_MECH_METABOLIC': """**Atherosclerosis & Vascular Dysfunction** (19 grants): Research examines atherosclerotic lesion development in ApoE-deficient mice, sex-specific cardiovascular effects, and ocean microplastic-accelerated atherosclerosis. Key themes include PXR-mediated cardiovascular disease, uteroplacental vascular effects, and metabolic reprogramming in gut microbiota. Studies link dietary plastic exposure to dyslipidemia and arterial remodeling.""",
+    'LLM_MECH_METABOLIC': """<strong>Atherosclerosis & Vascular Dysfunction</strong> (19 grants): Research examines atherosclerotic lesion development in ApoE-deficient mice, sex-specific cardiovascular effects, and ocean microplastic-accelerated atherosclerosis. Key themes include PXR-mediated cardiovascular disease, uteroplacental vascular effects, and metabolic reprogramming in gut microbiota. Studies link dietary plastic exposure to dyslipidemia and arterial remodeling.""",
 
-    'LLM_MECH_ENDOCRINE': """**Hormone Disruption & Skeletal Effects** (4 grants): Research examines PXR-mediated endocrine disruption, differential impacts of polystyrene vs PET nanoplastics on hormone systems, and DDT-nanoplastic co-exposure effects. Emerging theme: chronic dietary microplastic exposure weakening skeletal integrity through hormonal pathways.""",
+    'LLM_MECH_ENDOCRINE': """<strong>Hormone Disruption & Skeletal Effects</strong> (4 grants): Research examines PXR-mediated endocrine disruption, differential impacts of polystyrene vs PET nanoplastics on hormone systems, and DDT-nanoplastic co-exposure effects. Emerging theme: chronic dietary microplastic exposure weakening skeletal integrity through hormonal pathways.""",
 
-    'LLM_MECH_MICROBIOME': """**Gut-Brain Axis & Dysbiosis** (9 grants): Research investigates microplastic-induced colorectal cancer triggers via pks+ E. coli interactions, gut-brain axis effects on cognition, and metabolic reprogramming in gut bacteria. Key projects use synthetic microbiome models, intestinal organoids, and examine microbiome ratio changes from nanoplastic exposure.""",
+    'LLM_MECH_MICROBIOME': """<strong>Gut-Brain Axis & Dysbiosis</strong> (9 grants): Research investigates microplastic-induced colorectal cancer triggers via pks+ E. coli interactions, gut-brain axis effects on cognition, and metabolic reprogramming in gut bacteria. Key projects use synthetic microbiome models, intestinal organoids, and examine microbiome ratio changes from nanoplastic exposure.""",
 
-    'LLM_MECH_IMMUNE': """**Macrophage Activation & Immunotoxicity** (8 grants): Research examines cumulative environmental exposures on immune function, macrophage-mediated pro-inflammatory responses, and developmental immunotoxicity (Xenopus models). Key themes include airborne microplastic immunotoxicology, mucosal barrier immune effects, and biodistribution-triggered immune responses.""",
+    'LLM_MECH_IMMUNE': """<strong>Macrophage Activation & Immunotoxicity</strong> (8 grants): Research examines cumulative environmental exposures on immune function, macrophage-mediated pro-inflammatory responses, and developmental immunotoxicity (Xenopus models). Key themes include airborne microplastic immunotoxicology, mucosal barrier immune effects, and biodistribution-triggered immune responses.""",
 
-    'LLM_MECH_DNA_DAMAGE': """**Colorectal Cancer & Genotoxicity** (5 grants): Research focuses on microplastic interactions with genotoxic gut bacteria (pks+ E. coli) in early-onset colorectal cancer, genomic integrity effects from ingested nanoplastic mixtures, and airborne microplastic genotoxicity. Studies use whole-animal models to assess carcinogenic potential.""",
+    'LLM_MECH_DNA_DAMAGE': """<strong>Colorectal Cancer & Genotoxicity</strong> (5 grants): Research focuses on microplastic interactions with genotoxic gut bacteria (pks+ E. coli) in early-onset colorectal cancer, genomic integrity effects from ingested nanoplastic mixtures, and airborne microplastic genotoxicity. Studies use whole-animal models to assess carcinogenic potential.""",
 
-    'LLM_MECH_RECEPTOR': """**PXR, Ion Channels & Signaling** (7 grants): Research examines PXR-mediated cardiovascular effects, mechanosensitive endothelial ion channel impairment from photoaged microplastics, and intracellular signaling dynamics. Key themes include calcium flux disruption, Notch signaling effects, and colorectal tumor receptor mechanisms.""",
+    'LLM_MECH_RECEPTOR': """<strong>PXR, Ion Channels & Signaling</strong> (7 grants): Research examines PXR-mediated cardiovascular effects, mechanosensitive endothelial ion channel impairment from photoaged microplastics, and intracellular signaling dynamics. Key themes include calcium flux disruption, Notch signaling effects, and colorectal tumor receptor mechanisms.""",
 
-    'LLM_MECH_CELL_DEATH': """**Cytotoxicity & Amyloid Aggregation** (15 grants): Research examines alpha-synuclein membrane disruption, nanoplastic effects on amyloid-β aggregation, and dose-dependent cytotoxicity across placental and immune cell types. Key themes include liver hepatocyte toxicity, coffee cup leachate toxicity, and airborne microplastic-induced cell death.""",
+    'LLM_MECH_CELL_DEATH': """<strong>Cytotoxicity & Amyloid Aggregation</strong> (15 grants): Research examines alpha-synuclein membrane disruption, nanoplastic effects on amyloid-β aggregation, and dose-dependent cytotoxicity across placental and immune cell types. Key themes include liver hepatocyte toxicity, coffee cup leachate toxicity, and airborne microplastic-induced cell death.""",
 
-    'LLM_MECH_BARRIER': """**Gut Permeability & BBB Penetration** (26 grants): Research investigates intestinal barrier compromise and colorectal cancer progression, BBB penetration via nasal uptake, and uteroplacental barrier effects. Key themes include tampon nanoplastic effects on gynecological barriers, tight junction disruption, and particle translocation/biodistribution.""",
+    'LLM_MECH_BARRIER': """<strong>Gut Permeability & BBB Penetration</strong> (26 grants): Research investigates intestinal barrier compromise and colorectal cancer progression, BBB penetration via nasal uptake, and uteroplacental barrier effects. Key themes include tampon nanoplastic effects on gynecological barriers, tight junction disruption, and particle translocation/biodistribution.""",
 
-    'TYPE_METHODS': """**Spectroscopy & ML Detection** (variable): Research develops Raman spectroscopy, Py-GC/MS, and FTIR techniques for biological samples. Key projects include machine learning quantification pipelines, blank-corrected methods for reproductive tissues, and nanoparticle tracking analysis. Studies address detection limits in CSF, lung lavage, brain tissue, and atmospheric samples.""",
+    'TYPE_METHODS': """<strong>Spectroscopy & ML Detection</strong> (variable): Research develops Raman spectroscopy, Py-GC/MS, and FTIR techniques for biological samples. Key projects include machine learning quantification pipelines, blank-corrected methods for reproductive tissues, and nanoparticle tracking analysis. Studies address detection limits in CSF, lung lavage, brain tissue, and atmospheric samples.""",
 
-    'TYPE_EXPOSURE': """**Biomonitoring & Dose Assessment** (variable): Research develops biomonitoring frameworks for dietary, inhalation, and dermal exposure routes. Studies measure MNPs in human tissues/fluids, develop exposure biomarkers, and quantify doses from food containers and ambient air. Population-based studies and exposomic frameworks are key approaches.""",
+    'TYPE_EXPOSURE': """<strong>Biomonitoring & Dose Assessment</strong> (variable): Research develops biomonitoring frameworks for dietary, inhalation, and dermal exposure routes. Studies measure MNPs in human tissues/fluids, develop exposure biomarkers, and quantify doses from food containers and ambient air. Population-based studies and exposomic frameworks are key approaches.""",
 }
 
 # Non-mechanism TYPE categories (for conference abstracts without mechanism focus)
@@ -1013,7 +1013,7 @@ MECHANISM_SYSTEMS = {
         r'programmed\s+cell\s+death|(?:pyroptosis|ferroptosis|necroptosis)|'
         r'caspase.{0,20}(?:activ|express|mediat)|sasp\b|'
         r'p16.{0,15}(?:express|induc|positive)'),
-    'MECH_BARRIER_DISRUPTION': ('Barrier Disruption (BBB, Gut)',
+    'MECH_BARRIER_DISRUPTION': ('Barrier Disruption (e.g. blood-brain)',
         r'(?:aim|goal|objective).{0,50}barrier|'
         r'(?:study|investigat|examin).{0,30}barrier|'
         r'barrier.{0,30}(?:function|integrity|permeab|disrupt)|'
