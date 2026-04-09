@@ -478,8 +478,8 @@ st.markdown("""
         border-radius: 8px;
         font-family: 'Source Sans Pro', sans-serif;
         font-weight: 600;
-        font-size: 0.95rem;
-        padding: 12px 24px;
+        font-size: 0.85rem;
+        padding: 10px 16px;
         border: 2px solid #c5cbc7;
         transition: all 0.2s ease;
         cursor: pointer;
