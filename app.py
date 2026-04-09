@@ -1581,7 +1581,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # Main content - tabs
-tab1, tab_organ, tab_model, tab_mech, tab4 = st.tabs(["Results", "Organ Systems", "Model Systems", "Mechanisms", "Cross-Field Insights"])
+tab1, tab_organ, tab_model, tab_mech, tab4 = st.tabs(["Projects", "Organ Systems", "Model Systems", "Mechanisms", "Cross-Field Insights"])
 
 with tab1:
     # About this database info box with hyperlinks
@@ -1597,17 +1597,52 @@ with tab1:
     </div>
     """, unsafe_allow_html=True)
 
-    # Text search box with regex support
-    search_col1, search_col2 = st.columns([4, 1])
-    with search_col1:
-        search_query = st.text_input(
-            "Search grants",
-            placeholder="Search titles and abstracts (supports regex, e.g., 'nano.*plastic')",
-            key="grant_search",
-            label_visibility="collapsed"
-        )
-    with search_col2:
-        use_regex = st.checkbox("Regex", value=False, help="Enable regular expression search")
+    # Text search box with regex support - use columns to put help icon closer to label
+    st.markdown("""
+    <style>
+    .regex-label {
+        font-size: 14px;
+        font-weight: 400;
+        margin-bottom: 0.25rem;
+    }
+    .regex-label .help-icon {
+        display: inline-block;
+        width: 16px;
+        height: 16px;
+        background: #808495;
+        color: white;
+        border-radius: 50%;
+        text-align: center;
+        font-size: 11px;
+        line-height: 16px;
+        margin-left: 4px;
+        cursor: help;
+        position: relative;
+    }
+    .regex-label .help-icon:hover::after {
+        content: attr(data-tooltip);
+        position: absolute;
+        left: 50%;
+        transform: translateX(-50%);
+        bottom: 125%;
+        background: #333;
+        color: white;
+        padding: 8px 12px;
+        border-radius: 6px;
+        font-size: 12px;
+        white-space: nowrap;
+        z-index: 1000;
+        font-weight: normal;
+    }
+    </style>
+    <div class="regex-label">Search grants (regex supported)<span class="help-icon" data-tooltip="'gut|intestin' (OR), 'inflam.*' (wildcard), 'NF.?kB' (optional char)">?</span></div>
+    """, unsafe_allow_html=True)
+    search_query = st.text_input(
+        "Search grants (regex supported):",
+        placeholder="Search titles and abstracts (e.g., 'nano.*plastic')",
+        key="grant_search",
+        label_visibility="collapsed"
+    )
 
     # Use global toggle from sidebar
     show_unique = group_by_project
@@ -1618,10 +1653,7 @@ with tab1:
         # Create combined text for searching
         search_text = filtered['PROJECT_TITLE'].fillna('') + ' ' + filtered['ABSTRACT_TEXT'].fillna('')
         try:
-            if use_regex:
-                mask = search_text.str.contains(search_query, case=False, na=False, regex=True)
-            else:
-                mask = search_text.str.contains(search_query, case=False, na=False, regex=False)
+            mask = search_text.str.contains(search_query, case=False, na=False, regex=True)
             search_filtered = filtered[mask]
         except Exception as e:
             st.error(f"Invalid search pattern: {e}")
