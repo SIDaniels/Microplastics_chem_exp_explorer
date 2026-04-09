@@ -1793,7 +1793,7 @@ with tab1:
             display_cols = ['Source', 'Years', 'PROJECT_TITLE', 'PI_NAMEs', 'ORG_NAME']
             unique_projects = len(grouped)
             total_records = len(filtered_sorted)
-            st.subheader(f"Unique Projects: {unique_projects:,}")
+            st.subheader(f"Recent Projects and Funded Grants: {unique_projects:,}")
         else:
             display_df = filtered_sorted
             display_cols = ['Source', 'FISCAL_YEAR', 'PROJECT_TITLE', 'PI_NAMEs', 'ORG_NAME']
