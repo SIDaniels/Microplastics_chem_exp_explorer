@@ -1591,11 +1591,13 @@ with tab1:
     # About this database info box with hyperlinks
     st.markdown("""
     <div style="background-color: #f0f7f7; border-left: 4px solid #0D3B3C; padding: 12px 16px; margin-bottom: 16px; border-radius: 0 8px 8px 0;">
-        <strong>About this database:</strong> This explorer highlights <strong>microplastics research</strong> against
+        <strong>About this database:</strong> Microplastics research is a rapidly growing field across sub-domains and it's challenging to stay up to date with the latest work prior to its publication. Moreover, there are parallels that can be drawn to those with decades of experience working on other pollutants. This tool helps follow trends and make these connections.
+        <br><br>
+        This explorer highlights <strong>microplastics research</strong> from
         <a href="https://reporter.nih.gov/" target="_blank" style="color: #0D3B3C;">NIH-funded grants</a> (FY2022-2025)
-        focused on environmental chemical exposures, combined with conference abstracts from the
+        combined with abstracts from the inaugural
         <a href="https://hsc.unm.edu/pharmacy/research/areas/cmbm/mnp-conf/_docs/full-digital-program.pdf" target="_blank" style="color: #0D3B3C;">UNM Micro- and Nanoplastics Conference</a>.
-        Use the filters to explore research by exposure type, organ system, mechanism, and more. Use <strong>Cross-Field Insights</strong> to find methods and techniques funded for other pollutants that could accelerate your work.
+        Use the filters to explore research trends by exposure type, organ system, mechanism, and more. Use <strong>Cross-Field Insights</strong> to find methods and techniques funded for other pollutants that could accelerate your work.
         <br><br>
         <em>This tool is in beta and your feedback is welcomed! <a href="https://biotechstrategygroup.com/contact" target="_blank" style="color: #0D3B3C;">Drop us a line</a> to report any issues or let us know what pollutants you'd like to see added next.</em>
         <br><span style="color: #666; font-size: 0.85em;">Note: Initial loading may take a few seconds.</span>
@@ -1788,6 +1790,14 @@ with tab1:
 
 with tab4:
     st.markdown("#### Who is studying similar topics with other pollutants?")
+
+    st.markdown("""
+    <div style="background-color: #f0f7f7; border-left: 4px solid #0D3B3C; padding: 12px 16px; margin-bottom: 16px; border-radius: 0 8px 8px 0;">
+        <strong>The fastest path to understanding microplastics may not be through microplastics.</strong> By mapping mechanistic analogs to established fields, we can identify validated assays, model systems, and expertise ready to be adapted—helping new entrants get up to speed quickly.
+        <br><br>
+        <em style="color: #666;">In beta, co-worked with Claude</em>
+    </div>
+    """, unsafe_allow_html=True)
 
     st.markdown("""
     <div style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); padding: 1rem; border-radius: 8px; margin-bottom: 1rem; border-left: 4px solid #D4A84B;">
@@ -2123,7 +2133,8 @@ with tab4:
                         selection_mode="single-row",
                         column_config={
                             "Project Title": st.column_config.TextColumn("Project Title", width="large"),
-                            "Chemical Field": st.column_config.TextColumn("Chemical Field", width="small"),
+                            "Chemical Field": st.column_config.TextColumn("Chemical Field", width="medium"),
+                            "Expert / PI": st.column_config.TextColumn("Expert / PI", width="small"),
                         }
                     )
 
@@ -2593,7 +2604,7 @@ with tab_learnings:
 
     st.markdown("""
     <div style="background-color: #f0f7f7; border-left: 4px solid #0D3B3C; padding: 12px 16px; margin-bottom: 16px; border-radius: 0 8px 8px 0;">
-        Comparative framework for inhaled particle analogs adapted from Wieland et al. 2022. Extended to cardiovascular, immunotoxicological, and chemical delivery paradigms and reformulated as testable predictions with proposed experimental designs. Some analog pairings do not have direct precedent in published literature.
+        To showcase a few examples, comparative framework for particle analogs were adapted from Wieland et al. 2022<sup>4</sup>. Extended to cardiovascular, immunotoxicological, and chemical delivery paradigms and reformulated as testable predictions with proposed experimental designs. Some analog pairings do not have direct precedent in published literature.
         <br><br>
         <em style="color: #666;">In beta, co-worked with Claude</em>
     </div>
