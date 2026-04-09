@@ -2373,22 +2373,23 @@ with tab_model:
         any_model = any_model_mask.sum()
         any_model_pct = round(100 * any_model / n_grants, 1) if n_grants > 0 else 0
 
-        # Model systems patterns
-        MODEL_SYSTEMS = {
-            'Mouse/Rat': r'\bmouse\b|\bmice\b|\brat\b|\brodent\b|\bmurine\b',
-            'Cell culture': r'cell\s+line|cell\s+culture|in\s+vitro|primary\s+cell',
-            'Human cohort': r'cohort|epidemiol|NHANES|population.based|human\s+subject',
-            'Zebrafish': r'\bzebrafish\b|\bdanio\b',
-            'C. elegans': r'c\.\s*elegans|caenorhabditis',
+        # Model systems - use pre-classified columns from CSV
+        MODEL_COL_MAP = {
+            'In Vitro': 'MODEL_INVITRO',
+            'Rodent': 'MODEL_RODENT',
+            'Zebrafish': 'MODEL_ZEBRAFISH',
+            'Human': 'MODEL_HUMAN',
+            'Environmental': 'MODEL_ENVIRONMENTAL',
+            'Other Animal': 'MODEL_OTHER_ANIMAL',
         }
 
-        text = filtered_stomp['PROJECT_TITLE'].fillna('') + ' ' + filtered_stomp['ABSTRACT_TEXT'].fillna('')
         n_total = len(filtered_stomp)
 
         model_counts = {}
-        for name, pattern in MODEL_SYSTEMS.items():
-            count = text.str.contains(pattern, regex=True, flags=re.IGNORECASE, na=False).sum()
-            model_counts[name] = {'count': count, 'pct': round(100 * count / n_total, 1) if n_total > 0 else 0}
+        for name, col in MODEL_COL_MAP.items():
+            if col in filtered_stomp.columns:
+                count = (filtered_stomp[col] == 1).sum()
+                model_counts[name] = {'count': count, 'pct': round(100 * count / n_total, 1) if n_total > 0 else 0, 'col': col}
 
         sorted_models = sorted(model_counts.items(), key=lambda x: x[1]['count'], reverse=True)
 
@@ -2422,10 +2423,9 @@ with tab_model:
         else:
             selected_model = None
 
-        if selected_model and selected_model in MODEL_SYSTEMS:
-            model_pattern = MODEL_SYSTEMS[selected_model]
-            model_matches = text.str.contains(model_pattern, regex=True, flags=re.IGNORECASE, na=False)
-            model_grants = filtered_stomp[model_matches].copy()
+        if selected_model and selected_model in MODEL_COL_MAP:
+            model_col = MODEL_COL_MAP[selected_model]
+            model_grants = filtered_stomp[filtered_stomp[model_col] == 1].copy()
 
             st.markdown(f"### {selected_model}")
             st.markdown(f"**{len(model_grants):,} projects** using this model")
