@@ -1881,7 +1881,7 @@ with tab4:
 
     st.markdown("""
     <div style="background-color: #f0f7f7; border-left: 4px solid #0D3B3C; padding: 12px 16px; margin-bottom: 16px; border-radius: 0 8px 8px 0;">
-        <strong>The fastest path to understanding microplastics may not be through microplastics.</strong> By mapping mechanistic analogs to established fields, we can identify validated assays, model systems, and expertise ready to be adapted—helping new entrants get up to speed quickly.
+Understanding microplastics toxicity doesn't require starting from scratch. By identifying research in adjacent fields that studies the same biological mechanisms, you can discover established methods, model systems, and expert collaborators whose work directly informs microplastics research.
         <br><br>
         <em style="color: #666;">In beta, co-worked with Claude</em>
     </div>
