@@ -2592,12 +2592,10 @@ with tab_learnings:
     st.markdown("#### What can microplastics research learn from other fields?")
 
     st.markdown("""
-    <div style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); padding: 1rem; border-radius: 8px; margin-bottom: 1rem; border-left: 4px solid #D4A84B;">
-        <p style="margin: 0; font-size: 0.95rem; color: #333;">
-            Different types of micro/nanoplastics behave like pollutants that have been studied for decades.
-            By identifying the <strong>closest mechanistic analog</strong>, we can predict how microplastics will behave
-            and design experiments based on validated methods from those fields.
-        </p>
+    <div style="background-color: #f0f7f7; border-left: 4px solid #0D3B3C; padding: 12px 16px; margin-bottom: 16px; border-radius: 0 8px 8px 0;">
+        Comparative framework for inhaled particle analogs adapted from Wieland et al. 2022. Extended to cardiovascular, immunotoxicological, and chemical delivery paradigms and reformulated as testable predictions with proposed experimental designs. Some analog pairings do not have direct precedent in published literature.
+        <br><br>
+        <em style="color: #666;">In beta, co-worked with Claude</em>
     </div>
     """, unsafe_allow_html=True)
 
@@ -2644,9 +2642,9 @@ with tab_learnings:
         </div>
         """, unsafe_allow_html=True)
 
-        # Filter by source field (generic)
+        # Filter by close analog
         source_fields = ['All'] + sorted([s for s in predictions_df['Source field clean'].unique() if s and s != 'Unknown'])
-        selected_source = st.selectbox("Filter by source field:", source_fields, key='learnings_source')
+        selected_source = st.selectbox("Filter by close analog:", source_fields, key='learnings_source')
 
         if selected_source != 'All':
             display_predictions = predictions_df[predictions_df['Source field clean'] == selected_source]
@@ -2691,11 +2689,12 @@ with tab_learnings:
                 text = str(text)
 
                 # Pattern 1: numbers immediately after a period (reference style like "ratio.2" or "pathology.6,7")
-                text = re.sub(r'\.(\d+(?:,\d+)*)\b', lambda m: '.' + replace_ref_group(m.group(1)), text)
+                # But NOT decimal numbers like "2.5" or "PM2.5" - require letter before the period
+                text = re.sub(r'(?<=[a-zA-Z])\.(\d+(?:,\d+)*)\b', lambda m: '.' + replace_ref_group(m.group(1)), text)
 
                 # Pattern 2: reference numbers (single or comma-separated) directly after a lowercase letter or closing paren
                 # Like "response20,25" or ")36,37,38" or ")9" but NOT "PM2.5" or "MP-2"
-                text = re.sub(r'(?<=[a-z\)])(\d{1,2}(?:,\d{1,2})*)(?=[\s\.,;:)\]]|$)', lambda m: replace_ref_group(m.group(1)), text)
+                text = re.sub(r'(?<=[a-z\)])(\d{1,2}(?:,\d{1,2})*)(?=[\s,;:)\]]|$)', lambda m: replace_ref_group(m.group(1)), text)
 
                 # Pattern 3: comma followed by reference numbers like ",56,57" or ",36,58"
                 text = re.sub(r',(\d{1,2}(?:,\d{1,2})+)\b', lambda m: replace_ref_group(m.group(1)), text)
@@ -2706,11 +2705,11 @@ with tab_learnings:
             experiment_linked = add_ref_links(experiment) if not pd.isna(experiment) and experiment else ''
             analog_linked = add_ref_links(analog_display)
 
-            # Build params line (with ref links)
+            # Build params line (with ref links) - styled as definition
             params_line = ''
             if not pd.isna(key_params) and key_params:
                 params_linked = add_ref_links(str(key_params))
-                params_line = f'<p style="margin: 0.25rem 0 0 0; color: #555; font-weight: 400; font-size: 1rem;">{params_linked}</p>'
+                params_line = f'<p style="margin: 0.35rem 0 0 0; color: #555; font-size: 0.95rem;"><strong>Definition:</strong> {params_linked}</p>'
 
             # Use st.container with custom styling for proper card layout
             with st.container():
@@ -2725,7 +2724,7 @@ with tab_learnings:
                         <span style="background: {status_color}; color: white; padding: 5px 14px; border-radius: 12px; font-size: 0.85rem; font-weight: 500; flex-shrink: 0;">{status_text}</span>
                     </div>
                     <div style="display: flex; gap: 0.75rem; margin-bottom: 1rem; flex-wrap: wrap; align-items: center;">
-                        <span style="color: #0D3B3C; font-size: 1rem; font-weight: 600;">Closest analog:</span>
+                        <span style="color: #0D3B3C; font-size: 1rem; font-weight: 600;">Close analog:</span>
                         <span style="background: #e8f4f4; color: #0D3B3C; padding: 6px 14px; border-radius: 14px; font-size: 0.95rem; font-weight: 500; border: 1px solid #46B3A9;">{analog_linked}</span>
                         <span style="color: #666; font-size: 0.95rem;">from</span>
                         <span style="background: #0D3B3C; color: white; padding: 6px 14px; border-radius: 14px; font-size: 0.95rem; font-weight: 500;">{source_display}</span>
@@ -2747,12 +2746,11 @@ with tab_learnings:
         st.markdown("---")
         st.markdown('<div id="references"></div>', unsafe_allow_html=True)
         st.markdown("##### References")
-        with st.expander(f"View all {len(references_df)} references"):
-            for idx, row in references_df.iterrows():
-                num = row.get('No.', idx + 1)
-                citation = row.get('Full citation', '')
-                if not pd.isna(citation):
-                    st.markdown(f'<div id="ref{num}"><strong>{num}.</strong> {citation}</div>', unsafe_allow_html=True)
+        for idx, row in references_df.iterrows():
+            num = row.get('No.', idx + 1)
+            citation = row.get('Full citation', '')
+            if not pd.isna(citation):
+                st.markdown(f'<div id="ref{num}" style="margin-bottom: 0.5rem; font-size: 0.9rem;"><strong>{num}.</strong> {citation}</div>', unsafe_allow_html=True)
 
         # Download button
         csv_data = predictions_df.to_csv(index=False)
