@@ -1,0 +1,205 @@
+LLM_MECH_OXIDATIVE,LLM_MECH_INFLAMMATION,LLM_MECH_BARRIER,LLM_MECH_MICROBIOME,LLM_MECH_ENDOCRINE,LLM_MECH_NEURODEGENERATION,LLM_MECH_IMMUNE,LLM_MECH_DNA_DAMAGE,LLM_MECH_RECEPTOR,LLM_MECH_CELL_DEATH,LLM_OTHER_MECHANISMS,PROJECT_NUM,LLM_MECH_METABOLIC
+0,0,0,0,0,0,0,0,0,0,,P30ES009089,0
+0,0,0,0,0,0,0,0,0,0,,R43ES037180,0
+0,1,0,0,0,0,0,0,0,0,"vascular dysfunction, angiogenesis disruption, adipocyte dysfunction",R01HL173978,1
+0,0,0,0,0,0,0,0,0,0,axonal transport mechanisms,R21ES037200,0
+0,0,0,0,1,0,0,0,1,0,"cardiovascular toxicity,dyslipidemia,atherosclerosis",R35ES035015,1
+1,1,1,1,0,0,0,0,0,0,cellular metabolism,R01ES032037,0
+0,0,1,0,0,0,0,0,0,0,"vascular dysfunction, placental development impairment",F31ES035256,1
+0,1,0,0,0,0,1,0,0,0,developmental perturbations,P01ES035526,0
+1,1,0,0,0,0,0,0,0,0,cytotoxicity,R21ES036308,0
+0,0,1,0,0,0,0,0,1,0,,R21ES035963,0
+0,0,0,0,0,0,0,0,0,0,,R21ES037164,0
+1,1,0,0,0,0,0,0,0,0,,R01ES037008,0
+0,0,0,0,0,0,0,0,0,0,,P20GM103466,0
+0,0,0,0,0,0,0,0,0,0,,R43ES038045,0
+0,1,1,0,0,1,0,0,0,0,"protein misfolding, metabolomic changes",U01AG088557,0
+0,0,1,1,0,0,0,1,0,0,,P30CA045508,0
+0,0,0,0,0,0,0,0,0,0,,P30ES005022,0
+0,1,0,0,0,0,1,0,0,0,,R01ES036573,0
+0,1,0,0,0,0,0,0,0,0,,R00ES034053,0
+0,1,1,0,0,0,0,0,0,0,,R01ES036043,0
+0,0,0,0,0,0,0,0,0,0,,R01ES036575,0
+0,0,0,0,0,0,0,1,0,0,,R16GM150406,0
+0,1,1,0,0,1,0,0,0,0,,F31ES036154,0
+1,0,0,0,0,0,0,0,1,0,"mechanosensing ion channel signaling,hypoxia signaling",R01ES035780,0
+0,0,0,0,0,0,0,0,0,0,,R21ES035921,0
+0,0,0,0,0,0,1,0,0,0,,P50MD015706,0
+0,0,0,0,0,0,0,0,0,0,,P30CA118100,0
+1,1,0,1,0,0,0,1,0,0,,P30CA015704,0
+1,0,1,0,0,1,0,0,0,1,protein aggregation,R15NS120157,0
+0,0,0,0,0,0,0,0,0,0,,R21CA293440,0
+0,0,0,0,0,0,0,0,0,0,,R21OH012595,0
+0,0,0,0,0,0,0,0,0,0,"pulmonary fibrosis, respiratory sensitization",R21ES034098,0
+0,0,0,0,0,0,0,0,0,0,"endocytosis disruption, endosome and lysosome dysfunction, trace metal metabolism interference",R15ES034901,0
+0,0,0,0,0,0,0,0,0,0,,P30GM131944,0
+0,0,0,0,0,0,0,0,0,0,,ZIAES103375,0
+0,0,0,0,0,0,0,0,0,0,,R21ES034438,0
+0,0,1,0,0,0,0,0,0,0,,R21ES033311,0
+0,0,0,0,0,0,0,0,0,0,,R15ES034169,0
+0,0,0,0,0,0,0,0,0,0,,R13ES034641,0
+0,0,0,0,0,0,0,0,0,0,,R13ES034640,0
+0,0,0,0,0,0,0,0,0,0,,P01ES028942,0
+0,0,0,0,0,0,0,0,0,0,,R44ES031036,0
+1,1,1,0,0,0,0,0,0,0,,CONF_3176,0
+0,0,0,0,0,0,0,0,0,0,,CONF_3177,0
+0,0,0,0,0,0,0,0,0,0,,CONF_3178,0
+0,0,0,0,0,0,0,0,0,0,,CONF_3179,0
+0,0,0,0,0,0,0,0,0,0,,CONF_3180,0
+0,0,1,0,0,0,0,0,0,0,,CONF_3181,0
+0,0,0,0,0,0,0,0,0,0,,CONF_3182,0
+0,0,0,0,0,0,0,0,0,0,,CONF_3183,0
+0,0,0,0,0,0,0,0,0,0,,CONF_3184,0
+0,1,0,0,0,0,1,1,0,1,particle uptake,CONF_3185,0
+0,0,0,0,0,0,0,0,0,0,,CONF_3186,0
+0,0,0,0,1,0,0,0,0,0,,CONF_3187,0
+0,0,0,0,0,0,0,0,0,1,,CONF_3188,0
+0,0,1,0,0,0,0,0,0,0,,CONF_3189,0
+0,0,0,0,0,0,0,0,0,0,,CONF_3190,0
+0,0,0,0,0,0,0,0,0,0,"placental invasion disruption, placental morphological development",CONF_3191,0
+0,0,0,0,0,0,0,0,0,0,,CONF_3192,0
+0,0,0,0,0,0,0,0,0,0,,CONF_3193,0
+0,0,0,0,0,0,0,0,0,0,,CONF_3194,0
+0,0,0,0,0,0,0,0,0,0,,CONF_3195,0
+0,0,0,0,0,0,0,0,0,0,"growth effects,behavioral effects",CONF_3196,0
+0,0,0,0,0,0,1,0,0,0,developmental perturbations,CONF_3197,0
+0,0,0,0,0,0,0,0,0,0,,CONF_3198,0
+0,0,0,0,0,0,0,0,0,0,,CONF_3199,0
+0,0,0,0,0,0,0,0,0,0,,CONF_3200,0
+0,0,0,0,0,0,0,0,0,0,,CONF_3201,0
+0,0,0,0,0,0,0,0,0,0,,CONF_3202,0
+0,0,0,0,0,0,0,0,0,0,,CONF_3203,0
+0,0,0,0,0,0,0,0,0,0,"atherosclerosis,cardiovascular toxicity",CONF_3204,1
+0,0,0,0,0,0,0,0,0,0,"cardiovascular toxicity, atherosclerosis development, endothelial dysfunction",CONF_3205,1
+0,0,0,0,0,0,0,0,0,0,"cardiovascular pathophysiology, atherosclerosis development, arterial stiffness",CONF_3206,1
+0,0,0,0,0,0,0,0,0,0,"vascular remodeling, atherosclerosis, smooth muscle cell phenotypic modulation",CONF_3207,1
+0,0,0,0,0,0,0,0,0,0,,CONF_3208,0
+0,0,0,0,0,0,0,0,0,0,,CONF_3209,0
+0,0,0,0,0,0,0,0,0,0,,CONF_3210,0
+0,0,0,0,0,0,0,0,0,0,,CONF_3211,0
+1,0,0,0,0,0,0,0,0,1,mitochondrial respiration,CONF_3212,0
+0,0,0,1,0,0,0,0,0,0,,CONF_3213,0
+0,0,0,0,0,0,0,0,0,0,"skeletal toxicity, bone metabolism disruption",CONF_3214,0
+0,0,0,1,0,0,0,0,0,0,metabolic reprogramming,CONF_3215,1
+0,0,1,0,0,0,0,0,0,0,,CONF_3216,0
+1,0,1,0,0,1,0,0,0,0,"mitophagy,metabolic dysregulation,neurovascular integrity",CONF_3217,1
+0,0,0,0,0,1,0,0,0,0,"axonal transport, cytoskeletal transport",CONF_3218,0
+1,1,0,0,0,1,0,0,0,0,,CONF_3219,0
+0,0,0,0,0,0,0,0,0,0,,CONF_3220,0
+0,0,0,0,0,0,0,0,0,0,,CONF_3221,0
+0,0,0,0,0,0,0,0,0,0,,CONF_3222,0
+0,0,0,0,0,0,0,0,0,0,,CONF_3223,0
+0,1,0,0,0,1,0,0,0,1,,CONF_3224,0
+0,0,0,0,0,1,0,0,0,0,,CONF_3225,0
+0,0,1,0,0,0,0,0,0,0,,CONF_3226,0
+0,0,0,0,0,0,0,0,0,0,,CONF_3227,0
+0,0,0,0,0,0,0,0,0,0,,CONF_3228,0
+0,0,0,0,0,0,0,0,0,0,,CONF_3229,0
+0,0,0,0,0,0,0,0,0,0,,CONF_3230,0
+0,0,0,0,0,0,0,0,0,0,,CONF_3231,0
+0,0,0,0,0,0,0,0,0,0,,CONF_3232,0
+0,0,0,0,0,0,0,0,0,0,,CONF_3233,0
+0,0,0,0,0,0,0,0,0,0,,CONF_3234,0
+0,0,0,0,0,0,0,0,0,0,,CONF_3235,0
+0,0,0,0,0,0,0,0,0,0,,CONF_3237,0
+0,0,0,0,0,0,0,0,0,0,,CONF_3239,0
+0,1,0,0,0,0,1,1,0,1,particle uptake,CONF_3241,0
+0,0,1,0,0,0,0,0,0,0,,CONF_3243,0
+0,0,0,0,0,0,0,0,0,0,,CONF_3244,0
+0,0,0,0,0,0,0,0,0,0,,CONF_3245,0
+0,0,0,0,0,0,0,0,0,0,,CONF_3247,0
+0,0,0,0,0,0,0,0,0,0,,CONF_3249,0
+0,0,0,0,0,0,0,0,0,0,,CONF_3250,0
+0,0,0,0,0,0,0,0,0,0,,CONF_3251,0
+1,0,0,0,0,1,0,0,0,1,amyloid aggregation modulation,CONF_3252,0
+0,0,0,0,0,1,0,0,0,0,,CONF_3253,0
+0,0,0,0,0,0,0,0,0,0,,CONF_3254,0
+0,0,0,0,0,0,0,0,0,0,,CONF_3255,0
+0,1,0,0,0,0,1,0,0,0,,CONF_3257,0
+0,0,0,0,0,0,0,0,0,0,,CONF_3258,0
+1,1,0,0,0,0,1,0,1,0,"lysosomal trafficking, endocytic trafficking, metabolic reprogramming",CONF_3259,1
+0,0,0,0,0,0,0,0,0,0,,CONF_3260,0
+0,0,0,0,0,0,0,0,0,0,,CONF_3263,0
+0,0,1,0,0,0,0,0,0,0,,CONF_3264,0
+0,0,1,0,0,0,0,0,0,0,"placental development disruption, angiogenesis disruption",CONF_3266,1
+1,0,0,0,0,0,0,0,0,1,"hemolysis, membrane disruption",CONF_3267,0
+0,0,0,0,0,0,0,0,0,0,,CONF_3269,0
+0,0,0,0,0,0,0,0,0,0,,CONF_3270,0
+0,1,0,0,0,0,0,0,0,0,,CONF_3271,0
+1,0,0,0,0,1,0,0,0,1,"altered gene expression, altered protein folding",CONF_3272,0
+0,0,1,0,0,0,0,0,1,1,"mechanosensitive ion channel dysfunction,calcium signaling disruption",CONF_3273,0
+1,0,0,0,0,0,0,0,0,0,,CONF_3274,0
+0,0,0,0,0,0,0,0,0,1,,CONF_3275,0
+0,0,0,1,0,0,0,0,0,0,biofilm formation and architecture disruption,CONF_3276,0
+0,0,0,0,0,1,0,0,0,1,synergistic toxicity interactions,CONF_3278,0
+0,0,0,0,1,1,0,0,0,0,hepatotoxicity,CONF_3279,0
+0,0,0,0,0,0,0,0,0,0,,CONF_3281,0
+0,0,0,0,0,0,0,0,0,0,,CONF_3282,0
+1,1,1,1,0,0,0,0,0,0,,CONF_3285,0
+0,0,0,0,0,0,0,0,0,0,,CONF_3286,0
+0,0,0,0,0,0,0,0,0,0,,CONF_3289,0
+0,0,0,0,0,0,0,0,0,0,,CONF_3290,0
+0,0,0,0,0,0,0,0,0,0,,CONF_3292,0
+0,0,0,0,0,0,0,0,0,0,,CONF_3293,0
+0,0,0,0,0,0,0,0,0,0,,CONF_3294,0
+0,0,0,0,0,0,0,0,0,0,,CONF_3295,0
+0,0,0,0,0,0,0,0,0,0,,CONF_3296,0
+0,0,1,0,0,0,0,0,0,0,,CONF_3297,0
+0,0,1,0,0,1,0,0,0,0,"vascular pathology,microhemorrhage,vascular leakage",CONF_3298,1
+0,0,0,0,0,0,0,0,0,0,,CONF_3300,0
+0,0,0,0,0,0,0,0,0,0,"vascular wall localization, endothelial adhesion",CONF_3301,1
+0,0,0,0,0,0,0,0,0,0,,CONF_3302,0
+0,0,0,0,0,0,0,0,0,1,,CONF_3304,0
+0,0,1,0,0,0,0,0,0,0,glymphatic dysfunction,CONF_3305,0
+0,0,0,0,0,0,0,0,0,0,,CONF_3306,0
+1,1,0,0,0,1,0,0,0,0,,CONF_3307,0
+0,0,0,0,0,0,0,0,0,0,,CONF_3308,0
+1,1,0,1,0,1,0,0,1,1,"cardiovascular toxicity, reproductive toxicity, circadian rhythm disruption, hematopoietic disruption",CONF_3309,1
+0,0,0,0,1,0,0,0,0,0,"skeletal integrity disruption, bone homeostasis disruption, osteoblast mineralization impairment",CONF_3310,0
+0,0,0,0,0,0,0,0,0,0,,CONF_3311,0
+0,0,0,0,0,1,0,0,0,0,"developmental toxicity,behavioral effects",CONF_3312,0
+0,0,0,0,0,0,0,0,0,0,,CONF_3313,0
+0,0,0,0,0,0,0,0,0,0,,CONF_3314,0
+0,0,0,0,0,0,0,0,0,0,,CONF_3315,0
+0,0,0,0,0,0,0,0,0,0,endothelial dysfunction,CONF_3317,1
+0,0,0,0,0,0,0,0,0,0,,CONF_3318,0
+0,0,1,0,0,0,0,0,0,0,,CONF_3319,0
+0,0,0,0,0,0,0,0,0,0,,CONF_3320,0
+0,0,0,0,0,0,0,0,0,0,,CONF_3321,0
+0,0,0,0,0,1,0,0,0,1,"amyloid beta aggregation, carrier-mediated neurotoxicant transport",CONF_3322,0
+0,0,0,0,0,0,0,0,0,0,,CONF_3323,0
+1,0,1,0,0,0,0,0,0,0,"sperm quality impairment, mitochondrial ultrastructure damage",CONF_3324,0
+0,0,0,0,0,0,0,0,0,0,,CONF_3325,0
+0,0,0,0,0,0,0,0,0,0,"pathogen carriage, antibiotic resistance gene transfer",CONF_3327,0
+0,0,0,0,0,0,0,0,0,0,,CONF_3328,0
+0,1,0,0,0,0,0,0,1,0,"respiratory dysfunction, metabolic disruption",CONF_3330,1
+0,0,0,0,0,0,0,0,0,0,,CONF_3332,0
+0,0,0,1,0,0,0,0,0,0,metabolic disruption,CONF_3333,1
+0,0,0,0,0,0,0,0,0,0,,CONF_3334,0
+0,0,0,0,0,0,0,0,0,0,,CONF_3335,0
+0,0,0,0,0,0,0,0,0,0,,CONF_3336,0
+0,0,0,0,0,0,0,0,0,0,,CONF_3337,0
+0,0,0,0,0,0,0,0,0,0,,CONF_3339,0
+0,0,0,0,0,0,0,0,0,0,,CONF_3342,0
+0,0,0,0,0,0,0,0,0,0,,CONF_3344,0
+0,0,0,0,0,0,0,0,0,0,,CONF_3345,0
+0,0,0,0,0,0,0,0,0,0,,CONF_3346,0
+0,0,0,0,0,0,0,0,0,0,,CONF_3347,0
+0,0,0,0,0,0,0,0,0,0,,CONF_3349,0
+0,0,0,0,0,0,0,0,0,0,,CONF_3351,0
+0,0,1,0,0,0,0,0,0,0,"cellular uptake mechanisms, wound healing/cell migration",CONF_3352,0
+0,0,0,0,0,0,0,0,0,0,,CONF_3353,0
+0,1,0,0,0,0,0,0,0,0,metabolic dysfunction,CONF_3354,1
+0,0,0,0,0,0,0,0,0,0,,CONF_3355,0
+0,0,0,0,0,0,0,0,0,0,,CONF_3356,0
+0,0,0,0,0,0,0,0,0,0,,CONF_3357,0
+0,0,0,0,0,0,0,0,0,0,,CONF_3358,0
+0,0,0,0,0,0,0,0,0,0,,CONF_3359,0
+0,1,0,0,0,1,0,0,0,0,,CONF_3360,0
+0,0,0,0,0,0,0,0,0,0,,CONF_3361,0
+0,0,0,0,0,0,0,0,0,0,,CONF_3362,0
+0,0,0,0,0,0,0,0,0,0,"nephrotoxicity, cardiovascular toxicity, organ accumulation, renal function impairment",CONF_3363,1
+0,0,0,0,0,0,0,0,0,0,,CONF_3364,0
+0,0,0,0,0,0,0,0,0,0,,CONF_3365,0
+0,0,0,0,0,0,0,0,0,0,,CONF_3366,0
+0,0,0,0,0,0,0,0,0,0,,CONF_3367,0

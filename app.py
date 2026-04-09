@@ -651,40 +651,50 @@ EXPOSURES = {
     'EXP_NITRATES': 'Nitrates & Nitrites',
 }
 
-# Mechanism categories (excluding Inflammation & Oxidative Stress - poor classification accuracy)
+# Mechanism categories - using LLM classifications (more accurate than regex)
+# LLM classifications done via Claude Sonnet in April 2026
 MECHANISMS = {
-    'MECH_NEURODEGENERATION': 'Neurodegeneration',
-    'MECH_ENDOCRINE': 'Endocrine Disruption',
-    'MECH_MICROBIOME': 'Microbiome / Gut-Brain',
-    'MECH_IMMUNE_DYSFUNCTION': 'Immune Dysfunction',
-    'MECH_DNA_DAMAGE': 'DNA Damage / Genotoxicity',
-    'MECH_RECEPTOR_SIGNALING': 'Receptor Signaling',
-    'MECH_SENESCENCE_CELL_DEATH': 'Senescence / Cell Death',
-    'MECH_BARRIER_DISRUPTION': 'Barrier Disruption (BBB, Gut)',
+    'LLM_MECH_INFLAMMATION': 'Inflammation',
+    'LLM_MECH_BARRIER': 'Barrier Disruption (BBB, Gut)',
+    'LLM_MECH_OXIDATIVE': 'Oxidative Stress',
+    'LLM_MECH_NEURODEGENERATION': 'Neurodegeneration',
+    'LLM_MECH_METABOLIC': 'Metabolic / Cardiovascular',
+    'LLM_MECH_CELL_DEATH': 'Cell Death / Senescence',
+    'LLM_MECH_MICROBIOME': 'Microbiome / Gut-Brain',
+    'LLM_MECH_IMMUNE': 'Immune Dysfunction',
+    'LLM_MECH_RECEPTOR': 'Receptor Signaling',
+    'LLM_MECH_DNA_DAMAGE': 'DNA Damage / Genotoxicity',
+    'LLM_MECH_ENDOCRINE': 'Endocrine Disruption',
 }
 
 # Pre-written summaries for each research category (for Cross-Field Insights expander)
-# Updated based on analysis of actual grants in each category
+# Updated to use LLM classification keys (April 2026) - based on actual grant content
 CATEGORY_SUMMARIES = {
-    'MECH_NEURODEGENERATION': """NIH-funded microplastics neurodegeneration research examines nanoplastic transport mechanisms in the brain, nasal uptake pathways into the CNS, and links between plastic particle exposure and brain aging/dementia. Key projects include studies on alpha-synuclein membrane disruption (Parkinson's relevance), airborne microplastic neurotoxicity in urban environments, and BBB penetration mechanisms. Model systems include murine nasal uptake models and human neural cultures.""",
+    'LLM_MECH_INFLAMMATION': """**Cardiovascular & GI Inflammation** (25 grants): Research spans cardiovascular inflammatory responses to environmental pollutants, gastrointestinal inflammation from microplastic ingestion, and systemic inflammatory effects. Key themes include biodistribution-triggered inflammation, plastic food container leaching effects, and PET-based tracking of inflammatory responses. Studies use comparative models (Xenopus, organoids, rodents) to assess tissue-specific inflammatory pathways.""",
 
-    'MECH_ENDOCRINE': """Microplastics endocrine research focuses on plastic food container leaching, PXR-mediated cardiovascular effects of EDCs, and reproductive toxicity from micro/nanoplastic exposure. Studies examine how weathered plastics release hormone-disrupting additives (phthalates, BPA), effects on genomic integrity, and developmental toxicity using whole-animal models. Key endpoints include estrogen receptor activation and thyroid hormone interference.""",
+    'LLM_MECH_OXIDATIVE': """**ROS Generation & Mitochondrial Stress** (19 grants): Research examines oxidative damage from environmentally relevant nanoplastics, mitochondrial dysfunction in liver and neural tissues, and ROS-mediated colorectal tumor progression. Key projects investigate weathered/photoaged plastics, hepatic oxidative stress using cell models, and airborne microplastic-induced oxidative pathways. Studies link alpha-synuclein membrane disruption to oxidative mechanisms.""",
 
-    'MECH_MICROBIOME': """NIH microbiome research investigates microplastics' effects on gastrointestinal health, including gut barrier disruption, microbiome composition changes, and interactions with gut bacteria (e.g., pks+ E. coli in early-onset colorectal cancer). Studies use 3D human intestinal organoids, Xenopus models, and mouse gut models. Research links microplastic ingestion to intestinal inflammation and altered microbial metabolites.""",
+    'LLM_MECH_NEURODEGENERATION': """**Brain Aging, Alzheimer's & Parkinson's** (19 grants): Research focuses on nasal-to-brain uptake pathways, alpha-synuclein membrane disruption (Parkinson's), amyloid-β aggregation (Alzheimer's), and PINK1/Parkin-mediated mitophagy. Key projects track nanoplastic lifecycle in brain tissue, kinesin-mediated axonal transport, and neurotoxicity modeling. Studies span whole-body to cellular scales using murine and human neural models.""",
 
-    'MECH_IMMUNE_DYSFUNCTION': """Microplastics immune research examines inflammatory responses triggered by plastic particles, macrophage activation by nanoplastics, and effects on mucosal barriers (including gynecological tissues). Studies investigate how environmentally weathered plastics with adsorbed pollutants affect cytokine profiles, cardiovascular inflammation, and innate immune responses. Biodistribution studies track how particles translocate and trigger systemic inflammation.""",
+    'LLM_MECH_METABOLIC': """**Atherosclerosis & Vascular Dysfunction** (19 grants): Research examines atherosclerotic lesion development in ApoE-deficient mice, sex-specific cardiovascular effects, and ocean microplastic-accelerated atherosclerosis. Key themes include PXR-mediated cardiovascular disease, uteroplacental vascular effects, and metabolic reprogramming in gut microbiota. Studies link dietary plastic exposure to dyslipidemia and arterial remodeling.""",
 
-    'MECH_DNA_DAMAGE': """Genotoxicity research focuses on microplastic interactions with gut bacteria that produce DNA-damaging toxins (pks+ E. coli), effects on genomic integrity from ingested nanoplastic mixtures, and potential carcinogenic effects. Studies examine airborne microplastic toxicology and use whole-animal models to assess mutagenic potential. Links between early-life plastic exposure and cancer risk are under investigation.""",
+    'LLM_MECH_ENDOCRINE': """**Hormone Disruption & Skeletal Effects** (4 grants): Research examines PXR-mediated endocrine disruption, differential impacts of polystyrene vs PET nanoplastics on hormone systems, and DDT-nanoplastic co-exposure effects. Emerging theme: chronic dietary microplastic exposure weakening skeletal integrity through hormonal pathways.""",
 
-    'MECH_RECEPTOR_SIGNALING': """Receptor signaling research investigates how nanoplastic particles affect intracellular signaling dynamics and respiratory functions. Studies examine silicon microslit filter methods for microplastic testing, PET nanoplastic characterization, and how particle surface properties influence receptor binding and downstream cellular responses.""",
+    'LLM_MECH_MICROBIOME': """**Gut-Brain Axis & Dysbiosis** (9 grants): Research investigates microplastic-induced colorectal cancer triggers via pks+ E. coli interactions, gut-brain axis effects on cognition, and metabolic reprogramming in gut bacteria. Key projects use synthetic microbiome models, intestinal organoids, and examine microbiome ratio changes from nanoplastic exposure.""",
 
-    'MECH_SENESCENCE_CELL_DEATH': """Cell death research examines how photoaged microplastics impair endothelial mechanosensitive ion channels, affecting calcium flux and Notch signaling. Studies investigate nanoplastic-pesticide co-exposure neurotoxicity, mitochondrial dysfunction pathways, and links between MNP exposure and Alzheimer's disease pathology. Research uses in vitro models to test apoptosis and senescence endpoints.""",
+    'LLM_MECH_IMMUNE': """**Macrophage Activation & Immunotoxicity** (8 grants): Research examines cumulative environmental exposures on immune function, macrophage-mediated pro-inflammatory responses, and developmental immunotoxicity (Xenopus models). Key themes include airborne microplastic immunotoxicology, mucosal barrier immune effects, and biodistribution-triggered immune responses.""",
 
-    'MECH_BARRIER_DISRUPTION': """Barrier disruption research investigates how microplastics compromise intestinal barrier function and promote colorectal cancer progression. Studies examine MNP effects across the lifespan on human colons, tight junction disruption using 3D intestinal models, and particle translocation mechanisms. Key projects use in vitro barrier models and human tissue studies to assess permeability changes.""",
+    'LLM_MECH_DNA_DAMAGE': """**Colorectal Cancer & Genotoxicity** (5 grants): Research focuses on microplastic interactions with genotoxic gut bacteria (pks+ E. coli) in early-onset colorectal cancer, genomic integrity effects from ingested nanoplastic mixtures, and airborne microplastic genotoxicity. Studies use whole-animal models to assess carcinogenic potential.""",
 
-    'TYPE_METHODS': """Detection methods research develops Raman spectroscopy, Py-GC/MS, and FTIR techniques for identifying micro/nanoplastics in biological samples. Key projects include machine learning pipelines for microplastic quantification, blank-corrected Py-GC methods for human reproductive tissues, and nanoparticle tracking analysis. Studies address detection limits in CSF, lung lavage, brain tissue, and atmospheric samples.""",
+    'LLM_MECH_RECEPTOR': """**PXR, Ion Channels & Signaling** (7 grants): Research examines PXR-mediated cardiovascular effects, mechanosensitive endothelial ion channel impairment from photoaged microplastics, and intracellular signaling dynamics. Key themes include calcium flux disruption, Notch signaling effects, and colorectal tumor receptor mechanisms.""",
 
-    'TYPE_EXPOSURE': """Exposure assessment research develops biomonitoring frameworks for human microplastic exposure via dietary, inhalation, and dermal routes. Studies measure MNPs in human tissues and body fluids, develop exposure biomarkers, and quantify plastic particle doses from food containers and ambient air. Population-based studies and exposomic analytical frameworks are key research approaches.""",
+    'LLM_MECH_CELL_DEATH': """**Cytotoxicity & Amyloid Aggregation** (15 grants): Research examines alpha-synuclein membrane disruption, nanoplastic effects on amyloid-β aggregation, and dose-dependent cytotoxicity across placental and immune cell types. Key themes include liver hepatocyte toxicity, coffee cup leachate toxicity, and airborne microplastic-induced cell death.""",
+
+    'LLM_MECH_BARRIER': """**Gut Permeability & BBB Penetration** (26 grants): Research investigates intestinal barrier compromise and colorectal cancer progression, BBB penetration via nasal uptake, and uteroplacental barrier effects. Key themes include tampon nanoplastic effects on gynecological barriers, tight junction disruption, and particle translocation/biodistribution.""",
+
+    'TYPE_METHODS': """**Spectroscopy & ML Detection** (variable): Research develops Raman spectroscopy, Py-GC/MS, and FTIR techniques for biological samples. Key projects include machine learning quantification pipelines, blank-corrected methods for reproductive tissues, and nanoparticle tracking analysis. Studies address detection limits in CSF, lung lavage, brain tissue, and atmospheric samples.""",
+
+    'TYPE_EXPOSURE': """**Biomonitoring & Dose Assessment** (variable): Research develops biomonitoring frameworks for dietary, inhalation, and dermal exposure routes. Studies measure MNPs in human tissues/fluids, develop exposure biomarkers, and quantify doses from food containers and ambient air. Population-based studies and exposomic frameworks are key approaches.""",
 }
 
 # Non-mechanism TYPE categories (for conference abstracts without mechanism focus)
@@ -692,6 +702,22 @@ CATEGORY_SUMMARIES = {
 CONF_TYPE_CATEGORIES = {
     'TYPE_METHODS': 'Detection Methods',
     'TYPE_EXPOSURE': 'Exposure Assessment',
+}
+
+# Mapping from LLM column names to regex column names (for Cross-Field compatibility)
+# Cross-Field Insights uses chemical_exposure_grants_filtered.csv which has regex columns
+LLM_TO_REGEX_COL = {
+    'LLM_MECH_INFLAMMATION': 'MECH_INFLAMMATION',  # Not in crossfield - will use regex pattern
+    'LLM_MECH_BARRIER': 'MECH_BARRIER_DISRUPTION',
+    'LLM_MECH_OXIDATIVE': 'MECH_OXIDATIVE_MITOCHONDRIAL',
+    'LLM_MECH_NEURODEGENERATION': 'MECH_NEURODEGENERATION',
+    'LLM_MECH_METABOLIC': None,  # New category - not in crossfield
+    'LLM_MECH_CELL_DEATH': 'MECH_SENESCENCE_CELL_DEATH',
+    'LLM_MECH_MICROBIOME': 'MECH_MICROBIOME',
+    'LLM_MECH_IMMUNE': 'MECH_IMMUNE_DYSFUNCTION',
+    'LLM_MECH_RECEPTOR': 'MECH_RECEPTOR_SIGNALING',
+    'LLM_MECH_DNA_DAMAGE': 'MECH_DNA_DAMAGE',
+    'LLM_MECH_ENDOCRINE': 'MECH_ENDOCRINE',
 }
 
 # Regex patterns for TYPE_ categories (used for dynamic classification in Cross-Field Insights)
@@ -1370,7 +1396,7 @@ def compute_cooccurrence(df: pd.DataFrame) -> dict:
 
 
 @st.cache_data
-def load_data(_cache_version: str = "v15_mech_neuro_fixed") -> pd.DataFrame:
+def load_data(_cache_version: str = "v16_llm_mechanisms") -> pd.DataFrame:
     """Load pre-filtered grant data (6,500 chemical exposure grants + conference abstracts)."""
     if not DATA_PATH.exists():
         return pd.DataFrame()
@@ -1825,7 +1851,7 @@ with tab4:
             pattern = TYPE_PATTERNS[cat_key]
             cat_mask = mp_mask & text_combined.str.contains(pattern, regex=True, flags=re.IGNORECASE, na=False)
         elif cat_key in cf_df.columns:
-            # MECH_ categories use pre-classified columns
+            # LLM_MECH_ or MECH_ columns - use directly
             cat_mask = mp_mask & (cf_df[cat_key] == 1)
         else:
             cat_mask = mp_mask
@@ -1945,13 +1971,12 @@ with tab4:
     mech_label = MECHANISMS_AND_TYPES.get(my_mechanism, my_mechanism) if my_mechanism else "All Categories"
 
     # Check if this is a TYPE_ category that needs regex-based filtering
-    # TYPE_ categories always use regex since they don't have pre-classified columns for other chemicals
     use_regex_filter = my_mechanism and my_mechanism.startswith('TYPE_') and my_mechanism in TYPE_PATTERNS
 
     # Build combined text column for regex matching (used for TYPE_ categories)
     text_combined = cf_df['PROJECT_TITLE'].fillna('') + ' ' + cf_df['ABSTRACT_TEXT'].fillna('')
 
-    # Get grants from MY field (with mechanism filter - now always applied)
+    # Get grants from MY field (with mechanism filter)
     my_field_mask = (cf_df[my_exposure] == 1)
     if my_mechanism:
         if use_regex_filter:
@@ -1959,24 +1984,30 @@ with tab4:
             type_pattern = TYPE_PATTERNS[my_mechanism]
             my_field_mask = my_field_mask & text_combined.str.contains(type_pattern, regex=True, flags=re.IGNORECASE, na=False)
         elif my_mechanism in cf_df.columns:
-            # MECH_ categories: Use pre-classified column
+            # LLM_MECH_ columns now exist in crossfield
             my_field_mask = my_field_mask & (cf_df[my_mechanism] == 1)
     my_grants = cf_df[my_field_mask]
 
     # Get grants from OTHER fields (with mechanism filter)
+    # Note: Non-microplastics grants don't have LLM classifications, so we use regex columns for them
     other_exp_cols = [e for e in EXPOSURES.keys() if e != my_exposure and e in cf_df.columns]
     other_field_mask = (cf_df[other_exp_cols].max(axis=1) > 0) & (cf_df[my_exposure] == 0)
     if my_mechanism:
         if use_regex_filter:
-            # TYPE_ categories: Use regex pattern matching
             type_pattern = TYPE_PATTERNS[my_mechanism]
             other_field_mask = other_field_mask & text_combined.str.contains(type_pattern, regex=True, flags=re.IGNORECASE, na=False)
+        elif my_mechanism.startswith('LLM_MECH_'):
+            # For LLM mechanisms, use corresponding regex column for non-MP grants
+            regex_col = LLM_TO_REGEX_COL.get(my_mechanism)
+            if regex_col and regex_col in cf_df.columns:
+                other_field_mask = other_field_mask & (cf_df[regex_col] == 1)
+            # If no regex column (e.g., LLM_MECH_METABOLIC), other_grants will be empty
         elif my_mechanism in cf_df.columns:
-            # MECH_ categories: Use pre-classified column
             other_field_mask = other_field_mask & (cf_df[my_mechanism] == 1)
     other_grants = cf_df[other_field_mask]
 
     # Count by chemical field for the gap ratio display
+    # Note: Non-microplastics grants use regex columns since they don't have LLM classifications
     chemical_counts = {}
     for exp_col in other_exp_cols:
         if my_mechanism:
@@ -1985,8 +2016,14 @@ with tab4:
                 type_pattern = TYPE_PATTERNS[my_mechanism]
                 type_mask = text_combined.str.contains(type_pattern, regex=True, flags=re.IGNORECASE, na=False)
                 count = ((cf_df[exp_col] == 1) & type_mask & (cf_df[my_exposure] == 0)).sum()
+            elif my_mechanism.startswith('LLM_MECH_'):
+                # For LLM mechanisms, use corresponding regex column for non-MP grants
+                regex_col = LLM_TO_REGEX_COL.get(my_mechanism)
+                if regex_col and regex_col in cf_df.columns:
+                    count = ((cf_df[exp_col] == 1) & (cf_df[regex_col] == 1) & (cf_df[my_exposure] == 0)).sum()
+                else:
+                    count = 0  # No regex equivalent (e.g., LLM_MECH_METABOLIC)
             elif my_mechanism in cf_df.columns:
-                # MECH_ categories: Use pre-classified column
                 count = ((cf_df[exp_col] == 1) & (cf_df[my_mechanism] == 1) & (cf_df[my_exposure] == 0)).sum()
             else:
                 count = ((cf_df[exp_col] == 1) & (cf_df[my_exposure] == 0)).sum()
