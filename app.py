@@ -2324,8 +2324,6 @@ with tab_organ:
         # Deduplicate for all STOMP views
         filtered_stomp = filtered.drop_duplicates(subset=['PROJECT_TITLE'], keep='first')
 
-        st.markdown("#### Which body systems are being studied?")
-
         organ_data = stomp_results['organs']
         if organ_data:
             # Calculate projects with any organ system identified using CSV columns directly
@@ -2338,8 +2336,17 @@ with tab_organ:
                     any_organ_mask = any_organ_mask | (filtered_stomp[col] == 1)
             any_organ = any_organ_mask.sum()
             any_organ_pct = round(100 * any_organ / n_grants, 1) if n_grants > 0 else 0
+            not_categorized = n_grants - any_organ
+            not_categorized_pct = round(100 * not_categorized / n_grants, 1) if n_grants > 0 else 0
             # Sort by count
             sorted_organs = sorted(organ_data.items(), key=lambda x: x[1]['count'], reverse=True)
+
+            # Title and compact stat side by side
+            title_col, info_col = st.columns([1, 1])
+            with title_col:
+                st.markdown("#### Which body systems are being studied?")
+            with info_col:
+                st.markdown(f"<div style='background:#e8f4f8; border-left:3px solid #1f77b4; padding:8px 12px; border-radius:4px; font-size:0.9rem; margin-top:0.5rem;'><strong>{any_organ:,}</strong> projects ({any_organ_pct}%) have organ systems identified</div>", unsafe_allow_html=True)
 
             col1, col2 = st.columns([2, 1])
             with col1:
@@ -2351,11 +2358,6 @@ with tab_organ:
                 organ_table = [{'Organ System': k, 'Projects': v['count'], '%': f"{v['pct']}%"}
                               for k, v in sorted_organs[:8]]
                 st.dataframe(pd.DataFrame(organ_table), hide_index=True, use_container_width=True)
-
-            # Summary stat below the graphs
-            not_categorized = n_grants - any_organ
-            not_categorized_pct = round(100 * not_categorized / n_grants, 1) if n_grants > 0 else 0
-            st.info(f"**{any_organ:,}** projects ({any_organ_pct}%) have at least one organ system identified (remaining {not_categorized_pct}% are general toxicity, environmental monitoring, or methods development studies)")
 
             # Drill-down with selectbox
             organ_options = [f"{name} ({info['count']})" for name, info in sorted_organs if info['count'] > 0]
@@ -2463,8 +2465,6 @@ with tab_model:
         # Deduplicate for all STOMP views
         filtered_stomp = filtered.drop_duplicates(subset=['PROJECT_TITLE'], keep='first')
 
-        st.markdown("#### What model organisms are being used?")
-
         # Calculate projects with any model system identified using pre-classified columns
         n_grants = len(filtered_stomp)
         model_cols = ['MODEL_INVITRO', 'MODEL_RODENT', 'MODEL_ZEBRAFISH', 'MODEL_OTHER_ANIMAL', 'MODEL_HUMAN', 'MODEL_ENVIRONMENTAL']
@@ -2474,6 +2474,13 @@ with tab_model:
                 any_model_mask = any_model_mask | (filtered_stomp[col] == 1)
         any_model = any_model_mask.sum()
         any_model_pct = round(100 * any_model / n_grants, 1) if n_grants > 0 else 0
+
+        # Title and compact stat side by side
+        title_col, info_col = st.columns([1, 1])
+        with title_col:
+            st.markdown("#### What model organisms are being used?")
+        with info_col:
+            st.markdown(f"<div style='background:#e8f4f8; border-left:3px solid #1f77b4; padding:8px 12px; border-radius:4px; font-size:0.9rem; margin-top:0.5rem;'><strong>{any_model:,}</strong> projects ({any_model_pct}%) have model organisms identified</div>", unsafe_allow_html=True)
 
         # Model systems - use pre-classified columns from CSV
         MODEL_COL_MAP = {
@@ -2508,11 +2515,6 @@ with tab_model:
             model_table = [{'Model Organism': k, 'Projects': v['count'], '%': f"{v['pct']}%"}
                           for k, v in sorted_models]
             st.dataframe(pd.DataFrame(model_table), hide_index=True, use_container_width=True)
-
-        # Summary stat below the graphs
-        not_categorized = n_grants - any_model
-        not_categorized_pct = round(100 * not_categorized / n_grants, 1) if n_grants > 0 else 0
-        st.info(f"**{any_model:,}** projects ({any_model_pct}%) have at least one model organism identified (remaining {not_categorized_pct}% are environmental monitoring or methods development)")
 
         # Drill-down
         model_options = [f"{name} ({info['count']})" for name, info in sorted_models if info['count'] > 0]
@@ -2582,9 +2584,6 @@ with tab_model:
                     st.write(abstract)
 
     with tab_mech:
-        st.markdown("#### What biological mechanisms are being studied?")
-        st.caption("*Using pre-classified mechanism columns (same as Cross-Field Insights)*")
-
         # Use pre-classified MECH_* columns from CSV (same as Cross-Field Insights tab)
         # This provides consistent categorization across both tabs
         mech_name_to_key = {}
@@ -2604,6 +2603,21 @@ with tab_model:
             mech_name_to_key[label] = key
 
         if mech_data:
+            # Calculate mechanism stats for header
+            any_mech_mask = pd.Series(False, index=filtered_stomp.index)
+            for label, info in mech_data.items():
+                key = info['key']
+                if key in filtered_stomp.columns:
+                    any_mech_mask = any_mech_mask | (filtered_stomp[key] == 1)
+            any_mech = any_mech_mask.sum()
+            any_pct = round(100 * any_mech / n_grants, 1) if n_grants > 0 else 0
+
+            # Title and compact stat side by side
+            title_col, info_col = st.columns([1, 1])
+            with title_col:
+                st.markdown("#### What biological mechanisms are being studied?")
+            with info_col:
+                st.markdown(f"<div style='background:#e8f4f8; border-left:3px solid #1f77b4; padding:8px 12px; border-radius:4px; font-size:0.9rem; margin-top:0.5rem;'><strong>{any_mech:,}</strong> projects ({any_pct}%) have mechanisms identified</div>", unsafe_allow_html=True)
 
             sorted_mechs = sorted(mech_data.items(), key=lambda x: x[1]['count'], reverse=True)
 
@@ -2617,18 +2631,6 @@ with tab_model:
                 mech_table = [{'Mechanism': k, 'Projects': v['count'], '%': f"{v['pct']}%"}
                               for k, v in sorted_mechs[:10]]
                 st.dataframe(pd.DataFrame(mech_table), hide_index=True, use_container_width=True)
-
-            # Show how many projects have ANY mechanism (using pre-classified columns)
-            any_mech_mask = pd.Series(False, index=filtered_stomp.index)
-            for label, info in mech_data.items():
-                key = info['key']
-                if key in filtered_stomp.columns:
-                    any_mech_mask = any_mech_mask | (filtered_stomp[key] == 1)
-            any_mech = any_mech_mask.sum()
-            any_pct = round(100 * any_mech / n_grants, 1) if n_grants > 0 else 0
-            not_categorized = n_grants - any_mech
-            not_categorized_pct = round(100 * not_categorized / n_grants, 1) if n_grants > 0 else 0
-            st.info(f"**{any_mech:,}** projects ({any_pct}%) have at least one mechanism identified (remaining {not_categorized_pct}% are exposure assessment, environmental fate, or detection methods studies)")
 
             # Drill-down with selectbox
             mech_options = [f"{name} ({info['count']})" for name, info in sorted_mechs if info['count'] > 0]
