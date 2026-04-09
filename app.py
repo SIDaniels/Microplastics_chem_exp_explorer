@@ -541,7 +541,7 @@ st.markdown("""
         color: #0D3B3C;
         border-radius: 8px;
         font-family: 'Source Sans Pro', sans-serif;
-        font-weight: 600;
+        font-weight: 700;
         font-size: 1.3rem;
         padding: 14px 20px;
         border: 2px solid #c5cbc7;
