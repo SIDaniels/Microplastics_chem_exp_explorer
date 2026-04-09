@@ -73,7 +73,7 @@ def paginated_dataframe(df: pd.DataFrame, key: str, page_size: int = 25) -> pd.D
                 st.rerun()
 
         with nav_cols[2]:
-            st.markdown(f"<div style='text-align: center; padding-top: 5px;'>Page {current_page + 1} of {total_pages} ({total_rows} total)</div>", unsafe_allow_html=True)
+            st.markdown(f"<div style='text-align: center; padding-top: 5px;'>Page {current_page + 1} of {total_pages} ({total_rows} results total)</div>", unsafe_allow_html=True)
 
         with nav_cols[3]:
             if st.button("Next ▶", key=f"next_{key}", disabled=current_page >= total_pages - 1):
