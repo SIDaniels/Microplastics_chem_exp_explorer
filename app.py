@@ -2395,12 +2395,14 @@ with tab_model:
 
         col1, col2 = st.columns([2, 1])
         with col1:
-            chart_data = {k: v['count'] for k, v in sorted_models if v['count'] > 0}
+            # Include all model organisms (even with 0 count) for complete view
+            chart_data = {k: v['count'] for k, v in sorted_models}
             if chart_data:
                 chart = create_horizontal_bar_chart(chart_data, value_label="Projects")
                 st.altair_chart(chart, use_container_width=True)
 
         with col2:
+            # Show all model organisms in table
             model_table = [{'Model Organism': k, 'Projects': v['count'], '%': f"{v['pct']}%"}
                           for k, v in sorted_models]
             st.dataframe(pd.DataFrame(model_table), hide_index=True, use_container_width=True)
