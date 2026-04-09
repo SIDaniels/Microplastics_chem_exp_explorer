@@ -721,7 +721,7 @@ MECHANISMS_AND_TYPES = {**MECHANISMS, **CONF_TYPE_CATEGORIES}
 # Common research themes to detect in abstracts
 THEMES = {
     'gut_microbiome': r'gut|intestin|microbiome|gastrointestin|colon',
-    'reproductive': r'reproduct|pregnan|fetal|maternal|placent|utero',
+    'reproductive': r'reproduct(?:ive|ion)|pregnan|fetal|maternal|placent|utero|ovary|ovarian|testes|testicular|fertility|sperm|uterus|uterine',
     'cardiovascular': r'cardiovasc|heart|vascul|atheroscler|blood\s+vessel',
     'neurotoxicity': r'neuro|brain|cognitive|nervous\s+system|BBB',
     'cancer': r'cancer|tumor|carcinogen|oncogen|malignant',
