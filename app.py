@@ -523,6 +523,12 @@ st.markdown("""
         display: none !important;
     }
 
+    /* Reduce spacing around info boxes */
+    .stAlert {
+        margin-top: 0.5rem !important;
+        margin-bottom: 0.5rem !important;
+    }
+
     /* Tabs - styled as obvious clickable buttons spanning full width */
     .stTabs [data-baseweb="tab-list"] {
         gap: 8px;
@@ -2352,7 +2358,6 @@ with tab_organ:
             st.info(f"**{any_organ:,}** projects ({any_organ_pct}%) have at least one organ system identified (remaining {not_categorized_pct}% are general toxicity, environmental monitoring, or methods development studies)")
 
             # Drill-down with selectbox
-            st.markdown("---")
             organ_options = [f"{name} ({info['count']})" for name, info in sorted_organs if info['count'] > 0]
             if organ_options:
                 selected_organ_option = st.selectbox(
@@ -2510,7 +2515,6 @@ with tab_model:
         st.info(f"**{any_model:,}** projects ({any_model_pct}%) have at least one model organism identified (remaining {not_categorized_pct}% are environmental monitoring or methods development)")
 
         # Drill-down
-        st.markdown("---")
         model_options = [f"{name} ({info['count']})" for name, info in sorted_models if info['count'] > 0]
         if model_options:
             selected_model_option = st.selectbox(
@@ -2627,7 +2631,6 @@ with tab_model:
             st.info(f"**{any_mech:,}** projects ({any_pct}%) have at least one mechanism identified (remaining {not_categorized_pct}% are exposure assessment, environmental fate, or detection methods studies)")
 
             # Drill-down with selectbox
-            st.markdown("---")
             mech_options = [f"{name} ({info['count']})" for name, info in sorted_mechs if info['count'] > 0]
             if mech_options:
                 selected_mech_option = st.selectbox(
