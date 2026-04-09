@@ -2669,7 +2669,7 @@ with tab_learnings:
             mnp_display = mnp_type if not pd.isna(mnp_type) else 'Unknown'
             # Add params inline with title if present
             if not pd.isna(key_params) and key_params:
-                mnp_display = f'{mnp_display} <span style="color: #666; font-weight: normal; font-size: 0.95rem;">— {key_params}</span>'
+                mnp_display = f'{mnp_display} <span style="color: #555; font-weight: 400; font-size: 1.1rem;">— {key_params}</span>'
             params_html = ""  # No longer needed as separate element
             analog_display = analog if not pd.isna(analog) else 'N/A'
             source_display = source if not pd.isna(source) else 'N/A'
@@ -2692,16 +2692,18 @@ with tab_learnings:
                 # Pattern 1: numbers immediately after a period (reference style like "ratio.2" or "pathology.6,7")
                 text = re.sub(r'\.(\d+(?:,\d+)*)\b', lambda m: '.' + replace_ref_group(m.group(1)), text)
 
-                # Pattern 2: comma-separated numbers at end of text (like "samples,20,21" or ending with "1,2,3")
-                text = re.sub(r',(\d+(?:,\d+)+)$', lambda m: replace_ref_group(m.group(1)), text)
+                # Pattern 2: reference numbers (single or comma-separated) directly after a lowercase letter or closing paren
+                # Like "response20,25" or ")36,37,38" or ")9" but NOT "PM2.5" or "MP-2"
+                text = re.sub(r'(?<=[a-z\)])(\d{1,2}(?:,\d{1,2})*)(?=[\s\.,;:)\]]|$)', lambda m: replace_ref_group(m.group(1)), text)
 
-                # Pattern 3: standalone reference numbers after comma (like "samples,20" but not "MP-2")
-                text = re.sub(r',(\d{2,})(?=[,\s]|$)', lambda m: replace_ref_group(m.group(1)), text)
+                # Pattern 3: comma followed by reference numbers like ",56,57" or ",36,58"
+                text = re.sub(r',(\d{1,2}(?:,\d{1,2})+)\b', lambda m: replace_ref_group(m.group(1)), text)
 
                 return text
 
             prediction_linked = add_ref_links(prediction)
             experiment_linked = add_ref_links(experiment) if not pd.isna(experiment) and experiment else ''
+            analog_linked = add_ref_links(analog_display)
 
             # Use st.container with custom styling for proper card layout
             with st.container():
@@ -2713,8 +2715,8 @@ with tab_learnings:
                         <span style="background: {status_color}; color: white; padding: 5px 14px; border-radius: 12px; font-size: 0.85rem; font-weight: 500;">{status_text}</span>
                     </div>
                     <div style="display: flex; gap: 0.75rem; margin-bottom: 1rem; flex-wrap: wrap; align-items: center;">
-                        <span style="color: #666; font-size: 0.95rem;">Closest analog:</span>
-                        <span style="background: #46B3A9; color: white; padding: 6px 14px; border-radius: 14px; font-size: 0.95rem; font-weight: 500;">{analog_display}</span>
+                        <span style="color: #0D3B3C; font-size: 1rem; font-weight: 600;">Closest analog:</span>
+                        <span style="background: #e8f4f4; color: #0D3B3C; padding: 6px 14px; border-radius: 14px; font-size: 0.95rem; font-weight: 500; border: 1px solid #46B3A9;">{analog_linked}</span>
                         <span style="color: #666; font-size: 0.95rem;">from</span>
                         <span style="background: #0D3B3C; color: white; padding: 6px 14px; border-radius: 14px; font-size: 0.95rem; font-weight: 500;">{source_display}</span>
                     </div>
