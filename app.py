@@ -1925,10 +1925,6 @@ Understanding microplastics toxicity doesn't require starting from scratch. By i
     category_options_list = list(MECHANISMS_AND_TYPES.keys())
     category_labels = [f"{MECHANISMS_AND_TYPES[k]} ({category_mp_counts.get(k, 0)} grants)" for k in category_options_list]
 
-    # Initialize session state for crossfield category
-    if 'crossfield_category' not in st.session_state:
-        st.session_state.crossfield_category = category_options_list[0] if category_options_list else None
-
     # Two-column layout: selector on left, summary card on right
     sel_col, summary_col = st.columns([1, 2])
 
@@ -1936,32 +1932,24 @@ Understanding microplastics toxicity doesn't require starting from scratch. By i
         st.markdown("##### Microplastics Research Category")
         # Create a mapping for the selectbox
         label_to_key = {label: key for key, label in zip(category_options_list, category_labels)}
-        current_label = f"{MECHANISMS_AND_TYPES[st.session_state.crossfield_category]} ({category_mp_counts.get(st.session_state.crossfield_category, 0)} grants)"
 
         selected_label = st.selectbox(
             "Select category:",
-            category_labels,
-            index=category_labels.index(current_label) if current_label in category_labels else 0,
-            key="cf_category_select",
-            label_visibility="collapsed"
+            ["Select a category..."] + category_labels,
+            key="cf_category_selector"
         )
 
-        # Update session state if changed
-        selected_key = label_to_key.get(selected_label, category_options_list[0])
-        if selected_key != st.session_state.crossfield_category:
-            st.session_state.crossfield_category = selected_key
-            st.rerun()
-
-    my_mechanism = st.session_state.crossfield_category
-    mech_label = MECHANISMS_AND_TYPES.get(my_mechanism, my_mechanism) if my_mechanism else "All Categories"
-    mp_count = category_mp_counts.get(my_mechanism, 0)
+    # Get the mechanism key from the selected label (outside the with block)
+    my_mechanism = label_to_key.get(selected_label) if selected_label != "Select a category..." else None
+    mech_label = MECHANISMS_AND_TYPES.get(my_mechanism, my_mechanism) if my_mechanism else None
+    mp_count = category_mp_counts.get(my_mechanism, 0) if my_mechanism else 0
 
     with summary_col:
-        # Get the static summary for this category
-        summary = CATEGORY_SUMMARIES.get(my_mechanism, "")
-
-        # Build organ/model tags for current category (compute here for display)
         if my_mechanism:
+            # Get the static summary for this category
+            summary = CATEGORY_SUMMARIES.get(my_mechanism, "")
+
+            # Build organ/model tags for current category (compute here for display)
             if my_mechanism.startswith('TYPE_') and my_mechanism in TYPE_PATTERNS:
                 type_pattern = TYPE_PATTERNS[my_mechanism]
                 cat_mask = mp_mask & text_combined.str.contains(type_pattern, regex=True, flags=re.IGNORECASE, na=False)
@@ -1989,333 +1977,337 @@ Understanding microplastics toxicity doesn't require starting from scratch. By i
                 if pct >= 10:
                     cat_models.append((model_name, round(pct, 0)))
             cat_models.sort(key=lambda x: x[1], reverse=True)
-        else:
-            cat_organs = []
-            cat_models = []
 
-        # Styled summary card
-        summary_text = summary if summary else f"{mp_count} microplastics grants studying {mech_label}."
+            # Styled summary card
+            summary_text = summary if summary else f"{mp_count} microplastics grants studying {mech_label}."
 
-        # Build tags HTML
-        tags_html = ""
-        if cat_organs:
-            organ_tags = ' '.join([f'<span style="background: #e8f4f5; color: #0D3B3C; padding: 2px 8px; border-radius: 12px; font-size: 0.75rem;">{org[0]}</span>' for org in cat_organs[:4]])
-            tags_html += f'<div style="margin: 0.5rem 0;"><strong style="color: #666; font-size: 0.8rem;">Organs:</strong> {organ_tags}</div>'
-        if cat_models:
-            model_tags = ' '.join([f'<span style="background: #f5f0e8; color: #8B6914; padding: 2px 8px; border-radius: 12px; font-size: 0.75rem;">{mod[0]}</span>' for mod in cat_models[:4]])
-            tags_html += f'<div style="margin: 0.5rem 0;"><strong style="color: #666; font-size: 0.8rem;">Models:</strong> {model_tags}</div>'
+            # Build tags HTML
+            tags_html = ""
+            if cat_organs:
+                organ_tags = ' '.join([f'<span style="background: #e8f4f5; color: #0D3B3C; padding: 2px 8px; border-radius: 12px; font-size: 0.75rem;">{org[0]}</span>' for org in cat_organs[:4]])
+                tags_html += f'<div style="margin: 0.5rem 0;"><strong style="color: #666; font-size: 0.8rem;">Organs:</strong> {organ_tags}</div>'
+            if cat_models:
+                model_tags = ' '.join([f'<span style="background: #f5f0e8; color: #8B6914; padding: 2px 8px; border-radius: 12px; font-size: 0.75rem;">{mod[0]}</span>' for mod in cat_models[:4]])
+                tags_html += f'<div style="margin: 0.5rem 0;"><strong style="color: #666; font-size: 0.8rem;">Models:</strong> {model_tags}</div>'
 
-        st.markdown(f"""<div style="background: #f8f9fa; padding: 1rem; border-radius: 10px; border-left: 4px solid #0D3B3C;">
+            st.markdown(f"""<div style="background: #f8f9fa; padding: 1rem; border-radius: 10px; border-left: 4px solid #0D3B3C;">
 <h5 style="margin: 0 0 0.5rem 0; color: #0D3B3C; font-size: 1.1rem;">{mech_label} <span style="background: #0D3B3C; color: white; padding: 2px 8px; border-radius: 10px; font-size: 0.8rem; font-weight: normal;">{mp_count} grants</span></h5>
 {tags_html}
 <p style="margin: 0; color: #444; font-size: 0.85rem; line-height: 1.5;">{summary_text}</p>
 </div>""", unsafe_allow_html=True)
+        else:
+            # No category selected - show prompt
+            st.markdown("""<div style="background: #f8f9fa; padding: 1rem; border-radius: 10px; border-left: 4px solid #ccc;">
+<p style="margin: 0; color: #666; font-size: 0.9rem; font-style: italic;">Select a research category to view the summary and find related experts in adjacent fields.</p>
+</div>""", unsafe_allow_html=True)
 
-    # Always run - exposure is fixed to Microplastics
-    exp_label = EXPOSURES.get(my_exposure, my_exposure)
-    mech_label = MECHANISMS_AND_TYPES.get(my_mechanism, my_mechanism) if my_mechanism else "All Categories"
-
-    # Check if this is a TYPE_ category that needs regex-based filtering
-    use_regex_filter = my_mechanism and my_mechanism.startswith('TYPE_') and my_mechanism in TYPE_PATTERNS
-
-    # Build combined text column for regex matching (used for TYPE_ categories)
-    text_combined = cf_df['PROJECT_TITLE'].fillna('') + ' ' + cf_df['ABSTRACT_TEXT'].fillna('')
-
-    # Get grants from MY field (with mechanism filter)
-    my_field_mask = (cf_df[my_exposure] == 1)
+    # Only show results if a category is selected
     if my_mechanism:
-        if use_regex_filter:
-            # TYPE_ categories: Use regex pattern matching
-            type_pattern = TYPE_PATTERNS[my_mechanism]
-            my_field_mask = my_field_mask & text_combined.str.contains(type_pattern, regex=True, flags=re.IGNORECASE, na=False)
-        elif my_mechanism in cf_df.columns:
-            # LLM_MECH_ columns now exist in crossfield
-            my_field_mask = my_field_mask & (cf_df[my_mechanism] == 1)
-    my_grants = cf_df[my_field_mask]
+        # Always run - exposure is fixed to Microplastics
+        exp_label = EXPOSURES.get(my_exposure, my_exposure)
+        mech_label = MECHANISMS_AND_TYPES.get(my_mechanism, my_mechanism) if my_mechanism else "All Categories"
 
-    # Get grants from OTHER fields (with mechanism filter)
-    # Note: Non-microplastics grants don't have LLM classifications, so we use regex columns for them
-    other_exp_cols = [e for e in EXPOSURES.keys() if e != my_exposure and e in cf_df.columns]
-    other_field_mask = (cf_df[other_exp_cols].max(axis=1) > 0) & (cf_df[my_exposure] == 0)
-    if my_mechanism:
-        if use_regex_filter:
-            type_pattern = TYPE_PATTERNS[my_mechanism]
-            other_field_mask = other_field_mask & text_combined.str.contains(type_pattern, regex=True, flags=re.IGNORECASE, na=False)
-        elif my_mechanism.startswith('LLM_MECH_'):
-            # For LLM mechanisms, use corresponding regex column for non-MP grants
-            regex_col = LLM_TO_REGEX_COL.get(my_mechanism)
-            if regex_col and regex_col in cf_df.columns:
-                other_field_mask = other_field_mask & (cf_df[regex_col] == 1)
-            # If no regex column (e.g., LLM_MECH_METABOLIC), other_grants will be empty
-        elif my_mechanism in cf_df.columns:
-            other_field_mask = other_field_mask & (cf_df[my_mechanism] == 1)
-    other_grants = cf_df[other_field_mask]
+        # Check if this is a TYPE_ category that needs regex-based filtering
+        use_regex_filter = my_mechanism and my_mechanism.startswith('TYPE_') and my_mechanism in TYPE_PATTERNS
 
-    # Count by chemical field for the gap ratio display
-    # Note: Non-microplastics grants use regex columns since they don't have LLM classifications
-    chemical_counts = {}
-    for exp_col in other_exp_cols:
+        # Build combined text column for regex matching (used for TYPE_ categories)
+        text_combined = cf_df['PROJECT_TITLE'].fillna('') + ' ' + cf_df['ABSTRACT_TEXT'].fillna('')
+
+        # Get grants from MY field (with mechanism filter)
+        my_field_mask = (cf_df[my_exposure] == 1)
         if my_mechanism:
             if use_regex_filter:
                 # TYPE_ categories: Use regex pattern matching
                 type_pattern = TYPE_PATTERNS[my_mechanism]
-                type_mask = text_combined.str.contains(type_pattern, regex=True, flags=re.IGNORECASE, na=False)
-                count = ((cf_df[exp_col] == 1) & type_mask & (cf_df[my_exposure] == 0)).sum()
+                my_field_mask = my_field_mask & text_combined.str.contains(type_pattern, regex=True, flags=re.IGNORECASE, na=False)
+            elif my_mechanism in cf_df.columns:
+                # LLM_MECH_ columns now exist in crossfield
+                my_field_mask = my_field_mask & (cf_df[my_mechanism] == 1)
+        my_grants = cf_df[my_field_mask]
+
+        # Get grants from OTHER fields (with mechanism filter)
+        # Note: Non-microplastics grants don't have LLM classifications, so we use regex columns for them
+        other_exp_cols = [e for e in EXPOSURES.keys() if e != my_exposure and e in cf_df.columns]
+        other_field_mask = (cf_df[other_exp_cols].max(axis=1) > 0) & (cf_df[my_exposure] == 0)
+        if my_mechanism:
+            if use_regex_filter:
+                type_pattern = TYPE_PATTERNS[my_mechanism]
+                other_field_mask = other_field_mask & text_combined.str.contains(type_pattern, regex=True, flags=re.IGNORECASE, na=False)
             elif my_mechanism.startswith('LLM_MECH_'):
                 # For LLM mechanisms, use corresponding regex column for non-MP grants
                 regex_col = LLM_TO_REGEX_COL.get(my_mechanism)
                 if regex_col and regex_col in cf_df.columns:
-                    count = ((cf_df[exp_col] == 1) & (cf_df[regex_col] == 1) & (cf_df[my_exposure] == 0)).sum()
-                else:
-                    count = 0  # No regex equivalent (e.g., LLM_MECH_METABOLIC)
+                    other_field_mask = other_field_mask & (cf_df[regex_col] == 1)
+                # If no regex column (e.g., LLM_MECH_METABOLIC), other_grants will be empty
             elif my_mechanism in cf_df.columns:
-                count = ((cf_df[exp_col] == 1) & (cf_df[my_mechanism] == 1) & (cf_df[my_exposure] == 0)).sum()
+                other_field_mask = other_field_mask & (cf_df[my_mechanism] == 1)
+        other_grants = cf_df[other_field_mask]
+
+        # Count by chemical field for the gap ratio display
+        # Note: Non-microplastics grants use regex columns since they don't have LLM classifications
+        chemical_counts = {}
+        for exp_col in other_exp_cols:
+            if my_mechanism:
+                if use_regex_filter:
+                    # TYPE_ categories: Use regex pattern matching
+                    type_pattern = TYPE_PATTERNS[my_mechanism]
+                    type_mask = text_combined.str.contains(type_pattern, regex=True, flags=re.IGNORECASE, na=False)
+                    count = ((cf_df[exp_col] == 1) & type_mask & (cf_df[my_exposure] == 0)).sum()
+                elif my_mechanism.startswith('LLM_MECH_'):
+                    # For LLM mechanisms, use corresponding regex column for non-MP grants
+                    regex_col = LLM_TO_REGEX_COL.get(my_mechanism)
+                    if regex_col and regex_col in cf_df.columns:
+                        count = ((cf_df[exp_col] == 1) & (cf_df[regex_col] == 1) & (cf_df[my_exposure] == 0)).sum()
+                    else:
+                        count = 0  # No regex equivalent (e.g., LLM_MECH_METABOLIC)
+                elif my_mechanism in cf_df.columns:
+                    count = ((cf_df[exp_col] == 1) & (cf_df[my_mechanism] == 1) & (cf_df[my_exposure] == 0)).sum()
+                else:
+                    count = ((cf_df[exp_col] == 1) & (cf_df[my_exposure] == 0)).sum()
             else:
                 count = ((cf_df[exp_col] == 1) & (cf_df[my_exposure] == 0)).sum()
-        else:
-            count = ((cf_df[exp_col] == 1) & (cf_df[my_exposure] == 0)).sum()
-        if count > 0:
-            chemical_counts[EXPOSURES.get(exp_col, exp_col)] = count
+            if count > 0:
+                chemical_counts[EXPOSURES.get(exp_col, exp_col)] = count
 
-    # Sort by count
-    sorted_chemicals = sorted(chemical_counts.items(), key=lambda x: x[1], reverse=True)
+        # Sort by count
+        sorted_chemicals = sorted(chemical_counts.items(), key=lambda x: x[1], reverse=True)
 
-    # Gap ratio stats bar
-    st.markdown("---")
-    gap_ratio = len(other_grants) / len(my_grants) if len(my_grants) > 0 else 0
+        # Gap ratio stats bar
+        st.markdown("---")
+        gap_ratio = len(other_grants) / len(my_grants) if len(my_grants) > 0 else 0
 
-    # Styled stats bar
-    st.markdown(f"""
-    <div style="background: linear-gradient(90deg, #0D3B3C 0%, #1a5a5c 100%); padding: 1rem 1.5rem; border-radius: 10px; margin-bottom: 1rem;">
-        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
-            <div style="text-align: center;">
-                <div style="color: #46B3A9; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px;">Microplastics</div>
-                <div style="color: white; font-size: 1.8rem; font-weight: 700;">{len(my_grants):,}</div>
-                <div style="color: rgba(255,255,255,0.7); font-size: 0.85rem;">grants</div>
-            </div>
-            <div style="text-align: center;">
-                <div style="color: #D4A84B; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px;">Other Chemicals</div>
-                <div style="color: white; font-size: 1.8rem; font-weight: 700;">{len(other_grants):,}</div>
-                <div style="color: rgba(255,255,255,0.7); font-size: 0.85rem;">grants</div>
-            </div>
-            <div style="text-align: center;">
-                <div style="color: #D4A84B; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px;">Gap Ratio</div>
-                <div style="color: #D4A84B; font-size: 1.8rem; font-weight: 700;">{gap_ratio:.1f}x</div>
-                <div style="color: rgba(255,255,255,0.7); font-size: 0.85rem;">more established</div>
+        # Styled stats bar
+        st.markdown(f"""
+        <div style="background: linear-gradient(90deg, #0D3B3C 0%, #1a5a5c 100%); padding: 1rem 1.5rem; border-radius: 10px; margin-bottom: 1rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+                <div style="text-align: center;">
+                    <div style="color: #46B3A9; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px;">Microplastics</div>
+                    <div style="color: white; font-size: 1.8rem; font-weight: 700;">{len(my_grants):,}</div>
+                    <div style="color: rgba(255,255,255,0.7); font-size: 0.85rem;">grants</div>
+                </div>
+                <div style="text-align: center;">
+                    <div style="color: #D4A84B; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px;">Other Chemicals</div>
+                    <div style="color: white; font-size: 1.8rem; font-weight: 700;">{len(other_grants):,}</div>
+                    <div style="color: rgba(255,255,255,0.7); font-size: 0.85rem;">grants</div>
+                </div>
+                <div style="text-align: center;">
+                    <div style="color: #D4A84B; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px;">Gap Ratio</div>
+                    <div style="color: #D4A84B; font-size: 1.8rem; font-weight: 700;">{gap_ratio:.1f}x</div>
+                    <div style="color: rgba(255,255,255,0.7); font-size: 0.85rem;">more established</div>
+                </div>
             </div>
         </div>
-    </div>
-    """, unsafe_allow_html=True)
+        """, unsafe_allow_html=True)
 
-    # Show top chemical fields for this category
-    if sorted_chemicals:
-        top_chems = sorted_chemicals[:5]
-        chem_items = []
-        for name, count in top_chems:
-            grant_word = "grant" if count == 1 else "grants"
-            chem_items.append(f'<span style="display: inline-block; background: rgba(70,179,169,0.2); padding: 6px 12px; border-radius: 16px; margin: 3px 6px 3px 0; font-size: 0.9rem;"><strong>{name}</strong> <span style="background: rgba(70,179,169,0.4); padding: 2px 6px; border-radius: 10px; margin-left: 4px; font-size: 0.8rem;">{count:,} {grant_word}</span></span>')
-        chem_badges = " ".join(chem_items)
-        st.markdown(f'<div style="margin-bottom: 1rem; padding: 12px 16px; background: #f8f9fa; border-radius: 8px; border-left: 4px solid #46B3A9;"><div style="font-weight: 600; margin-bottom: 8px;">Top research fields also studying {mech_label}:</div><div>{chem_badges}</div></div>', unsafe_allow_html=True)
+        # Show top chemical fields for this category
+        if sorted_chemicals:
+            top_chems = sorted_chemicals[:5]
+            chem_items = []
+            for name, count in top_chems:
+                grant_word = "grant" if count == 1 else "grants"
+                chem_items.append(f'<span style="display: inline-block; background: rgba(70,179,169,0.2); padding: 6px 12px; border-radius: 16px; margin: 3px 6px 3px 0; font-size: 0.9rem;"><strong>{name}</strong> <span style="background: rgba(70,179,169,0.4); padding: 2px 6px; border-radius: 10px; margin-left: 4px; font-size: 0.8rem;">{count:,} {grant_word}</span></span>')
+            chem_badges = " ".join(chem_items)
+            st.markdown(f'<div style="margin-bottom: 1rem; padding: 12px 16px; background: #f8f9fa; border-radius: 8px; border-left: 4px solid #46B3A9;"><div style="font-weight: 600; margin-bottom: 8px;">Top research fields also studying {mech_label}:</div><div>{chem_badges}</div></div>', unsafe_allow_html=True)
 
-    # Secondary filters row - moved below "Top research fields"
-    st.markdown("<div style='height: 12px'></div>", unsafe_allow_html=True)
-    col1, col2 = st.columns(2)
-    with col1:
-        model_options = ["All Models", "In Vitro (Cells)", "Animal (Rodent)", "Animal (Zebrafish)", "Human (Cohort/Epi)", "Human (Clinical)"]
-        model_filter = st.selectbox(
-            "Filter by model organism:",
-            model_options,
-            key='crossfield_model'
-        )
-    with col2:
-        # Keyword search field
-        keyword_search = st.text_input(
-            "Search by keyword (regex supported):",
-            placeholder="e.g., gut|intestin, inflam.*, NF.?kB",
-            help="Supports regex patterns: 'gut|intestin' (OR), 'inflam.*' (wildcard), 'NF.?kB' (optional char). Plain text also works.",
-            key='crossfield_keyword'
-        )
-
-    if len(my_grants) > 0:
-        my_text = my_grants['PROJECT_TITLE'].fillna('') + ' ' + my_grants['ABSTRACT_TEXT'].fillna('')
-
-        # Find which organ systems are most studied in source field
-        my_organs = []
-        for key, (label, pattern) in ORGAN_SYSTEMS.items():
-            matches = my_text.str.contains(pattern, regex=True, flags=re.IGNORECASE, na=False)
-            pct = 100 * matches.sum() / len(my_text)
-            if pct >= 10:
-                my_organs.append((label, round(pct, 0)))
-        my_organs.sort(key=lambda x: x[1], reverse=True)
-
-        # Find which model systems are used in source field
-        my_models = []
-        for model_name, pattern in MODEL_SYSTEMS.items():
-            matches = my_text.str.contains(pattern, regex=True, flags=re.IGNORECASE, na=False)
-            pct = 100 * matches.sum() / len(my_text)
-            if pct >= 10:
-                my_models.append((model_name, round(pct, 0)))
-        my_models.sort(key=lambda x: x[1], reverse=True)
-
-        if len(other_grants) > 0:
-            # Compute similarity scores with enhanced weighting
-            scored_grants = compute_grant_similarity(
-                my_grants, other_grants,
-                selected_category=my_mechanism,
-                keyword_filter=keyword_search
+        # Secondary filters row - moved below "Top research fields"
+        st.markdown("<div style='height: 12px'></div>", unsafe_allow_html=True)
+        col1, col2 = st.columns(2)
+        with col1:
+            model_options = ["All Models", "In Vitro (Cells)", "Animal (Rodent)", "Animal (Zebrafish)", "Human (Cohort/Epi)", "Human (Clinical)"]
+            model_filter = st.selectbox(
+                "Filter by model organism:",
+                model_options,
+                key='crossfield_model'
+            )
+        with col2:
+            # Keyword search field
+            keyword_search = st.text_input(
+                "Search by keyword (regex supported):",
+                placeholder="e.g., gut|intestin, inflam.*, NF.?kB",
+                help="Supports regex patterns: 'gut|intestin' (OR), 'inflam.*' (wildcard), 'NF.?kB' (optional char). Plain text also works.",
+                key='crossfield_keyword'
             )
 
-            # Apply keyword filter - exclude grants that don't match the keyword regex
-            if keyword_search and keyword_search.strip():
-                # Filter to only grants that matched the keyword (have "Keyword:" in matching_features)
-                scored_grants = scored_grants[scored_grants['matching_features'].str.contains('Keyword:', na=False)]
-                if len(scored_grants) == 0:
-                    st.warning(f"No grants matched keyword filter: '{keyword_search}'")
+        if len(my_grants) > 0:
+            my_text = my_grants['PROJECT_TITLE'].fillna('') + ' ' + my_grants['ABSTRACT_TEXT'].fillna('')
 
-            # Group by project and keep highest similarity score
-            if 'CORE_PROJECT_NUM' in scored_grants.columns:
-                # For grouping, we need to get the best matching themes per project
-                def best_match(group):
-                    best_idx = group['similarity_score'].idxmax()
-                    return group.loc[best_idx]
+            # Find which organ systems are most studied in source field
+            my_organs = []
+            for key, (label, pattern) in ORGAN_SYSTEMS.items():
+                matches = my_text.str.contains(pattern, regex=True, flags=re.IGNORECASE, na=False)
+                pct = 100 * matches.sum() / len(my_text)
+                if pct >= 10:
+                    my_organs.append((label, round(pct, 0)))
+            my_organs.sort(key=lambda x: x[1], reverse=True)
 
-                inspiring = scored_grants.groupby('CORE_PROJECT_NUM').apply(best_match, include_groups=False).reset_index(drop=True)
-                inspiring = inspiring.sort_values('similarity_score', ascending=False)
+            # Find which model systems are used in source field
+            my_models = []
+            for model_name, pattern in MODEL_SYSTEMS.items():
+                matches = my_text.str.contains(pattern, regex=True, flags=re.IGNORECASE, na=False)
+                pct = 100 * matches.sum() / len(my_text)
+                if pct >= 10:
+                    my_models.append((model_name, round(pct, 0)))
+            my_models.sort(key=lambda x: x[1], reverse=True)
 
-                # Apply model system filter
-                if model_filter != "All Models":
-                    inspiring = inspiring[inspiring['model_system'] == model_filter]
+            if len(other_grants) > 0:
+                # Compute similarity scores with enhanced weighting
+                scored_grants = compute_grant_similarity(
+                    my_grants, other_grants,
+                    selected_category=my_mechanism,
+                    keyword_filter=keyword_search
+                )
 
-                # Add chemical field info
-                def get_exposures(row):
-                    exps = []
-                    for exp in other_exp_cols:
-                        if exp in row and row[exp] == 1:
-                            # Get short name: everything before ( or &
-                            full_name = EXPOSURES.get(exp, exp)
-                            if '(' in full_name:
-                                exp_name = full_name.split('(')[0].strip()
-                            elif '&' in full_name:
-                                exp_name = full_name.split('&')[0].strip()
-                            else:
-                                exp_name = full_name
-                            exps.append(exp_name)
-                    return ', '.join(exps)
+                # Apply keyword filter - exclude grants that don't match the keyword regex
+                if keyword_search and keyword_search.strip():
+                    # Filter to only grants that matched the keyword (have "Keyword:" in matching_features)
+                    scored_grants = scored_grants[scored_grants['matching_features'].str.contains('Keyword:', na=False)]
+                    if len(scored_grants) == 0:
+                        st.warning(f"No grants matched keyword filter: '{keyword_search}'")
 
-                inspiring['Chemical(s)'] = inspiring.apply(get_exposures, axis=1)
+                # Group by project and keep highest similarity score
+                if 'CORE_PROJECT_NUM' in scored_grants.columns:
+                    # For grouping, we need to get the best matching themes per project
+                    def best_match(group):
+                        best_idx = group['similarity_score'].idxmax()
+                        return group.loc[best_idx]
 
-                # Initialize selection variable before conditional
-                inspiring_selection = None
+                    inspiring = scored_grants.groupby('CORE_PROJECT_NUM').apply(best_match, include_groups=False).reset_index(drop=True)
+                    inspiring = inspiring.sort_values('similarity_score', ascending=False)
 
-                if len(inspiring) == 0:
-                    st.info(f"No grants found with model organism: {model_filter}")
-                else:
-                    # Format for display - PI first, then chemical badge, title, model
-                    display_cols = ['PI_NAMEs', 'Chemical(s)', 'PROJECT_TITLE', 'model_system', 'ORG_NAME']
-                    display_cols = [c for c in display_cols if c in inspiring.columns]
+                    # Apply model system filter
+                    if model_filter != "All Models":
+                        inspiring = inspiring[inspiring['model_system'] == model_filter]
 
-                    # Prepare full dataframe for pagination
-                    full_display_df = inspiring[display_cols].copy()
-                    if 'PI_NAMEs' in full_display_df.columns:
-                        full_display_df['PI_NAMEs'] = full_display_df['PI_NAMEs'].apply(clean_pi_names)
-                    col_rename = {
-                        'PI_NAMEs': 'Expert / Contact Researcher',
-                        'Chemical(s)': 'Chemical Field',
-                        'PROJECT_TITLE': 'Project Title',
-                        'model_system': 'Model',
-                        'ORG_NAME': 'Institution'
-                    }
-                    full_display_df.columns = [col_rename.get(c, c) for c in display_cols]
+                    # Add chemical field info
+                    def get_exposures(row):
+                        exps = []
+                        for exp in other_exp_cols:
+                            if exp in row and row[exp] == 1:
+                                # Get short name: everything before ( or &
+                                full_name = EXPOSURES.get(exp, exp)
+                                if '(' in full_name:
+                                    exp_name = full_name.split('(')[0].strip()
+                                elif '&' in full_name:
+                                    exp_name = full_name.split('&')[0].strip()
+                                else:
+                                    exp_name = full_name
+                                exps.append(exp_name)
+                        return ', '.join(exps)
 
-                    st.caption(f"Found **{len(inspiring):,}** experts - click a row to view details")
+                    inspiring['Chemical(s)'] = inspiring.apply(get_exposures, axis=1)
 
-                    # Paginate the results (25 per page)
-                    display_df = paginated_dataframe(full_display_df, key="crossfield_experts", page_size=25)
+                    # Initialize selection variable before conditional
+                    inspiring_selection = None
 
-                    inspiring_selection = st.dataframe(
-                        display_df,
-                        hide_index=True,
-                        use_container_width=True,
-                        on_select="rerun",
-                        selection_mode="single-row",
-                        column_config={
-                            "Project Title": st.column_config.TextColumn("Project Title", width="large"),
-                            "Chemical Field": st.column_config.TextColumn("Chemical Field", width="medium"),
-                            "Expert / Contact Researcher": st.column_config.TextColumn("Expert / Contact Researcher", width="small"),
+                    if len(inspiring) == 0:
+                        st.info(f"No grants found with model organism: {model_filter}")
+                    else:
+                        # Format for display - PI first, then chemical badge, title, model
+                        display_cols = ['PI_NAMEs', 'Chemical(s)', 'PROJECT_TITLE', 'model_system', 'ORG_NAME']
+                        display_cols = [c for c in display_cols if c in inspiring.columns]
+
+                        # Prepare full dataframe for pagination
+                        full_display_df = inspiring[display_cols].copy()
+                        if 'PI_NAMEs' in full_display_df.columns:
+                            full_display_df['PI_NAMEs'] = full_display_df['PI_NAMEs'].apply(clean_pi_names)
+                        col_rename = {
+                            'PI_NAMEs': 'Expert / Contact Researcher',
+                            'Chemical(s)': 'Chemical Field',
+                            'PROJECT_TITLE': 'Project Title',
+                            'model_system': 'Model',
+                            'ORG_NAME': 'Institution'
                         }
-                    )
+                        full_display_df.columns = [col_rename.get(c, c) for c in display_cols]
 
-                    # CSV download button for all expert studies
-                    export_cols = ['PI_NAMEs', 'ORG_NAME', 'PROJECT_TITLE', 'Chemical(s)', 'model_system', 'ABSTRACT_TEXT', 'similarity_score']
-                    export_cols = [c for c in export_cols if c in inspiring.columns]
-                    export_df = inspiring[export_cols].copy()
-                    export_df.columns = ['PI', 'Institution', 'Project Title', 'Chemical Field', 'Model Organism', 'Abstract', 'Relevance Score'][:len(export_cols)]
-                    csv_data = export_df.to_csv(index=False)
-                    cat_slug = mech_label.lower().replace(' ', '_').replace('/', '_')[:20]
-                    st.download_button(
-                        label=f"Download All {len(inspiring):,} Expert Studies (CSV)",
-                        data=csv_data,
-                        file_name=f"crossfield_experts_{cat_slug}.csv",
-                        mime="text/csv",
-                        key=f"cf_download_{cat_slug}"
-                    )
+                        st.caption(f"Found **{len(inspiring):,}** experts - click a row to view details")
 
-                # Show grant details for selected row
-                if inspiring_selection and inspiring_selection.selection and inspiring_selection.selection.rows:
-                    selected_idx = inspiring_selection.selection.rows[0]
-                    orig = inspiring.iloc[selected_idx]
+                        # Paginate the results (25 per page)
+                        display_df = paginated_dataframe(full_display_df, key="crossfield_experts", page_size=25)
 
-                    st.markdown("---")
-                    st.markdown("### Expert Details")
+                        inspiring_selection = st.dataframe(
+                            display_df,
+                            hide_index=True,
+                            use_container_width=True,
+                            on_select="rerun",
+                            selection_mode="single-row",
+                            column_config={
+                                "Project Title": st.column_config.TextColumn("Project Title", width="large"),
+                                "Chemical Field": st.column_config.TextColumn("Chemical Field", width="medium"),
+                                "Expert / Contact Researcher": st.column_config.TextColumn("Expert / Contact Researcher", width="medium"),
+                            }
+                        )
 
-                    # Get chemical field badge
-                    chem_field = orig.get('Chemical(s)', 'Unknown')
+                        # CSV download button for all expert studies
+                        export_cols = ['PI_NAMEs', 'ORG_NAME', 'PROJECT_TITLE', 'Chemical(s)', 'model_system', 'ABSTRACT_TEXT', 'similarity_score']
+                        export_cols = [c for c in export_cols if c in inspiring.columns]
+                        export_df = inspiring[export_cols].copy()
+                        export_df.columns = ['PI', 'Institution', 'Project Title', 'Chemical Field', 'Model Organism', 'Abstract', 'Relevance Score'][:len(export_cols)]
+                        csv_data = export_df.to_csv(index=False)
+                        cat_slug = mech_label.lower().replace(' ', '_').replace('/', '_')[:20]
+                        st.download_button(
+                            label=f"Download All {len(inspiring):,} Expert Studies (CSV)",
+                            data=csv_data,
+                            file_name=f"crossfield_experts_{cat_slug}.csv",
+                            mime="text/csv",
+                            key=f"cf_download_{cat_slug}"
+                        )
 
-                    st.markdown(f"""
-                    <div style="background: white; padding: 1.5rem; border-radius: 8px; border: 1px solid rgba(13,59,60,0.15); margin-top: 1rem;">
-                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.75rem;">
-                            <div>
-                                <p style="color: #0D3B3C; font-size: 1.2rem; font-weight: 700; margin: 0;">{clean_pi_names(orig.get('PI_NAMEs', 'Unknown'))}</p>
-                                <p style="color: #666; margin: 0.25rem 0 0 0; font-size: 0.9rem;">{orig.get('ORG_NAME', 'Unknown')}</p>
-                            </div>
-                            <div style="background: linear-gradient(135deg, #46B3A9 0%, #0D3B3C 100%); color: white; padding: 6px 14px; border-radius: 16px; font-size: 0.85rem; font-weight: 600;">
-                                {chem_field}
-                            </div>
-                        </div>
-                        <p style="color: #333; margin: 0.75rem 0 0 0; font-size: 0.95rem;"><strong>Project:</strong> {orig['PROJECT_TITLE']}</p>
-                    </div>
-                    """, unsafe_allow_html=True)
+                    # Show grant details for selected row
+                    if inspiring_selection and inspiring_selection.selection and inspiring_selection.selection.rows:
+                        selected_idx = inspiring_selection.selection.rows[0]
+                        orig = inspiring.iloc[selected_idx]
 
-                    # Show why this is relevant
-                    if orig.get('matching_features'):
+                        st.markdown("---")
+                        st.markdown("### Expert Details")
+
+                        # Get chemical field badge
+                        chem_field = orig.get('Chemical(s)', 'Unknown')
+
                         st.markdown(f"""
-                        <div style="background: rgba(70,179,169,0.1); padding: 0.75rem 1rem; border-radius: 6px; margin-top: 0.75rem; border-left: 3px solid #46B3A9;">
-                            <strong style="color: #0D3B3C;">Thematic overlap:</strong> {orig['matching_features']}
+                        <div style="background: white; padding: 1.5rem; border-radius: 8px; border: 1px solid rgba(13,59,60,0.15); margin-top: 1rem;">
+                            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.75rem;">
+                                <div>
+                                    <p style="color: #0D3B3C; font-size: 1.2rem; font-weight: 700; margin: 0;">{clean_pi_names(orig.get('PI_NAMEs', 'Unknown'))}</p>
+                                    <p style="color: #666; margin: 0.25rem 0 0 0; font-size: 0.9rem;">{orig.get('ORG_NAME', 'Unknown')}</p>
+                                </div>
+                                <div style="background: linear-gradient(135deg, #46B3A9 0%, #0D3B3C 100%); color: white; padding: 6px 14px; border-radius: 16px; font-size: 0.85rem; font-weight: 600;">
+                                    {chem_field}
+                                </div>
+                            </div>
+                            <p style="color: #333; margin: 0.75rem 0 0 0; font-size: 0.95rem;"><strong>Project:</strong> {orig['PROJECT_TITLE']}</p>
                         </div>
                         """, unsafe_allow_html=True)
 
-                    # Show what exposures/mechanisms this grant has
-                    col1, col2 = st.columns(2)
-                    with col1:
-                        grant_exps = [EXPOSURES[e] for e in EXPOSURES.keys() if e in orig.index and orig[e] == 1]
-                        if grant_exps:
-                            st.markdown(f"**Chemical exposures:** {', '.join(grant_exps)}")
-                    with col2:
-                        grant_mechs = [MECHANISMS[m] for m in MECHANISMS.keys() if m in orig.index and orig[m] == 1]
-                        if grant_mechs:
-                            st.markdown(f"**Mechanisms:** {', '.join(grant_mechs)}")
+                        # Show why this is relevant
+                        if orig.get('matching_features'):
+                            st.markdown(f"""
+                            <div style="background: rgba(70,179,169,0.1); padding: 0.75rem 1rem; border-radius: 6px; margin-top: 0.75rem; border-left: 3px solid #46B3A9;">
+                                <strong style="color: #0D3B3C;">Thematic overlap:</strong> {orig['matching_features']}
+                            </div>
+                            """, unsafe_allow_html=True)
 
-                    abstract = orig.get('ABSTRACT_TEXT', 'No abstract available')
-                    if pd.isna(abstract):
-                        abstract = 'No abstract available'
-                    st.markdown("**Abstract:**")
-                    st.write(abstract)
+                        # Show what exposures/mechanisms this grant has
+                        col1, col2 = st.columns(2)
+                        with col1:
+                            grant_exps = [EXPOSURES[e] for e in EXPOSURES.keys() if e in orig.index and orig[e] == 1]
+                            if grant_exps:
+                                st.markdown(f"**Chemical exposures:** {', '.join(grant_exps)}")
+                        with col2:
+                            grant_mechs = [MECHANISMS[m] for m in MECHANISMS.keys() if m in orig.index and orig[m] == 1]
+                            if grant_mechs:
+                                st.markdown(f"**Mechanisms:** {', '.join(grant_mechs)}")
+
+                        abstract = orig.get('ABSTRACT_TEXT', 'No abstract available')
+                        if pd.isna(abstract):
+                            abstract = 'No abstract available'
+                        st.markdown("**Abstract:**")
+                        st.write(abstract)
+                else:
+                    st.info(f"No grants found studying {mech_label} in other chemical fields.")
             else:
-                st.info(f"No grants found studying {mech_label} in other chemical fields.")
+                st.warning(f"Not enough data to build a research profile for {exp_label} + {mech_label}. Try a different combination.")
         else:
-            st.warning(f"Not enough data to build a research profile for {exp_label} + {mech_label}. Try a different combination.")
-    else:
-        st.info(f"No grants found for {exp_label} + {mech_label}. Try a different combination.")
+            st.info(f"No grants found for {exp_label} + {mech_label}. Try a different combination.")
 
 # Organ Systems Tab
 with tab_organ:
