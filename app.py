@@ -1682,9 +1682,6 @@ with tab1:
     st.markdown("""
     <div style="background-color: #f0f7f7; border-left: 4px solid #0D3B3C; padding: 12px 16px; margin-bottom: 16px; border-radius: 0 8px 8px 0;">
         <strong>About this database:</strong> Staying ahead of the curve on research for emerging pollutants, like microplastics, is a challenge. Explore the latest on funded microplastics research from <a href="https://reporter.nih.gov/" target="_blank" style="color: #0D3B3C;">NIH grants</a> (FY2022-2025) and the inaugural <a href="https://hsc.unm.edu/pharmacy/research/areas/cmbm/mnp-conf/_docs/full-digital-program.pdf" target="_blank" style="color: #0D3B3C;">UNM Micro- and Nanoplastics Conference</a>. Check out details based on the affected organ, model organism, molecular mechanism, or your own query. Use <strong>Cross-Field Insights</strong> to find similar approaches for other pollutants and research experts who could directly apply their work to microplastics.
-        <br><br>
-        <em>This tool is in beta and your feedback is welcomed! <a href="https://www.engineeredresilience.org/contact" target="_blank" style="color: #0D3B3C;">Drop us a line</a> to report any issues or let us know how to improve.</em>
-        <br><span style="color: #666; font-size: 0.85em;">Note: Initial loading may take a few seconds.</span>
     </div>
     """, unsafe_allow_html=True)
 
