@@ -2390,7 +2390,6 @@ with tab_organ:
                     organ_grants = filtered_stomp[organ_matches].copy()
 
                     st.markdown(f"### {selected_organ}")
-                    st.markdown(f"**{len(organ_grants):,} projects** studying this system")
 
                     display_cols = ['PROJECT_TITLE', 'PI_NAMEs', 'ORG_NAME', 'FISCAL_YEAR']
                     display_cols = [c for c in display_cols if c in organ_grants.columns]
