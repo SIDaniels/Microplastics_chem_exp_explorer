@@ -1391,7 +1391,7 @@ def load_data(_cache_version: str = "v15_mech_neuro_fixed") -> pd.DataFrame:
 
 
 @st.cache_data
-def load_crossfield_data(_cache_version: str = "v1_crossfield") -> pd.DataFrame:
+def load_crossfield_data(_cache_version: str = "v2_neuro_fixed") -> pd.DataFrame:
     """Load full chemical exposure dataset for Cross-Field Insights comparison."""
     if not CROSSFIELD_DATA_PATH.exists():
         return pd.DataFrame()
