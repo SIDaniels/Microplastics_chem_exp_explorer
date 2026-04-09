@@ -1881,7 +1881,11 @@ with tab4:
 
     st.markdown("""
     <div style="background-color: #f0f7f7; border-left: 4px solid #0D3B3C; padding: 12px 16px; margin-bottom: 16px; border-radius: 0 8px 8px 0;">
-Understanding microplastics toxicity doesn't require starting from scratch. By identifying research in adjacent fields that studies the same biological mechanisms, you can discover established methods, model systems, and expert collaborators whose work directly informs microplastics research. Choose a studied microplastics mechanism (like inflammatory or metabolic) to view the overall summary of the field, then see the resulting list of researchers working on the same mechanism but in the context of other pollutants.
+Understanding microplastics toxicity doesn't require starting from scratch. By identifying research in adjacent fields that studies the same biological mechanisms, you can discover established methods, model systems, and expert collaborators whose work directly informs microplastics research.
+        <br><br>
+        <strong>Step 1:</strong> Choose a studied microplastics research category (e.g., detection, microbiome) to view the overall summary of what's currently studied in this microplastics subfield.
+        <br>
+        <strong>Step 2:</strong> Query and export the resulting list of researchers who have been recently funded to work on the same mechanism but in the context of other pollutants.
         <br><br>
         <em style="color: #666;">In beta, co-worked with Claude</em>
     </div>
