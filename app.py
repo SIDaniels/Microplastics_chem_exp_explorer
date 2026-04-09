@@ -1561,7 +1561,11 @@ if group_by_project:
 else:
     filtered_display = filtered
 
-# Co-occurrence stats removed - not currently used, improves load time
+# Compute co-occurrence stats (full dataset for suggestions)
+cooccur = compute_cooccurrence(df)
+
+# Compute dynamic stats on filtered data
+cooccur_filtered = compute_cooccurrence(filtered) if len(filtered) > 0 else {}
 
 # ============== SUMMARY CARD & ACTIVE FILTERS ==============
 # Get deduplicated data for summary
@@ -1575,7 +1579,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # Main content - tabs
-tab1, tab_organ, tab_model, tab_mech, tab4 = st.tabs(["Projects", "Organ Systems", "Model Systems", "Mechanisms", "Cross-Field Insights"])
+tab1, tab_organ, tab_model, tab_mech, tab4 = st.tabs(["Projects", "Organ Systems", "Model Organisms", "Mechanisms", "Cross-Field Insights"])
 
 with tab1:
     # About this database info box with hyperlinks
@@ -1777,13 +1781,13 @@ with tab1:
         st.info("No grants match your filters. Try broadening your search.")
 
 with tab4:
-    st.subheader("Accelerate microplastics research by learning from adjacent fields")
+    st.markdown("#### Who is studying similar topics with other pollutants?")
 
     st.markdown("""
     <div style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); padding: 1rem; border-radius: 8px; margin-bottom: 1rem; border-left: 4px solid #D4A84B;">
         <p style="margin: 0; font-size: 0.95rem; color: #333;">
             Select a research category below to see NIH-funded experts studying that topic with other pollutants (pesticides, heavy metals, air pollution, etc.).
-            Their validated methods, model systems, and mechanistic insights can be adapted for microplastics work—saving years of method development.
+            Their validated methods, model organisms, and mechanistic insights can be adapted for microplastics work—saving years of method development.
         </p>
     </div>
     """, unsafe_allow_html=True)
@@ -1823,7 +1827,7 @@ with tab4:
     sel_col, summary_col = st.columns([1, 2])
 
     with sel_col:
-        st.markdown("#### Microplastics Research Category")
+        st.markdown("##### Microplastics Research Category")
         # Create a mapping for the selectbox
         label_to_key = {label: key for key, label in zip(category_options_list, category_labels)}
         current_label = f"{MECHANISMS_AND_TYPES[st.session_state.crossfield_category]} ({category_mp_counts.get(st.session_state.crossfield_category, 0)} grants)"
@@ -1896,9 +1900,9 @@ with tab4:
             tags_html += f'<div style="margin: 0.5rem 0;"><strong style="color: #666; font-size: 0.8rem;">Models:</strong> {model_tags}</div>'
 
         st.markdown(f"""<div style="background: #f8f9fa; padding: 1rem; border-radius: 10px; border-left: 4px solid #0D3B3C;">
-<h4 style="margin: 0 0 0.5rem 0; color: #0D3B3C;">{mech_label} <span style="background: #0D3B3C; color: white; padding: 2px 8px; border-radius: 10px; font-size: 0.8rem; font-weight: normal;">{mp_count} grants</span></h4>
+<h5 style="margin: 0 0 0.5rem 0; color: #0D3B3C; font-size: 1.1rem;">{mech_label} <span style="background: #0D3B3C; color: white; padding: 2px 8px; border-radius: 10px; font-size: 0.8rem; font-weight: normal;">{mp_count} grants</span></h5>
 {tags_html}
-<p style="margin: 0; color: #444; font-size: 0.9rem; line-height: 1.5;">{summary_text}</p>
+<p style="margin: 0; color: #444; font-size: 0.85rem; line-height: 1.5;">{summary_text}</p>
 </div>""", unsafe_allow_html=True)
 
     # Secondary filters row
@@ -1907,7 +1911,7 @@ with tab4:
     with col1:
         model_options = ["All Models", "In Vitro (Cells)", "Animal (Rodent)", "Animal (Zebrafish)", "Human (Cohort/Epi)", "Human (Clinical)"]
         model_filter = st.selectbox(
-            "Filter by model system:",
+            "Filter by model organism:",
             model_options,
             key='crossfield_model'
         )
@@ -2079,7 +2083,7 @@ with tab4:
                 inspiring_selection = None
 
                 if len(inspiring) == 0:
-                    st.info(f"No grants found with model system: {model_filter}")
+                    st.info(f"No grants found with model organism: {model_filter}")
                 else:
                     # Format for display - PI first, then chemical badge, title, model
                     display_cols = ['PI_NAMEs', 'Chemical(s)', 'PROJECT_TITLE', 'model_system', 'ORG_NAME']
@@ -2115,7 +2119,7 @@ with tab4:
                     export_cols = ['PI_NAMEs', 'ORG_NAME', 'PROJECT_TITLE', 'Chemical(s)', 'model_system', 'ABSTRACT_TEXT', 'similarity_score']
                     export_cols = [c for c in export_cols if c in inspiring.columns]
                     export_df = inspiring[export_cols].copy()
-                    export_df.columns = ['PI', 'Institution', 'Project Title', 'Chemical Field', 'Model System', 'Abstract', 'Relevance Score'][:len(export_cols)]
+                    export_df.columns = ['PI', 'Institution', 'Project Title', 'Chemical Field', 'Model Organism', 'Abstract', 'Relevance Score'][:len(export_cols)]
                     csv_data = export_df.to_csv(index=False)
                     cat_slug = mech_label.lower().replace(' ', '_').replace('/', '_')[:20]
                     st.download_button(
@@ -2331,7 +2335,7 @@ with tab_model:
         # Deduplicate for all STOMP views
         filtered_stomp = filtered.drop_duplicates(subset=['PROJECT_TITLE'], keep='first')
 
-        st.markdown("#### What model systems are being used?")
+        st.markdown("#### What model organisms are being used?")
 
         # Calculate projects with any model system identified using pre-classified columns
         n_grants = len(filtered_stomp)
@@ -2370,25 +2374,25 @@ with tab_model:
                 st.altair_chart(chart, use_container_width=True)
 
         with col2:
-            model_table = [{'Model System': k, 'Projects': v['count'], '%': f"{v['pct']}%"}
+            model_table = [{'Model Organism': k, 'Projects': v['count'], '%': f"{v['pct']}%"}
                           for k, v in sorted_models]
             st.dataframe(pd.DataFrame(model_table), hide_index=True, use_container_width=True)
 
         # Summary stat below the graphs
         not_categorized = n_grants - any_model
         not_categorized_pct = round(100 * not_categorized / n_grants, 1) if n_grants > 0 else 0
-        st.info(f"**{any_model:,}** projects ({any_model_pct}%) have at least one model system identified (remaining {not_categorized_pct}% are environmental monitoring or methods development)")
+        st.info(f"**{any_model:,}** projects ({any_model_pct}%) have at least one model organism identified (remaining {not_categorized_pct}% are environmental monitoring or methods development)")
 
         # Drill-down
         st.markdown("---")
         model_options = [f"{name} ({info['count']})" for name, info in sorted_models if info['count'] > 0]
         if model_options:
             selected_model_option = st.selectbox(
-                "Explore projects by model system",
-                ["Select a model system..."] + model_options,
+                "Explore projects by model organism",
+                ["Select a model organism..."] + model_options,
                 key="model_select"
             )
-            selected_model = selected_model_option.rsplit(" (", 1)[0] if selected_model_option != "Select a model system..." else None
+            selected_model = selected_model_option.rsplit(" (", 1)[0] if selected_model_option != "Select a model organism..." else None
         else:
             selected_model = None
 
