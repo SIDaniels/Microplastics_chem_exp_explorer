@@ -1673,14 +1673,6 @@ cooccur_filtered = compute_cooccurrence(filtered) if len(filtered) > 0 else {}
 # Get deduplicated data for summary
 filtered_unique = filtered.drop_duplicates(subset=['PROJECT_TITLE'], keep='first') if group_by_project else filtered
 
-# Summary card with title
-st.markdown("""
-<div style="text-align: center; margin-bottom: 1rem;">
-    <h1 style="font-family: 'Spectral', Georgia, serif; color: #0D3B3C; font-size: 2.2rem; margin-bottom: 0.5rem;">
-        Microplastic Research Trendspotter<sup style="font-size: 0.4em; vertical-align: super; margin-left: 0.2em;">BETA</sup>
-    </h1>
-</div>
-""", unsafe_allow_html=True)
 
 # Main content - tabs
 tab1, tab_organ, tab_model, tab_mech, tab4 = st.tabs(["Projects", "Organ Systems", "Model Organisms", "Mechanisms", "Cross-Field Insights"])
