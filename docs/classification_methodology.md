@@ -15,7 +15,7 @@ Last updated: April 2026
 | Category | Column Name | Count | Description |
 |----------|-------------|-------|-------------|
 | In Vitro | MODEL_INVITRO | 31 | Cell-based experiments |
-| Rodent | MODEL_RODENT | 51 | Mouse/rat animal models |
+| Rodent | MODEL_RODENT | 44 | Mouse/rat animal models (active use) |
 | Zebrafish | MODEL_ZEBRAFISH | 5 | Zebrafish/Danio rerio |
 | Human | MODEL_HUMAN | 69 | Human subjects/epidemiology |
 | Environmental | MODEL_ENVIRONMENTAL | 8 | Environmental sampling |
@@ -31,13 +31,23 @@ cultured\s+cell|HepG2|Caco-2|HEK293|A549|MCF|HeLa
 ```
 **Rationale**: Matches explicit cell culture terminology and common cell line names.
 
-#### MODEL_RODENT (Mouse/Rat)
+#### MODEL_RODENT (Mouse/Rat) - Medium Approach
+**Tightened from 51 → 44 projects**
+
+Uses a "medium" approach to avoid classifying projects that merely cite rodent studies:
+
+**Criteria (match ANY):**
+1. Rodent term in TITLE (strong signal)
+2. 2+ mentions of rodent terms in abstract (suggests actual use)
+3. Active use language patterns:
 ```regex
-(?:^|[^a-z])(?:mouse|mice|murine|rodent)(?:[^a-z]|$)|
-\brat\b(?:s\b)?|animal\s+model|
-(?:C57BL|BALB|Swiss|Sprague|Wistar)
+(?:we|will|to)\s+(?:use|used|using)\s+(?:mouse|mice|rat|rats|rodent)
+(?:mice|rats|mouse)\s+(?:were|was|are|will be)\s+(?:exposed|treated|fed|given|injected|dosed)
+(?:pregnant|female|male|adult|neonatal)\s+(?:mice|rats|mouse)
+c57bl|balb|sprague|wistar  # strain names
+(?:apoe|ldlr).{0,5}(?:mice|mouse)  # knockout mice
 ```
-**Rationale**: Requires word boundaries to avoid false positives. Includes common strain names.
+**Rationale**: A single mention of "mice" in an abstract often means citing other studies, not using rodent models. Requiring active use language or multiple mentions ensures the project actually uses rodents.
 
 #### MODEL_ZEBRAFISH
 ```regex

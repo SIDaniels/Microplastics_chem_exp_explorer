@@ -6,7 +6,7 @@ Updates the MODEL_* columns in microplastic_grants_cleaned.csv
 
 Classification Strategy (April 2026):
 - MODEL_INVITRO: Cell-based experiments (cell lines, primary cells, organoids)
-- MODEL_RODENT: Mouse/rat studies with explicit animal model language
+- MODEL_RODENT: Mouse/rat studies with active use language (not just citing)
 - MODEL_ZEBRAFISH: Zebrafish/Danio rerio studies (explicit mentions only)
 - MODEL_HUMAN: Human subjects, epidemiology, cohorts, clinical trials
 - MODEL_ENVIRONMENTAL: Environmental sampling/monitoring studies
@@ -20,11 +20,33 @@ Key Fixes Applied:
 4. INVITRO: Expanded from 26→31 by including organoid and 3D culture models
 5. RODENT: Tightened from 51→44 using medium approach - requires title match,
    2+ mentions in abstract, OR active use language (not just citing other studies)
+
+Final Counts (April 2026):
+- MODEL_INVITRO: 31
+- MODEL_RODENT: 44
+- MODEL_ZEBRAFISH: 5
+- MODEL_HUMAN: 69
+- MODEL_ENVIRONMENTAL: 8
+- MODEL_OTHER_ANIMAL: 3
 """
 
 import pandas as pd
 import re
 from pathlib import Path
+
+# Rodent-specific patterns for active use detection
+RODENT_TERMS = r'\bmouse\b|\bmice\b|\bmurine\b|\brat\b|\brats\b|\brodent\b'
+RODENT_ACTIVE_USE = [
+    r'(?:we|will|to)\s+(?:use|used|using)\s+(?:mouse|mice|rat|rats|rodent)',
+    r'(?:mouse|mice|rat|rats|rodent)\s+(?:model|studies|experiment)',
+    r'(?:in|using|with)\s+(?:mice|rats|mouse)\b',
+    r'(?:mice|rats|mouse)\s+(?:were|was|are|will be)\s+(?:exposed|treated|fed|given|injected|dosed)',
+    r'(?:pregnant|female|male|adult|neonatal)\s+(?:mice|rats|mouse)',
+    r'c57bl|balb|sprague|wistar',  # strain names
+    r'(?:mice|rats)\s+(?:fed|received|consumed)',
+    r'murine\s+(?:model|tissue|cell|lung|brain|liver)',
+    r'(?:apoe|ldlr).{0,5}(?:mice|mouse)',  # knockout mice
+]
 
 # Define model organism patterns
 MODEL_PATTERNS = {
@@ -34,13 +56,6 @@ MODEL_PATTERNS = {
                    r'organoid|3D\s+culture|spheroid|tissue\s+culture|'
                    r'cultured\s+cell|HepG2|Caco-2|HEK293|A549|MCF|HeLa',
         'description': 'Cell-based experiments including cell lines, primary cells, organoids'
-    },
-    'MODEL_RODENT': {
-        'name': 'Animal (Rodent)',
-        'pattern': r'(?:^|[^a-z])(?:mouse|mice|murine|rodent)(?:[^a-z]|$)|'
-                   r'\brat\b(?:s\b)?|animal\s+model|'
-                   r'(?:C57BL|BALB|Swiss|Sprague|Wistar)',
-        'description': 'Mouse and rat studies with explicit model language'
     },
     'MODEL_ZEBRAFISH': {
         'name': 'Animal (Zebrafish)',
@@ -74,6 +89,33 @@ MODEL_PATTERNS = {
 }
 
 
+def classify_rodent_medium(row: pd.Series) -> int:
+    """
+    Classify rodent using medium approach:
+    - Title match = strong signal (return 1)
+    - 2+ mentions in abstract = likely actual use (return 1)
+    - Active use language in abstract = actual use (return 1)
+    - Otherwise = probably just citing other studies (return 0)
+    """
+    title = str(row['PROJECT_TITLE']).lower() if pd.notna(row['PROJECT_TITLE']) else ''
+    abstract = str(row['ABSTRACT_TEXT']).lower() if pd.notna(row['ABSTRACT_TEXT']) else ''
+
+    # Title match is strong signal
+    if re.search(RODENT_TERMS, title):
+        return 1
+
+    # Multiple mentions in abstract suggests actual use
+    mentions = len(re.findall(RODENT_TERMS, abstract))
+    if mentions >= 2:
+        return 1
+
+    # Single mention with active use language
+    for pattern in RODENT_ACTIVE_USE:
+        if re.search(pattern, abstract):
+            return 1
+    return 0
+
+
 def classify_model_organisms(df: pd.DataFrame) -> pd.DataFrame:
     """
     Apply model organism classifications to dataframe.
@@ -84,7 +126,7 @@ def classify_model_organisms(df: pd.DataFrame) -> pd.DataFrame:
     Returns:
         DataFrame with MODEL_* columns added/updated
     """
-    # Combine title and abstract for searching
+    # Combine title and abstract for searching (for simple pattern matches)
     df['_combined_text'] = (
         df['PROJECT_TITLE'].fillna('').str.lower() + ' ' +
         df['ABSTRACT_TEXT'].fillna('').str.lower()
@@ -93,6 +135,12 @@ def classify_model_organisms(df: pd.DataFrame) -> pd.DataFrame:
     print("Classifying model organisms...")
     print("-" * 50)
 
+    # Classify rodent separately with medium approach
+    print("MODEL_RODENT (Animal - Rodent): using medium approach...")
+    df['MODEL_RODENT'] = df.apply(classify_rodent_medium, axis=1)
+    print(f"  MODEL_RODENT: {df['MODEL_RODENT'].sum()} projects")
+
+    # Classify others with simple pattern matching
     for col_name, config in MODEL_PATTERNS.items():
         pattern = config['pattern']
         name = config['name']
@@ -103,7 +151,7 @@ def classify_model_organisms(df: pd.DataFrame) -> pd.DataFrame:
         ).astype(int)
 
         count = df[col_name].sum()
-        print(f"{col_name} ({name}): {count} projects")
+        print(f"  {col_name} ({name}): {count} projects")
 
     # Clean up
     df = df.drop(columns=['_combined_text'])
@@ -137,8 +185,10 @@ def main():
 
     # Get counts after
     print("\n=== AFTER ===")
-    for col in sorted(MODEL_PATTERNS.keys()):
-        print(f"  {col}: {df[col].sum()}")
+    all_cols = list(MODEL_PATTERNS.keys()) + ['MODEL_RODENT']
+    for col in sorted(set(all_cols)):
+        if col in df.columns:
+            print(f"  {col}: {df[col].sum()}")
 
     # Save
     print(f"\nSaving to {csv_path}")
