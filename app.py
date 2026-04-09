@@ -1579,7 +1579,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # Main content - tabs
-tab1, tab_organ, tab_model, tab_mech, tab4 = st.tabs(["Projects", "Organ Systems", "Model Organisms", "Mechanisms", "Cross-Field Insights"])
+tab1, tab_organ, tab_model, tab_mech, tab4, tab_learnings = st.tabs(["Projects", "Organ Systems", "Model Organisms", "Mechanisms", "Cross-Field Insights", "Example Learnings"])
 
 with tab1:
     # About this database info box with hyperlinks
@@ -2083,7 +2083,7 @@ with tab4:
                             else:
                                 exp_name = full_name
                             exps.append(exp_name)
-                    return ', '.join(exps[:2]) + ('...' if len(exps) > 2 else '')
+                    return ', '.join(exps)
 
                 inspiring['Chemical(s)'] = inspiring.apply(get_exposures, axis=1)
 
@@ -2581,4 +2581,179 @@ with tab_model:
 
         else:
             st.info("No mechanism patterns matched in the current dataset.")
+
+with tab_learnings:
+    st.markdown("#### What can microplastics research learn from other fields?")
+
+    st.markdown("""
+    <div style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); padding: 1rem; border-radius: 8px; margin-bottom: 1rem; border-left: 4px solid #D4A84B;">
+        <p style="margin: 0; font-size: 0.95rem; color: #333;">
+            Different types of micro/nanoplastics behave like pollutants that have been studied for decades.
+            By identifying the <strong>closest mechanistic analog</strong>, we can predict how microplastics will behave
+            and design experiments based on validated methods from those fields.
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # Load the predictions data
+    try:
+        predictions_df = pd.read_excel('data/mnp_analog_predictions_v3 (1).xlsx', sheet_name='MNP analog predictions')
+        references_df = pd.read_excel('data/mnp_analog_predictions_v3 (1).xlsx', sheet_name='References')
+
+        # Clean column names
+        predictions_df.columns = [col.replace('\n', ' ').strip() for col in predictions_df.columns]
+
+        # Drop rows that are headers/section dividers (all NaN except first column)
+        predictions_df = predictions_df.dropna(subset=['Testable prediction'])
+
+        # Map source fields to generic categories
+        source_mapping = {
+            'Asbestos': 'Asbestos',
+            'Asbestos / occ hygiene': 'Asbestos',
+            'PM2.5 / UFP': 'Air Pollution',
+            'PM2.5 epidemiology': 'Air Pollution',
+            'PM2.5 cardiology': 'Air Pollution',
+            'Silica / silicosis': 'Silica',
+            'Plasticizers': 'Plasticizers',
+            'PFAS': 'PFAS',
+            'PFAS immunotox': 'PFAS',
+            'NO PRECEDENT': 'No Precedent',
+        }
+
+        def clean_source(s):
+            if pd.isna(s):
+                return 'Unknown'
+            return source_mapping.get(str(s).strip(), str(s).strip())
+
+        predictions_df['Source field clean'] = predictions_df['Source field'].apply(clean_source)
+
+        # Display count and status legend
+        st.markdown(f"**{len(predictions_df)}** testable predictions from cross-field analysis")
+
+        st.markdown("""
+        <div style="display: flex; gap: 1.5rem; margin-bottom: 1.25rem; flex-wrap: wrap; font-size: 0.95rem; color: #555;">
+            <span><span style="background: #5FA872; color: white; padding: 4px 12px; border-radius: 12px; font-weight: 500;">Validated</span> confirmed in microplastics</span>
+            <span><span style="background: #D4A84B; color: white; padding: 4px 12px; border-radius: 12px; font-weight: 500;">Partial</span> some supporting evidence</span>
+            <span><span style="background: #999; color: white; padding: 4px 12px; border-radius: 12px; font-weight: 500;">Proposed</span> not yet tested</span>
+        </div>
+        """, unsafe_allow_html=True)
+
+        # Filter by source field (generic)
+        source_fields = ['All'] + sorted([s for s in predictions_df['Source field clean'].unique() if s and s != 'Unknown'])
+        selected_source = st.selectbox("Filter by source field:", source_fields, key='learnings_source')
+
+        if selected_source != 'All':
+            display_predictions = predictions_df[predictions_df['Source field clean'] == selected_source]
+        else:
+            display_predictions = predictions_df
+
+        # Display each prediction as a card
+        for idx, row in display_predictions.iterrows():
+            mnp_type = row.get('MNP subtype (mechanistically defined)', 'Unknown')
+            key_params = row.get('Key physical parameters', '')
+            analog = row.get('Closest mechanistic analog', '')
+            source = row.get('Source field clean', '')
+            prediction = row.get('Testable prediction', '')
+            experiment = row.get('Experimental design', '')
+            status = row.get('Status', '')
+
+            # Skip if no prediction
+            if pd.isna(prediction) or not prediction:
+                continue
+
+            # Status badge color
+            status_color = '#5FA872' if status == 'Validated' else '#D4A84B' if status == 'Partial' else '#999'
+            status_text = status if not pd.isna(status) else 'Proposed'
+
+            # Build the card HTML - include params inline with title
+            mnp_display = mnp_type if not pd.isna(mnp_type) else 'Unknown'
+            # Add params inline with title if present
+            if not pd.isna(key_params) and key_params:
+                mnp_display = f'{mnp_display} <span style="color: #666; font-weight: normal; font-size: 0.95rem;">— {key_params}</span>'
+            params_html = ""  # No longer needed as separate element
+            analog_display = analog if not pd.isna(analog) else 'N/A'
+            source_display = source if not pd.isna(source) else 'N/A'
+            source_label = source if not pd.isna(source) else 'analog'
+
+            # Convert reference numbers to superscript links (e.g., "1,2" -> "<sup><a href='#ref1'>1</a>,<a href='#ref2'>2</a></sup>")
+            def add_ref_links(text):
+                import re
+                def make_sup_link(num):
+                    return f"<a href='#ref{num}' style='color: #46B3A9; text-decoration: none;'>{num}</a>"
+
+                def replace_ref_group(nums_str):
+                    # Split by comma and create links
+                    parts = re.split(r'[,\s]+', nums_str)
+                    linked = ','.join([make_sup_link(p.strip()) for p in parts if p.strip().isdigit()])
+                    return f"<sup>{linked}</sup>" if linked else ''
+
+                text = str(text)
+
+                # Pattern 1: numbers immediately after a period (reference style like "ratio.2" or "pathology.6,7")
+                text = re.sub(r'\.(\d+(?:,\d+)*)\b', lambda m: '.' + replace_ref_group(m.group(1)), text)
+
+                # Pattern 2: comma-separated numbers at end of text (like "samples,20,21" or ending with "1,2,3")
+                text = re.sub(r',(\d+(?:,\d+)+)$', lambda m: replace_ref_group(m.group(1)), text)
+
+                # Pattern 3: standalone reference numbers after comma (like "samples,20" but not "MP-2")
+                text = re.sub(r',(\d{2,})(?=[,\s]|$)', lambda m: replace_ref_group(m.group(1)), text)
+
+                return text
+
+            prediction_linked = add_ref_links(prediction)
+            experiment_linked = add_ref_links(experiment) if not pd.isna(experiment) and experiment else ''
+
+            # Use st.container with custom styling for proper card layout
+            with st.container():
+                # Card header with title and status badge
+                st.markdown(f'''
+                <div style="background: white; padding: 1.5rem; border-radius: 12px; border: 1px solid rgba(13,59,60,0.15); margin-bottom: 0.5rem; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.75rem;">
+                        <h3 style="margin: 0; color: #0D3B3C; font-size: 1.2rem; font-weight: 600;">{mnp_display}</h3>
+                        <span style="background: {status_color}; color: white; padding: 5px 14px; border-radius: 12px; font-size: 0.85rem; font-weight: 500;">{status_text}</span>
+                    </div>
+                    <div style="display: flex; gap: 0.75rem; margin-bottom: 1rem; flex-wrap: wrap; align-items: center;">
+                        <span style="color: #666; font-size: 0.95rem;">Closest analog:</span>
+                        <span style="background: #46B3A9; color: white; padding: 6px 14px; border-radius: 14px; font-size: 0.95rem; font-weight: 500;">{analog_display}</span>
+                        <span style="color: #666; font-size: 0.95rem;">from</span>
+                        <span style="background: #0D3B3C; color: white; padding: 6px 14px; border-radius: 14px; font-size: 0.95rem; font-weight: 500;">{source_display}</span>
+                    </div>
+                    <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                        <div style="flex: 1; background: #fafafa; padding: 1rem; border-radius: 8px; border-left: 4px solid #D4A84B; min-width: 280px;">
+                            <p style="color: #0D3B3C; font-weight: 600; margin: 0 0 0.5rem 0; font-size: 1rem;">Testable prediction</p>
+                            <p style="color: #333; margin: 0; font-size: 0.95rem; line-height: 1.6;">{prediction_linked}</p>
+                        </div>
+                        <div style="flex: 1; background: #e8f4f4; padding: 1rem; border-radius: 8px; border-left: 4px solid #46B3A9; min-width: 280px;">
+                            <p style="color: #0D3B3C; font-weight: 600; margin: 0 0 0.5rem 0; font-size: 1rem;">Experimental design</p>
+                            <p style="color: #444; margin: 0; font-size: 0.95rem; line-height: 1.6;">{experiment_linked if experiment_linked else '<em style="color: #999;">Not specified</em>'}</p>
+                        </div>
+                    </div>
+                </div>
+                ''', unsafe_allow_html=True)
+
+        # References section with anchor IDs for linking
+        st.markdown("---")
+        st.markdown('<div id="references"></div>', unsafe_allow_html=True)
+        st.markdown("##### References")
+        with st.expander(f"View all {len(references_df)} references"):
+            for idx, row in references_df.iterrows():
+                num = row.get('No.', idx + 1)
+                citation = row.get('Full citation', '')
+                if not pd.isna(citation):
+                    st.markdown(f'<div id="ref{num}"><strong>{num}.</strong> {citation}</div>', unsafe_allow_html=True)
+
+        # Download button
+        csv_data = predictions_df.to_csv(index=False)
+        st.download_button(
+            label="Download Predictions Table (CSV)",
+            data=csv_data,
+            file_name="mnp_analog_predictions.csv",
+            mime="text/csv",
+            key="learnings_download"
+        )
+
+    except FileNotFoundError:
+        st.error("Predictions data file not found. Please ensure 'mnp_analog_predictions_v3 (1).xlsx' is in the data folder.")
+    except Exception as e:
+        st.error(f"Error loading predictions data: {str(e)}")
 
