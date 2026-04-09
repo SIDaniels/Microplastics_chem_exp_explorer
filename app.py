@@ -2009,25 +2009,6 @@ Understanding microplastics toxicity doesn't require starting from scratch. By i
 <p style="margin: 0; color: #444; font-size: 0.85rem; line-height: 1.5;">{summary_text}</p>
 </div>""", unsafe_allow_html=True)
 
-    # Secondary filters row
-    st.markdown("<div style='height: 12px'></div>", unsafe_allow_html=True)
-    col1, col2 = st.columns(2)
-    with col1:
-        model_options = ["All Models", "In Vitro (Cells)", "Animal (Rodent)", "Animal (Zebrafish)", "Human (Cohort/Epi)", "Human (Clinical)"]
-        model_filter = st.selectbox(
-            "Filter by model organism:",
-            model_options,
-            key='crossfield_model'
-        )
-    with col2:
-        # Keyword search field
-        keyword_search = st.text_input(
-            "Search by keyword (regex supported):",
-            placeholder="e.g., gut|intestin, inflam.*, NF.?kB",
-            help="Supports regex patterns: 'gut|intestin' (OR), 'inflam.*' (wildcard), 'NF.?kB' (optional char). Plain text also works.",
-            key='crossfield_keyword'
-        )
-
     # Always run - exposure is fixed to Microplastics
     exp_label = EXPOSURES.get(my_exposure, my_exposure)
     mech_label = MECHANISMS_AND_TYPES.get(my_mechanism, my_mechanism) if my_mechanism else "All Categories"
@@ -2133,6 +2114,25 @@ Understanding microplastics toxicity doesn't require starting from scratch. By i
             chem_items.append(f'<span style="display: inline-block; background: rgba(70,179,169,0.2); padding: 6px 12px; border-radius: 16px; margin: 3px 6px 3px 0; font-size: 0.9rem;"><strong>{name}</strong> <span style="background: rgba(70,179,169,0.4); padding: 2px 6px; border-radius: 10px; margin-left: 4px; font-size: 0.8rem;">{count:,} {grant_word}</span></span>')
         chem_badges = " ".join(chem_items)
         st.markdown(f'<div style="margin-bottom: 1rem; padding: 12px 16px; background: #f8f9fa; border-radius: 8px; border-left: 4px solid #46B3A9;"><div style="font-weight: 600; margin-bottom: 8px;">Top research fields also studying {mech_label}:</div><div>{chem_badges}</div></div>', unsafe_allow_html=True)
+
+    # Secondary filters row - moved below "Top research fields"
+    st.markdown("<div style='height: 12px'></div>", unsafe_allow_html=True)
+    col1, col2 = st.columns(2)
+    with col1:
+        model_options = ["All Models", "In Vitro (Cells)", "Animal (Rodent)", "Animal (Zebrafish)", "Human (Cohort/Epi)", "Human (Clinical)"]
+        model_filter = st.selectbox(
+            "Filter by model organism:",
+            model_options,
+            key='crossfield_model'
+        )
+    with col2:
+        # Keyword search field
+        keyword_search = st.text_input(
+            "Search by keyword (regex supported):",
+            placeholder="e.g., gut|intestin, inflam.*, NF.?kB",
+            help="Supports regex patterns: 'gut|intestin' (OR), 'inflam.*' (wildcard), 'NF.?kB' (optional char). Plain text also works.",
+            key='crossfield_keyword'
+        )
 
     if len(my_grants) > 0:
         my_text = my_grants['PROJECT_TITLE'].fillna('') + ' ' + my_grants['ABSTRACT_TEXT'].fillna('')
