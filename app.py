@@ -523,7 +523,7 @@ st.markdown("""
         display: none !important;
     }
 
-    /* Tabs - styled as obvious clickable buttons */
+    /* Tabs - styled as obvious clickable buttons spanning full width */
     .stTabs [data-baseweb="tab-list"] {
         gap: 8px;
         background-color: #e8ebe9;
@@ -531,6 +531,9 @@ st.markdown("""
         border-radius: 12px;
         border: 2px solid #d0d5d2;
         box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
+        width: 100%;
+        display: flex;
+        justify-content: stretch;
     }
 
     .stTabs [data-baseweb="tab"] {
@@ -539,12 +542,14 @@ st.markdown("""
         border-radius: 8px;
         font-family: 'Source Sans Pro', sans-serif;
         font-weight: 600;
-        font-size: 1rem;
-        padding: 12px 24px;
+        font-size: 1.15rem;
+        padding: 14px 20px;
         border: 2px solid #c5cbc7;
         transition: all 0.2s ease;
         cursor: pointer;
         box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+        flex: 1;
+        text-align: center;
     }
 
     .stTabs [data-baseweb="tab"]:hover {
