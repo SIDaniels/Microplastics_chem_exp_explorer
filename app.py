@@ -1687,13 +1687,7 @@ with tab1:
     # About this database info box with hyperlinks
     st.markdown("""
     <div style="background-color: #f0f7f7; border-left: 4px solid #0D3B3C; padding: 12px 16px; margin-bottom: 16px; border-radius: 0 8px 8px 0;">
-        <strong>About this database:</strong> Microplastics research is a rapidly growing field across sub-domains and it's challenging to stay up to date with the latest work prior to its publication. Moreover, there are parallels that can be drawn to those with decades of experience working on other pollutants. This tool helps follow trends and make these connections.
-        <br><br>
-        This explorer highlights <strong>microplastics research</strong> from
-        <a href="https://reporter.nih.gov/" target="_blank" style="color: #0D3B3C;">NIH-funded grants</a> (FY2022-2025)
-        combined with abstracts from the inaugural
-        <a href="https://hsc.unm.edu/pharmacy/research/areas/cmbm/mnp-conf/_docs/full-digital-program.pdf" target="_blank" style="color: #0D3B3C;">UNM Micro- and Nanoplastics Conference</a>.
-        Use the filters to explore research trends by exposure type, organ system, mechanism, and more. Use <strong>Cross-Field Insights</strong> to find methods and techniques funded for other pollutants that could accelerate your work.
+        Staying ahead of the curve on research for an emerging pollutant, like microplastics, is hard to do by searching the literature alone. Explore the latest on funded microplastics research from <a href="https://reporter.nih.gov/" target="_blank" style="color: #0D3B3C;">NIH grants</a> (FY2022-2025) and the inaugural <a href="https://hsc.unm.edu/pharmacy/research/areas/cmbm/mnp-conf/_docs/full-digital-program.pdf" target="_blank" style="color: #0D3B3C;">UNM Micro- and Nanoplastics Conference</a>. Check out details by affected organs, model organism, molecular mechanism, or build your own query. Use <strong>Cross-Field Insights</strong> to find similar approaches funded for other pollutants that could directly apply to microplastics.
         <br><br>
         <em>This tool is in beta and your feedback is welcomed! <a href="https://www.engineeredresilience.org/contact" target="_blank" style="color: #0D3B3C;">Drop us a line</a> to report any issues or let us know how to improve.</em>
         <br><span style="color: #666; font-size: 0.85em;">Note: Initial loading may take a few seconds.</span>
