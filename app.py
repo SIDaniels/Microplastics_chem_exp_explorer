@@ -510,6 +510,12 @@ st.markdown("""
         display: none;
     }
 
+    /* Hide tab scroll arrows */
+    .stTabs button[data-testid="stTabsScrollButton"],
+    .stTabs [data-baseweb="button-group"] button {
+        display: none !important;
+    }
+
     /* DataFrames */
     .stDataFrame {
         border-radius: 8px;
@@ -2667,13 +2673,8 @@ with tab_learnings:
 
             # Build the card HTML - include params inline with title
             mnp_display = mnp_type if not pd.isna(mnp_type) else 'Unknown'
-            # Add params inline with title if present
-            if not pd.isna(key_params) and key_params:
-                mnp_display = f'{mnp_display} <span style="color: #555; font-weight: 400; font-size: 1.1rem;">— {key_params}</span>'
-            params_html = ""  # No longer needed as separate element
             analog_display = analog if not pd.isna(analog) else 'N/A'
             source_display = source if not pd.isna(source) else 'N/A'
-            source_label = source if not pd.isna(source) else 'analog'
 
             # Convert reference numbers to superscript links (e.g., "1,2" -> "<sup><a href='#ref1'>1</a>,<a href='#ref2'>2</a></sup>")
             def add_ref_links(text):
@@ -2705,14 +2706,23 @@ with tab_learnings:
             experiment_linked = add_ref_links(experiment) if not pd.isna(experiment) and experiment else ''
             analog_linked = add_ref_links(analog_display)
 
+            # Build params line (with ref links)
+            params_line = ''
+            if not pd.isna(key_params) and key_params:
+                params_linked = add_ref_links(str(key_params))
+                params_line = f'<p style="margin: 0.25rem 0 0 0; color: #555; font-weight: 400; font-size: 1rem;">{params_linked}</p>'
+
             # Use st.container with custom styling for proper card layout
             with st.container():
                 # Card header with title and status badge
                 st.markdown(f'''
                 <div style="background: white; padding: 1.5rem; border-radius: 12px; border: 1px solid rgba(13,59,60,0.15); margin-bottom: 0.5rem; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
-                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.75rem;">
-                        <h3 style="margin: 0; color: #0D3B3C; font-size: 1.2rem; font-weight: 600;">{mnp_display}</h3>
-                        <span style="background: {status_color}; color: white; padding: 5px 14px; border-radius: 12px; font-size: 0.85rem; font-weight: 500;">{status_text}</span>
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.5rem;">
+                        <div>
+                            <h3 style="margin: 0; color: #0D3B3C; font-size: 1.2rem; font-weight: 600;">{mnp_display}</h3>
+                            {params_line}
+                        </div>
+                        <span style="background: {status_color}; color: white; padding: 5px 14px; border-radius: 12px; font-size: 0.85rem; font-weight: 500; flex-shrink: 0;">{status_text}</span>
                     </div>
                     <div style="display: flex; gap: 0.75rem; margin-bottom: 1rem; flex-wrap: wrap; align-items: center;">
                         <span style="color: #0D3B3C; font-size: 1rem; font-weight: 600;">Closest analog:</span>
