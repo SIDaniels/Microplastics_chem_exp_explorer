@@ -542,7 +542,7 @@ st.markdown("""
         border-radius: 8px;
         font-family: 'Source Sans Pro', sans-serif;
         font-weight: 600;
-        font-size: 1.15rem;
+        font-size: 1.3rem;
         padding: 14px 20px;
         border: 2px solid #c5cbc7;
         transition: all 0.2s ease;
