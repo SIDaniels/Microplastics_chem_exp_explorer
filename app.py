@@ -1681,7 +1681,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # Main content - tabs
-tab1, tab_organ, tab_model, tab_mech, tab4 = st.tabs(["Projects", "Organ Systems", "Model Organisms", "Mechanisms", "Cross-Field Insights"])
+tab1, tab_organ, tab_model, tab_mech, tab4 = st.tabs(["Projects", "Organ Systems", "Model Organisms", "Mechanisms", "Cross-Field Insights ᴮᴱᵀᴬ"])
 
 with tab1:
     # About this database info box with hyperlinks
@@ -1880,7 +1880,7 @@ with tab1:
         st.info("No grants match your filters. Try broadening your search.")
 
 with tab4:
-    st.markdown("#### Who is studying similar topics with other pollutants?<sup style='font-size: 0.5em; vertical-align: super; margin-left: 0.3em; color: #D4A84B;'>BETA</sup>", unsafe_allow_html=True)
+    st.markdown("#### Who is studying similar topics with other pollutants?")
 
     st.markdown("""
     <div style="background-color: #f0f7f7; border-left: 4px solid #0D3B3C; padding: 12px 16px; margin-bottom: 16px; border-radius: 0 8px 8px 0;">
