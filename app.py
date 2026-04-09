@@ -2074,7 +2074,15 @@ with tab4:
                     exps = []
                     for exp in other_exp_cols:
                         if exp in row and row[exp] == 1:
-                            exps.append(EXPOSURES.get(exp, exp)[:15])
+                            # Get short name: everything before ( or &
+                            full_name = EXPOSURES.get(exp, exp)
+                            if '(' in full_name:
+                                exp_name = full_name.split('(')[0].strip()
+                            elif '&' in full_name:
+                                exp_name = full_name.split('&')[0].strip()
+                            else:
+                                exp_name = full_name
+                            exps.append(exp_name)
                     return ', '.join(exps[:2]) + ('...' if len(exps) > 2 else '')
 
                 inspiring['Chemical(s)'] = inspiring.apply(get_exposures, axis=1)
@@ -2109,6 +2117,7 @@ with tab4:
                         selection_mode="single-row",
                         column_config={
                             "Project Title": st.column_config.TextColumn("Project Title", width="large"),
+                            "Chemical Field": st.column_config.TextColumn("Chemical Field", width="small"),
                         }
                     )
 
