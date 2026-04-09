@@ -1886,8 +1886,6 @@ Understanding microplastics toxicity doesn't require starting from scratch. By i
         <strong>Step 1:</strong> Choose a studied microplastics research category (e.g., detection, microbiome) to view the overall summary of what's currently studied in this microplastics subfield.
         <br>
         <strong>Step 2:</strong> Query and export the resulting list of researchers who have been recently funded to work on the same mechanism but in the context of other pollutants.
-        <br><br>
-        <em style="color: #666;">In beta, co-worked with Claude</em>
     </div>
     """, unsafe_allow_html=True)
 
