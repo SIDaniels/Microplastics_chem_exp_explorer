@@ -1370,7 +1370,7 @@ def compute_cooccurrence(df: pd.DataFrame) -> dict:
 
 
 @st.cache_data
-def load_data(_cache_version: str = "v14_rodent_tightened") -> pd.DataFrame:
+def load_data(_cache_version: str = "v15_mech_neuro_fixed") -> pd.DataFrame:
     """Load pre-filtered grant data (6,500 chemical exposure grants + conference abstracts)."""
     if not DATA_PATH.exists():
         return pd.DataFrame()
