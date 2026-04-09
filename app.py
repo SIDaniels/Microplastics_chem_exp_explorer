@@ -1695,7 +1695,7 @@ with tab1:
         <a href="https://hsc.unm.edu/pharmacy/research/areas/cmbm/mnp-conf/_docs/full-digital-program.pdf" target="_blank" style="color: #0D3B3C;">UNM Micro- and Nanoplastics Conference</a>.
         Use the filters to explore research trends by exposure type, organ system, mechanism, and more. Use <strong>Cross-Field Insights</strong> to find methods and techniques funded for other pollutants that could accelerate your work.
         <br><br>
-        <em>This tool is in beta and your feedback is welcomed! <a href="https://biotechstrategygroup.com/contact" target="_blank" style="color: #0D3B3C;">Drop us a line</a> to report any issues or let us know how to improve.</em>
+        <em>This tool is in beta and your feedback is welcomed! <a href="https://www.engineeredresilience.org/contact" target="_blank" style="color: #0D3B3C;">Drop us a line</a> to report any issues or let us know how to improve.</em>
         <br><span style="color: #666; font-size: 0.85em;">Note: Initial loading may take a few seconds.</span>
     </div>
     """, unsafe_allow_html=True)
