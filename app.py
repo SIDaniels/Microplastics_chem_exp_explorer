@@ -675,6 +675,15 @@ st.markdown("""
     div[style*="position: fixed"][style*="bottom"] a {display: none !important;}
     div[style*="position: fixed"][style*="right"] {display: none !important;}
 
+    /* Additional Streamlit Cloud branding removal (2024-2026 versions) */
+    [data-testid="stBottomBlockContainer"] {display: none !important;}
+    .st-emotion-cache-h4xjwg {display: none !important;}
+    .st-emotion-cache-1wbqy5l {display: none !important;}
+    iframe[title="streamlit_badge"] {display: none !important;}
+    .stAppDeployButton {display: none !important;}
+    div[class*="stAppDeployButton"] {display: none !important;}
+    [data-testid="manage-app-button"] {display: none !important;}
+
     /* Wrap text in dataframe tables so titles are fully visible */
     [data-testid="stDataFrame"] td {
         white-space: normal !important;
