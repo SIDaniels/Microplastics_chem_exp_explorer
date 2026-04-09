@@ -18,6 +18,8 @@ Key Fixes Applied:
 2. ZEBRAFISH: Tightened from 11→5 by requiring explicit zebrafish/Danio terms
 3. HUMAN: Expanded from 45→69 by including human tissue/sample studies
 4. INVITRO: Expanded from 26→31 by including organoid and 3D culture models
+5. RODENT: Tightened from 51→44 using medium approach - requires title match,
+   2+ mentions in abstract, OR active use language (not just citing other studies)
 """
 
 import pandas as pd
