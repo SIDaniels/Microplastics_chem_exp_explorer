@@ -1884,7 +1884,7 @@ with tab4:
 
     st.markdown("""
     <div style="background-color: #f0f7f7; border-left: 4px solid #0D3B3C; padding: 12px 16px; margin-bottom: 16px; border-radius: 0 8px 8px 0;">
-Microplastics research is just getting started, but some answers may be a contact away. Find experts who are funded to examine similar scientific problems for other pollutants in order to help accelerate microplastics research.
+Microplastics research is just getting started, but some answers may be a contact away. Help to accelerate microplastics research by finding experts who are funded to examine similar scientific problems for other pollutants.
         <br><br>
         <strong>Step 1:</strong> Choose a microplastics research category (e.g., detection methods, microbiome effects) to view a summary of what's currently studied in this subfield.
         <br>
