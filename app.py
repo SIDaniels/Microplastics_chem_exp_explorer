@@ -73,7 +73,7 @@ def paginated_dataframe(df: pd.DataFrame, key: str, page_size: int = 25) -> pd.D
                 st.rerun()
 
         with nav_cols[2]:
-            st.markdown(f"<div style='text-align: center; padding-top: 5px;'>Page {current_page + 1} of {total_pages} ({total_rows} total)</div>", unsafe_allow_html=True)
+            st.markdown(f"<div style='text-align: center; padding-top: 5px;'>Showing {start_idx + 1}-{end_idx} of {total_rows}</div>", unsafe_allow_html=True)
 
         with nav_cols[3]:
             if st.button("Next ▶", key=f"next_{key}", disabled=current_page >= total_pages - 1):
@@ -1806,7 +1806,7 @@ with tab1:
         full_table_df = display_df[display_cols].copy()
         if 'PI_NAMEs' in full_table_df.columns:
             full_table_df['PI_NAMEs'] = full_table_df['PI_NAMEs'].apply(clean_pi_names)
-        col_names = {'PROJECT_TITLE': 'Title', 'PI_NAMEs': 'PI(s)', 'ORG_NAME': 'Organization', 'FISCAL_YEAR': 'FY', 'Source': 'Source', 'Years': 'Years'}
+        col_names = {'PROJECT_TITLE': 'Title', 'PI_NAMEs': 'Contact Researcher Name', 'ORG_NAME': 'Organization', 'FISCAL_YEAR': 'FY', 'Source': 'Source', 'Years': 'Years'}
         full_table_df.columns = [col_names.get(c, c) for c in display_cols]
 
         # Show grants with row selection enabled
@@ -1859,7 +1859,7 @@ with tab1:
                 <p style="color: #46B3A9; margin: 0 0 0.5rem 0; font-size: 0.95rem;">
                     <strong>{grant.get('ORG_NAME', 'Unknown')}</strong> | {fy_display}
                 </p>
-                <p style="color: #666; margin: 0; font-size: 0.9rem;">PI: {clean_pi_names(grant.get('PI_NAMEs', 'Unknown'))}</p>
+                <p style="color: #666; margin: 0; font-size: 0.9rem;">Contact Researcher: {clean_pi_names(grant.get('PI_NAMEs', 'Unknown'))}</p>
             </div>
             """, unsafe_allow_html=True)
 
@@ -2217,7 +2217,7 @@ with tab4:
                     if 'PI_NAMEs' in full_display_df.columns:
                         full_display_df['PI_NAMEs'] = full_display_df['PI_NAMEs'].apply(clean_pi_names)
                     col_rename = {
-                        'PI_NAMEs': 'Expert / PI',
+                        'PI_NAMEs': 'Expert / Contact Researcher',
                         'Chemical(s)': 'Chemical Field',
                         'PROJECT_TITLE': 'Project Title',
                         'model_system': 'Model',
@@ -2239,7 +2239,7 @@ with tab4:
                         column_config={
                             "Project Title": st.column_config.TextColumn("Project Title", width="large"),
                             "Chemical Field": st.column_config.TextColumn("Chemical Field", width="medium"),
-                            "Expert / PI": st.column_config.TextColumn("Expert / PI", width="small"),
+                            "Expert / Contact Researcher": st.column_config.TextColumn("Expert / Contact Researcher", width="small"),
                         }
                     )
 
@@ -2411,7 +2411,7 @@ with tab_organ:
                         full_grants_display = organ_grants[display_cols].copy()
                         if 'PI_NAMEs' in full_grants_display.columns:
                             full_grants_display['PI_NAMEs'] = full_grants_display['PI_NAMEs'].apply(clean_pi_names)
-                        col_names = {'PROJECT_TITLE': 'Title', 'PI_NAMEs': 'PI(s)', 'ORG_NAME': 'Organization', 'FISCAL_YEAR': 'FY'}
+                        col_names = {'PROJECT_TITLE': 'Title', 'PI_NAMEs': 'Contact Researcher Name', 'ORG_NAME': 'Organization', 'FISCAL_YEAR': 'FY'}
                         full_grants_display.columns = [col_names.get(c, c) for c in display_cols]
                         st.caption("Select a row to view abstract below")
 
@@ -2446,7 +2446,7 @@ with tab_organ:
                             grant_row = organ_grants.iloc[selected_idx]
                             st.markdown("---")
                             st.markdown(f"**{grant_row['PROJECT_TITLE']}**")
-                            st.markdown(f"*PI:* {clean_pi_names(grant_row.get('PI_NAMEs', 'Unknown'))} | *Org:* {grant_row.get('ORG_NAME', 'Unknown')} | *FY:* {int(grant_row.get('FISCAL_YEAR', 0))}")
+                            st.markdown(f"*Contact Researcher:* {clean_pi_names(grant_row.get('PI_NAMEs', 'Unknown'))} | *Org:* {grant_row.get('ORG_NAME', 'Unknown')} | *FY:* {int(grant_row.get('FISCAL_YEAR', 0))}")
                             abstract = grant_row.get('ABSTRACT_TEXT', 'No abstract available')
                             if pd.isna(abstract):
                                 abstract = 'No abstract available'
@@ -2543,7 +2543,7 @@ with tab_model:
                 full_grants_display = model_grants[display_cols].copy()
                 if 'PI_NAMEs' in full_grants_display.columns:
                     full_grants_display['PI_NAMEs'] = full_grants_display['PI_NAMEs'].apply(clean_pi_names)
-                col_names = {'PROJECT_TITLE': 'Title', 'PI_NAMEs': 'PI(s)', 'ORG_NAME': 'Organization', 'FISCAL_YEAR': 'FY'}
+                col_names = {'PROJECT_TITLE': 'Title', 'PI_NAMEs': 'Contact Researcher Name', 'ORG_NAME': 'Organization', 'FISCAL_YEAR': 'FY'}
                 full_grants_display.columns = [col_names.get(c, c) for c in display_cols]
                 st.caption("Select a row to view abstract below")
 
@@ -2577,7 +2577,7 @@ with tab_model:
                     grant_row = model_grants.iloc[selected_idx]
                     st.markdown("---")
                     st.markdown(f"**{grant_row['PROJECT_TITLE']}**")
-                    st.markdown(f"*PI:* {clean_pi_names(grant_row.get('PI_NAMEs', 'Unknown'))} | *Org:* {grant_row.get('ORG_NAME', 'Unknown')} | *FY:* {int(grant_row.get('FISCAL_YEAR', 0))}")
+                    st.markdown(f"*Contact Researcher:* {clean_pi_names(grant_row.get('PI_NAMEs', 'Unknown'))} | *Org:* {grant_row.get('ORG_NAME', 'Unknown')} | *FY:* {int(grant_row.get('FISCAL_YEAR', 0))}")
                     abstract = grant_row.get('ABSTRACT_TEXT', 'No abstract available')
                     if pd.isna(abstract):
                         abstract = 'No abstract available'
@@ -2664,7 +2664,7 @@ with tab_model:
                     full_grants_display = mech_grants[display_cols].copy()
                     if 'PI_NAMEs' in full_grants_display.columns:
                         full_grants_display['PI_NAMEs'] = full_grants_display['PI_NAMEs'].apply(clean_pi_names)
-                    col_names = {'PROJECT_TITLE': 'Title', 'PI_NAMEs': 'PI(s)', 'ORG_NAME': 'Organization', 'FISCAL_YEAR': 'FY'}
+                    col_names = {'PROJECT_TITLE': 'Title', 'PI_NAMEs': 'Contact Researcher Name', 'ORG_NAME': 'Organization', 'FISCAL_YEAR': 'FY'}
                     full_grants_display.columns = [col_names.get(c, c) for c in display_cols]
                     st.caption("Select a row to view abstract below")
 
@@ -2699,7 +2699,7 @@ with tab_model:
                         grant_row = mech_grants.iloc[selected_idx]
                         st.markdown("---")
                         st.markdown(f"**{grant_row['PROJECT_TITLE']}**")
-                        st.markdown(f"*PI:* {clean_pi_names(grant_row.get('PI_NAMEs', 'Unknown'))} | *Org:* {grant_row.get('ORG_NAME', 'Unknown')} | *FY:* {int(grant_row.get('FISCAL_YEAR', 0))}")
+                        st.markdown(f"*Contact Researcher:* {clean_pi_names(grant_row.get('PI_NAMEs', 'Unknown'))} | *Org:* {grant_row.get('ORG_NAME', 'Unknown')} | *FY:* {int(grant_row.get('FISCAL_YEAR', 0))}")
                         abstract = grant_row.get('ABSTRACT_TEXT', 'No abstract available')
                         if pd.isna(abstract):
                             abstract = 'No abstract available'
