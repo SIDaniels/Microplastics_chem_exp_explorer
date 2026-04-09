@@ -27,6 +27,67 @@ ER_COLORS = {
 # Gradient palette for charts
 ER_GRADIENT = ['#0D3B3C', '#1a5455', '#2d7170', '#46B3A9', '#5FA872', '#D4A84B']
 
+# ============== PAGINATION HELPER ==============
+
+def paginated_dataframe(df: pd.DataFrame, key: str, page_size: int = 25) -> pd.DataFrame:
+    """
+    Display a paginated dataframe with navigation controls.
+    Returns the current page's dataframe slice.
+
+    Args:
+        df: The full dataframe to paginate
+        key: Unique key for session state (to track page number)
+        page_size: Number of rows per page (default 25)
+
+    Returns:
+        The slice of dataframe for the current page
+    """
+    total_rows = len(df)
+    total_pages = max(1, (total_rows + page_size - 1) // page_size)
+
+    # Initialize page state
+    page_key = f"page_{key}"
+    if page_key not in st.session_state:
+        st.session_state[page_key] = 0
+
+    # Ensure page is within bounds
+    st.session_state[page_key] = max(0, min(st.session_state[page_key], total_pages - 1))
+    current_page = st.session_state[page_key]
+
+    # Calculate slice indices
+    start_idx = current_page * page_size
+    end_idx = min(start_idx + page_size, total_rows)
+
+    # Display navigation if more than one page
+    if total_pages > 1:
+        nav_cols = st.columns([1, 2, 2, 2, 1])
+
+        with nav_cols[0]:
+            if st.button("◀◀", key=f"first_{key}", disabled=current_page == 0):
+                st.session_state[page_key] = 0
+                st.rerun()
+
+        with nav_cols[1]:
+            if st.button("◀ Prev", key=f"prev_{key}", disabled=current_page == 0):
+                st.session_state[page_key] = current_page - 1
+                st.rerun()
+
+        with nav_cols[2]:
+            st.markdown(f"<div style='text-align: center; padding-top: 5px;'>Page {current_page + 1} of {total_pages} ({total_rows} total)</div>", unsafe_allow_html=True)
+
+        with nav_cols[3]:
+            if st.button("Next ▶", key=f"next_{key}", disabled=current_page >= total_pages - 1):
+                st.session_state[page_key] = current_page + 1
+                st.rerun()
+
+        with nav_cols[4]:
+            if st.button("▶▶", key=f"last_{key}", disabled=current_page >= total_pages - 1):
+                st.session_state[page_key] = total_pages - 1
+                st.rerun()
+
+    return df.iloc[start_idx:end_idx]
+
+
 # ============== CHATBOT FUNCTIONS ==============
 
 # Rate limiting settings
@@ -1741,15 +1802,19 @@ with tab1:
 
         display_cols = [c for c in display_cols if c in display_df.columns]
 
-        # Prepare display dataframe with nice column names
-        table_df = display_df[display_cols].head(100).copy()
-        if 'PI_NAMEs' in table_df.columns:
-            table_df['PI_NAMEs'] = table_df['PI_NAMEs'].apply(clean_pi_names)
+        # Prepare full display dataframe with nice column names
+        full_table_df = display_df[display_cols].copy()
+        if 'PI_NAMEs' in full_table_df.columns:
+            full_table_df['PI_NAMEs'] = full_table_df['PI_NAMEs'].apply(clean_pi_names)
         col_names = {'PROJECT_TITLE': 'Title', 'PI_NAMEs': 'PI(s)', 'ORG_NAME': 'Organization', 'FISCAL_YEAR': 'FY', 'Source': 'Source', 'Years': 'Years'}
-        table_df.columns = [col_names.get(c, c) for c in display_cols]
+        full_table_df.columns = [col_names.get(c, c) for c in display_cols]
 
         # Show grants with row selection enabled
         st.markdown("<p style='color: #666; font-size: 0.95rem; margin-bottom: 0.5rem;'><strong>Click a row</strong> to view the full abstract below.</p>", unsafe_allow_html=True)
+
+        # Paginate the results (25 per page)
+        table_df = paginated_dataframe(full_table_df, key="mechanisms_table", page_size=25)
+
         selection = st.dataframe(
             table_df,
             use_container_width=True,
@@ -1761,9 +1826,6 @@ with tab1:
                 "Title": st.column_config.TextColumn("Title", width="large"),
             }
         )
-
-        if len(display_df) > 100:
-            st.info(f"Showing first 100 of {len(display_df):,} results. Use filters to narrow results.")
 
         # Download button
         csv = filtered_sorted.drop(columns=['_tag_count'], errors='ignore').to_csv(index=False)
@@ -2149,9 +2211,11 @@ with tab4:
                     # Format for display - PI first, then chemical badge, title, model
                     display_cols = ['PI_NAMEs', 'Chemical(s)', 'PROJECT_TITLE', 'model_system', 'ORG_NAME']
                     display_cols = [c for c in display_cols if c in inspiring.columns]
-                    display_df = inspiring[display_cols].head(25).copy()
-                    if 'PI_NAMEs' in display_df.columns:
-                        display_df['PI_NAMEs'] = display_df['PI_NAMEs'].apply(clean_pi_names)
+
+                    # Prepare full dataframe for pagination
+                    full_display_df = inspiring[display_cols].copy()
+                    if 'PI_NAMEs' in full_display_df.columns:
+                        full_display_df['PI_NAMEs'] = full_display_df['PI_NAMEs'].apply(clean_pi_names)
                     col_rename = {
                         'PI_NAMEs': 'Expert / PI',
                         'Chemical(s)': 'Chemical Field',
@@ -2159,9 +2223,13 @@ with tab4:
                         'model_system': 'Model',
                         'ORG_NAME': 'Institution'
                     }
-                    display_df.columns = [col_rename.get(c, c) for c in display_cols]
+                    full_display_df.columns = [col_rename.get(c, c) for c in display_cols]
 
                     st.caption(f"Found **{len(inspiring):,}** experts - click a row to view details")
+
+                    # Paginate the results (25 per page)
+                    display_df = paginated_dataframe(full_display_df, key="crossfield_experts", page_size=25)
+
                     inspiring_selection = st.dataframe(
                         display_df,
                         hide_index=True,
@@ -2174,9 +2242,6 @@ with tab4:
                             "Expert / PI": st.column_config.TextColumn("Expert / PI", width="small"),
                         }
                     )
-
-                    if len(inspiring) > 25:
-                        st.caption(f"Showing top 25 of {len(inspiring):,} unique projects, ranked by thematic similarity")
 
                     # CSV download button for all expert studies
                     export_cols = ['PI_NAMEs', 'ORG_NAME', 'PROJECT_TITLE', 'Chemical(s)', 'model_system', 'ABSTRACT_TEXT', 'similarity_score']
@@ -2342,12 +2407,17 @@ with tab_organ:
                     display_cols = ['PROJECT_TITLE', 'PI_NAMEs', 'ORG_NAME', 'FISCAL_YEAR']
                     display_cols = [c for c in display_cols if c in organ_grants.columns]
                     if display_cols:
-                        grants_display = organ_grants[display_cols].head(50).copy()
-                        if 'PI_NAMEs' in grants_display.columns:
-                            grants_display['PI_NAMEs'] = grants_display['PI_NAMEs'].apply(clean_pi_names)
+                        # Prepare full display dataframe
+                        full_grants_display = organ_grants[display_cols].copy()
+                        if 'PI_NAMEs' in full_grants_display.columns:
+                            full_grants_display['PI_NAMEs'] = full_grants_display['PI_NAMEs'].apply(clean_pi_names)
                         col_names = {'PROJECT_TITLE': 'Title', 'PI_NAMEs': 'PI(s)', 'ORG_NAME': 'Organization', 'FISCAL_YEAR': 'FY'}
-                        grants_display.columns = [col_names.get(c, c) for c in display_cols]
+                        full_grants_display.columns = [col_names.get(c, c) for c in display_cols]
                         st.caption("Select a row to view abstract below")
+
+                        # Paginate the results (25 per page)
+                        grants_display = paginated_dataframe(full_grants_display, key="organ_systems_table", page_size=25)
+
                         organ_selection = st.dataframe(
                             grants_display,
                             hide_index=True,
@@ -2359,9 +2429,6 @@ with tab_organ:
                                 "Title": st.column_config.TextColumn("Title", width="large"),
                             }
                         )
-
-                        if len(organ_grants) > 50:
-                            st.caption(f"Showing first 50 of {len(organ_grants):,} projects")
 
                         # Download button for organ system results
                         organ_csv = organ_grants.to_csv(index=False)
@@ -2472,12 +2539,17 @@ with tab_model:
             display_cols = ['PROJECT_TITLE', 'PI_NAMEs', 'ORG_NAME', 'FISCAL_YEAR']
             display_cols = [c for c in display_cols if c in model_grants.columns]
             if display_cols:
-                grants_display = model_grants[display_cols].head(50).copy()
-                if 'PI_NAMEs' in grants_display.columns:
-                    grants_display['PI_NAMEs'] = grants_display['PI_NAMEs'].apply(clean_pi_names)
+                # Prepare full display dataframe
+                full_grants_display = model_grants[display_cols].copy()
+                if 'PI_NAMEs' in full_grants_display.columns:
+                    full_grants_display['PI_NAMEs'] = full_grants_display['PI_NAMEs'].apply(clean_pi_names)
                 col_names = {'PROJECT_TITLE': 'Title', 'PI_NAMEs': 'PI(s)', 'ORG_NAME': 'Organization', 'FISCAL_YEAR': 'FY'}
-                grants_display.columns = [col_names.get(c, c) for c in display_cols]
+                full_grants_display.columns = [col_names.get(c, c) for c in display_cols]
                 st.caption("Select a row to view abstract below")
+
+                # Paginate the results (25 per page)
+                grants_display = paginated_dataframe(full_grants_display, key="model_organisms_table", page_size=25)
+
                 model_selection = st.dataframe(
                     grants_display,
                     hide_index=True,
@@ -2489,9 +2561,6 @@ with tab_model:
                         "Title": st.column_config.TextColumn("Title", width="large"),
                     }
                 )
-
-                if len(model_grants) > 50:
-                    st.caption(f"Showing first 50 of {len(model_grants):,} projects")
 
                 # Download button for model system results
                 model_csv = model_grants.to_csv(index=False)
@@ -2591,12 +2660,17 @@ with tab_model:
                 display_cols = ['PROJECT_TITLE', 'PI_NAMEs', 'ORG_NAME', 'FISCAL_YEAR']
                 display_cols = [c for c in display_cols if c in mech_grants.columns]
                 if display_cols:
-                    grants_display = mech_grants[display_cols].head(50).copy()
-                    if 'PI_NAMEs' in grants_display.columns:
-                        grants_display['PI_NAMEs'] = grants_display['PI_NAMEs'].apply(clean_pi_names)
+                    # Prepare full display dataframe
+                    full_grants_display = mech_grants[display_cols].copy()
+                    if 'PI_NAMEs' in full_grants_display.columns:
+                        full_grants_display['PI_NAMEs'] = full_grants_display['PI_NAMEs'].apply(clean_pi_names)
                     col_names = {'PROJECT_TITLE': 'Title', 'PI_NAMEs': 'PI(s)', 'ORG_NAME': 'Organization', 'FISCAL_YEAR': 'FY'}
-                    grants_display.columns = [col_names.get(c, c) for c in display_cols]
+                    full_grants_display.columns = [col_names.get(c, c) for c in display_cols]
                     st.caption("Select a row to view abstract below")
+
+                    # Paginate the results (25 per page)
+                    grants_display = paginated_dataframe(full_grants_display, key="mechanisms_stomp_table", page_size=25)
+
                     mech_selection = st.dataframe(
                         grants_display,
                         hide_index=True,
@@ -2608,9 +2682,6 @@ with tab_model:
                             "Title": st.column_config.TextColumn("Title", width="large"),
                         }
                     )
-
-                    if len(mech_grants) > 50:
-                        st.caption(f"Showing first 50 of {len(mech_grants):,} projects")
 
                     # Download button for mechanism results
                     mech_csv = mech_grants.to_csv(index=False)
