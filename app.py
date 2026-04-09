@@ -1690,6 +1690,9 @@ with tab1:
     </div>
     """, unsafe_allow_html=True)
 
+    # Show title first
+    st.subheader(f"Recent Projects and Funded Grants: {len(filtered):,}")
+
     # Text search box with regex support - use columns to put help icon closer to label
     st.markdown("""
     <style>
@@ -1793,11 +1796,9 @@ with tab1:
             display_cols = ['Source', 'Years', 'PROJECT_TITLE', 'PI_NAMEs', 'ORG_NAME']
             unique_projects = len(grouped)
             total_records = len(filtered_sorted)
-            st.subheader(f"Recent Projects and Funded Grants: {unique_projects:,}")
         else:
             display_df = filtered_sorted
             display_cols = ['Source', 'FISCAL_YEAR', 'PROJECT_TITLE', 'PI_NAMEs', 'ORG_NAME']
-            st.subheader(f"Matching Grants: {len(search_filtered):,}")
 
         display_cols = [c for c in display_cols if c in display_df.columns]
 
