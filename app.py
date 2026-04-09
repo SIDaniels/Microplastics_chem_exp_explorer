@@ -1888,31 +1888,23 @@ with tab4:
             cat_organs = []
             cat_models = []
 
-        # Build tags HTML
-        organ_html = ""
-        if cat_organs:
-            organ_tags = ' '.join([f'<span style="background: #e8f4f5; color: #0D3B3C; padding: 2px 8px; border-radius: 12px; font-size: 0.8rem; margin-right: 4px;">{org[0]}</span>' for org in cat_organs[:4]])
-            organ_html = f'<div style="margin-bottom: 8px;"><strong style="color: #666; font-size: 0.85rem;">Organ Systems:</strong> {organ_tags}</div>'
-
-        model_html = ""
-        if cat_models:
-            model_tags = ' '.join([f'<span style="background: #f5f0e8; color: #8B6914; padding: 2px 8px; border-radius: 12px; font-size: 0.8rem; margin-right: 4px;">{mod[0]}</span>' for mod in cat_models[:4]])
-            model_html = f'<div style="margin-bottom: 8px;"><strong style="color: #666; font-size: 0.85rem;">Model Systems:</strong> {model_tags}</div>'
-
         # Styled summary card
-        st.markdown(f"""
-        <div style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-                    padding: 1rem 1.25rem; border-radius: 10px;
-                    border-left: 4px solid #0D3B3C; margin-bottom: 0.5rem;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
-                <h4 style="margin: 0; color: #0D3B3C; font-family: 'Source Sans Pro', sans-serif;">{mech_label}</h4>
-                <span style="background: #0D3B3C; color: white; padding: 4px 12px; border-radius: 15px; font-size: 0.85rem; font-weight: 600;">{mp_count} grants</span>
-            </div>
-            {organ_html}
-            {model_html}
-            <p style="margin: 0; font-size: 0.9rem; color: #444; line-height: 1.5;">{summary if summary else f"<em>{mp_count} microplastics grants studying {mech_label}.</em>"}</p>
-        </div>
-        """, unsafe_allow_html=True)
+        summary_text = summary if summary else f"{mp_count} microplastics grants studying {mech_label}."
+
+        # Build tags HTML
+        tags_html = ""
+        if cat_organs:
+            organ_tags = ' '.join([f'<span style="background: #e8f4f5; color: #0D3B3C; padding: 2px 8px; border-radius: 12px; font-size: 0.75rem;">{org[0]}</span>' for org in cat_organs[:4]])
+            tags_html += f'<div style="margin: 0.5rem 0;"><strong style="color: #666; font-size: 0.8rem;">Organs:</strong> {organ_tags}</div>'
+        if cat_models:
+            model_tags = ' '.join([f'<span style="background: #f5f0e8; color: #8B6914; padding: 2px 8px; border-radius: 12px; font-size: 0.75rem;">{mod[0]}</span>' for mod in cat_models[:4]])
+            tags_html += f'<div style="margin: 0.5rem 0;"><strong style="color: #666; font-size: 0.8rem;">Models:</strong> {model_tags}</div>'
+
+        st.markdown(f"""<div style="background: #f8f9fa; padding: 1rem; border-radius: 10px; border-left: 4px solid #0D3B3C;">
+<h4 style="margin: 0 0 0.5rem 0; color: #0D3B3C;">{mech_label} <span style="background: #0D3B3C; color: white; padding: 2px 8px; border-radius: 10px; font-size: 0.8rem; font-weight: normal;">{mp_count} grants</span></h4>
+{tags_html}
+<p style="margin: 0; color: #444; font-size: 0.9rem; line-height: 1.5;">{summary_text}</p>
+</div>""", unsafe_allow_html=True)
 
     # Secondary filters row
     st.markdown("<div style='height: 12px'></div>", unsafe_allow_html=True)
