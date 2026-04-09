@@ -1561,13 +1561,7 @@ if group_by_project:
 else:
     filtered_display = filtered
 
-# Compute co-occurrence stats (full dataset for suggestions)
-cooccur = compute_cooccurrence(df)
-
-# Compute dynamic stats on filtered data
-cooccur_filtered = compute_cooccurrence(filtered) if len(filtered) > 0 else {}
-
-# Related filters section removed - app is focused on Microplastics only
+# Co-occurrence stats removed - not currently used, improves load time
 
 # ============== SUMMARY CARD & ACTIVE FILTERS ==============
 # Get deduplicated data for summary
@@ -1594,6 +1588,7 @@ with tab1:
         Use the filters to explore research by exposure type, organ system, mechanism, and more. Use <strong>Cross-Field Insights</strong> to find methods and techniques funded for other pollutants that could accelerate your work.
         <br><br>
         <em>This tool is in beta and your feedback is welcomed! <a href="https://biotechstrategygroup.com/contact" target="_blank" style="color: #0D3B3C;">Drop us a line</a> to report any issues or let us know what pollutants you'd like to see added next.</em>
+        <br><span style="color: #666; font-size: 0.85em;">Note: Initial loading may take a few seconds.</span>
     </div>
     """, unsafe_allow_html=True)
 
@@ -1782,13 +1777,13 @@ with tab1:
         st.info("No grants match your filters. Try broadening your search.")
 
 with tab4:
-    st.subheader("Cross-Field Insights")
+    st.subheader("Accelerate microplastics research by learning from adjacent fields")
 
     st.markdown("""
     <div style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); padding: 1rem; border-radius: 8px; margin-bottom: 1rem; border-left: 4px solid #D4A84B;">
         <p style="margin: 0; font-size: 0.95rem; color: #333;">
-            <strong>Find established experts</strong> who already study your research niche of interest with other chemicals.
-            These experts are currently funded in pollutant research in relation to human health, and their approach could translate to work on microplastics.
+            Select a research category below to see NIH-funded experts studying that topic with other pollutants (pesticides, heavy metals, air pollution, etc.).
+            Their validated methods, model systems, and mechanistic insights can be adapted for microplastics work—saving years of method development.
         </p>
     </div>
     """, unsafe_allow_html=True)
