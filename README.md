@@ -179,6 +179,33 @@ streamlit run app.py
 
 ## Technical Notes
 
+### Cross-Field Insights: Relevance Scoring Algorithm
+
+The Cross-Field Insights tab helps researchers find experts studying similar problems with other pollutants. When a user selects a research category (e.g., "Gut Microbiome" or "Oxidative Stress"), the app scores and ranks 2,400+ grants from other pollutant fields based on research similarity.
+
+**How it works:**
+
+1. **Analyze the source field**: The algorithm first examines all microplastics grants in the selected category to identify:
+   - Which mechanisms are commonly studied (>10% prevalence)
+   - Which model systems are used (>15% prevalence)
+   - Which organ systems are targeted (>10% prevalence)
+   - Which molecular pathways/subthemes appear (>8% prevalence)
+
+2. **Score each target grant**: Every grant from the cross-field dataset (heavy metals, PFAS, pesticides, etc.) is scored based on overlap with the source field:
+
+   | Feature | Points | Rationale |
+   |---------|--------|-----------|
+   | Keyword match (user search) | +10 | Explicit user intent |
+   | Selected category match | +5 | Direct research alignment |
+   | Mechanism match | +3 each (max 2) | Mechanisms often translate across chemicals |
+   | Model system match | +2 | Methods/protocols are transferable |
+   | Subtheme/pathway match | +2 each (max 2) | Deep mechanistic alignment |
+   | Organ system overlap | +1 each | Secondary relevance |
+
+3. **Display results**: Grants are sorted by relevance score, with matching features shown (e.g., "★Gut Microbiome, Model: Rodent, Inflammation").
+
+**Example**: If a microplastics researcher is studying gut microbiome effects using rodent models, they'd find high-scoring matches among PFAS or pesticide researchers who also study microbiome disruption in rodents—even though the pollutant is different.
+
 ### Classification Approach Evolution
 
 We initially attempted pure regex-based classification for mechanisms of toxicity. This worked reasonably well for binary detection (does the grant mention inflammation?) but struggled with nuance (does the grant *study* inflammation as a primary outcome, or just mention it as background?).
