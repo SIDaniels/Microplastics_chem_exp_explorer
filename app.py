@@ -1896,7 +1896,7 @@ Microplastics research is just getting started. Leverage existing biotech expert
         <br><br>
         <strong>Step 1:</strong> Choose a microplastics research category to view a summary of what's currently studied.
         <br>
-        <strong>Step 2:</strong> View the populated list of experts whose funded research spans the same category across other pollutants. Refine your query and download as CSVs.
+        <strong>Step 2:</strong> Scroll down to view the populated list of experts whose funded research spans the same category across other pollutants. Refine your query and download results.
     </div>
     """, unsafe_allow_html=True)
 
