@@ -1892,11 +1892,11 @@ with tab4:
 
     st.markdown("""
     <div style="background-color: #f0f7f7; border-left: 4px solid #0D3B3C; padding: 12px 16px; margin-bottom: 16px; border-radius: 0 8px 8px 0;">
-Microplastics research is just getting started. Leverage existing biotech expertise from those working in adjacent spaces. Search 2,400+ NIH-funded researchers working on similar problems for other pollutants who have transferable approaches for microplastics.
+Microplastics research is just getting started. Leverage existing biotech expertise from those working in adjacent spaces. Search 2,400+ NIH-funded researchers working on similar problems for other pollutants who likely have transferable knowledge for microplastics.
         <br><br>
-        <strong>Step 1:</strong> Choose a microplastics research category to view a summary of what's currently studied in this subfield.
+        <strong>Step 1:</strong> Choose a microplastics research category to view a summary of what's currently studied.
         <br>
-        <strong>Step 2:</strong> View the populated list of experts in the same broader category who study other pollutants. Refine your query and export CSVs.
+        <strong>Step 2:</strong> View the populated list of experts whose funded research spans the same category across other pollutants. Refine your query and download as CSVs.
     </div>
     """, unsafe_allow_html=True)
 
