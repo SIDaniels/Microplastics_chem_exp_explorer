@@ -210,10 +210,23 @@ The Cross-Field Insights tab helps researchers find experts studying similar pro
 
 We initially attempted pure regex-based classification for mechanisms of toxicity. This worked reasonably well for binary detection (does the grant mention inflammation?) but struggled with nuance (does the grant *study* inflammation as a primary outcome, or just mention it as background?).
 
+**Key lesson: Abstracts are challenging to query with regex.** Scientific abstracts use varied terminology, abbreviations, and sentence structures. A grant studying "ROS-mediated mitochondrial dysfunction" might not match a simple "oxidative stress" regex. Manual validation revealed many false negatives.
+
 The LLM-based approach (`scripts/llm_classify_mechanisms.py`) resolved this by:
 1. Providing detailed definitions of each mechanism
 2. Asking the LLM to determine if the grant *directly investigates* each mechanism
 3. Allowing for "other mechanisms" discovery
+
+### LLM-Generated Category Summaries
+
+The expandable "What are microplastics researchers studying?" summaries in Cross-Field Insights were generated using Claude. For each research category, the LLM analyzed the microplastics grants in that category and wrote a human-readable summary of current research themes, common approaches, and knowledge gaps. These summaries help users understand the landscape before exploring cross-field experts.
+
+### Manual Validation
+
+After automated classification, we performed manual spot-checks to verify accuracy:
+- Reviewed a sample of grants in each category to confirm appropriate classification
+- Identified edge cases where regex patterns failed (informing the move to LLM classification)
+- Validated that cross-field matches were genuinely relevant (not just keyword coincidences)
 
 ### Experimental: Pollutant Analog Predictions
 
