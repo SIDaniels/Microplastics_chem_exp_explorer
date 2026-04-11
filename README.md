@@ -44,7 +44,17 @@ For cross-field comparison (chemical exposures):
 - Broader search covering: heavy metals, PFAS, pesticides, phthalates/BPA, air pollution, PAHs/dioxins/PCBs, flame retardants, solvents, nitrates
 - This yielded ~2,400 grants for comparison
 
-### Step 1b: Collect Recent Papers from Paperclip
+### Step 1b: Collect Conference Abstracts
+
+**Source**: [1st Micro/Nanoplastics & Human Health Conference](https://hsc.unm.edu/pharmacy/research/areas/cmbm/mnp-conf/) (January 2026, University of New Mexico)
+
+Conference abstracts were extracted from the [full digital program PDF](https://hsc.unm.edu/pharmacy/research/areas/cmbm/mnp-conf/_docs/full-digital-program.pdf):
+- Extracted 162 abstracts via PDF parsing
+- Fields captured: title, authors, institution, abstract text
+- Manually corrected 77 entries with garbled PI names or missing organization data
+- Each abstract was classified using the same LLM pipeline as papers
+
+### Step 1c: Collect Recent Papers from Paperclip
 
 **Source**: [Paperclip](https://paperclip.ai/) (indexes bioRxiv, medRxiv, PMC)
 
