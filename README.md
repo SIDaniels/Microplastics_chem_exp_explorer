@@ -44,6 +44,16 @@ For cross-field comparison (chemical exposures):
 - Broader search covering: heavy metals, PFAS, pesticides, phthalates/BPA, air pollution, PAHs/dioxins/PCBs, flame retardants, solvents, nitrates
 - This yielded ~2,400 grants for comparison
 
+### Step 1b: Collect Recent Papers from Paperclip
+
+**Source**: [Paperclip](https://paperclip.ai/) (indexes bioRxiv, medRxiv, PMC)
+
+For recent preprints and published papers (2025-2026):
+- Search terms: `microplastic*`, `nanoplastic*`
+- Used SQL query to extract ~200 papers with abstracts
+- See `scripts/paperclip_extract_papers.py` for extraction process
+- See `docs/PAPERCLIP_EXTRACTION_PROCESS.md` for detailed methodology
+
 ### Step 2: Filter and Clean Data
 
 Raw NIH Reporter exports contain many false positives. We developed iterative regex-based filtering to identify grants that genuinely study the target pollutant (vs. those that merely mention it in passing).
@@ -106,6 +116,8 @@ The app (`app.py`) provides:
 | Script | Purpose |
 |--------|---------|
 | `scripts/llm_classify_mechanisms.py` | Classify grants by mechanism using Claude LLM |
+| `scripts/llm_classify_all.py` | Full LLM classification pipeline for papers (health relevance, mechanisms, organs, models) |
+| `scripts/paperclip_extract_papers.py` | Extract microplastics papers from Paperclip (bioRxiv, medRxiv, PMC) |
 | `scripts/update_organ_systems.py` | Update organ system classifications |
 | `scripts/update_model_organisms.py` | Update model organism classifications |
 
@@ -236,6 +248,7 @@ We experimented with using Claude to predict which pollutants might serve as use
 ## Acknowledgments
 
 - Data sourced from [NIH Reporter](https://reporter.nih.gov/)
+- Recent papers extracted from [Paperclip](https://paperclip.ai/) (bioRxiv, medRxiv, PMC)
 - Conference abstracts from the [1st Micro/Nanoplastics & Human Health Conference](https://hsc.unm.edu/pharmacy/research/areas/cmbm/mnp-conf/) (January 2026, New Mexico)
 - Built with [Streamlit](https://streamlit.io/)
 - LLM classification powered by [Anthropic Claude](https://www.anthropic.com/)
