@@ -27,6 +27,35 @@ ER_COLORS = {
 # Gradient palette for charts
 ER_GRADIENT = ['#0D3B3C', '#1a5455', '#2d7170', '#46B3A9', '#5FA872', '#D4A84B']
 
+# ============== CLEAN EXPORT COLUMNS ==============
+
+# Columns to include in CSV exports (clean, user-friendly)
+EXPORT_COLUMNS = [
+    # Core metadata
+    'PROJECT_TITLE', 'ABSTRACT_TEXT', 'CORE_PROJECT_NUM', 'PI_NAMEs',
+    'ORG_NAME', 'FISCAL_YEAR', 'SOURCE', 'doi', 'pub_date',
+    # LLM classifications
+    'LLM_HUMAN_HEALTH_RELEVANT', 'LLM_CONFIDENCE',
+    'LLM_STUDY_DETECTION', 'LLM_STUDY_EXPOSURE_ASSESSMENT',
+    # LLM Mechanisms
+    'LLM_MECH_OXIDATIVE_STRESS', 'LLM_MECH_INFLAMMATION', 'LLM_MECH_BARRIER_DISRUPTION',
+    'LLM_MECH_MICROBIOME', 'LLM_MECH_ENDOCRINE', 'LLM_MECH_NEURODEGENERATION',
+    'LLM_MECH_IMMUNE_DYSFUNCTION', 'LLM_MECH_DNA_DAMAGE', 'LLM_MECH_RECEPTOR_SIGNALING',
+    'LLM_MECH_CELL_DEATH',
+    # LLM Organs
+    'LLM_ORGAN_BRAIN_NERVOUS', 'LLM_ORGAN_CARDIOVASCULAR', 'LLM_ORGAN_GI_GUT',
+    'LLM_ORGAN_RESPIRATORY', 'LLM_ORGAN_REPRODUCTIVE', 'LLM_ORGAN_LIVER',
+    'LLM_ORGAN_KIDNEY', 'LLM_ORGAN_IMMUNE', 'LLM_ORGAN_ENDOCRINE',
+    # LLM Models
+    'LLM_MODEL_INVITRO', 'LLM_MODEL_RODENT', 'LLM_MODEL_ZEBRAFISH',
+    'LLM_MODEL_HUMAN', 'LLM_MODEL_ENVIRONMENTAL', 'LLM_MODEL_OTHER_ANIMAL',
+]
+
+def clean_export_df(df: pd.DataFrame) -> pd.DataFrame:
+    """Return dataframe with only clean export columns (that exist in df)."""
+    cols_to_keep = [c for c in EXPORT_COLUMNS if c in df.columns]
+    return df[cols_to_keep]
+
 # ============== PAGINATION HELPER ==============
 
 def paginated_dataframe(df: pd.DataFrame, key: str, page_size: int = 25) -> pd.DataFrame:
@@ -718,10 +747,10 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# Data path - use microplastic grants with pre-classified columns for STOMP Analysis
-DATA_PATH = Path(__file__).parent / 'data' / 'microplastic_grants_cleaned.csv'
+# Data path - unified dataset with grants + conference abstracts + papers (460 total)
+DATA_PATH = Path(__file__).parent / 'data' / 'microplastic_grants_with_papers.csv'
 # Cross-field data path - use full chemical exposure dataset for Cross-Field Insights
-CROSSFIELD_DATA_PATH = Path(__file__).parent / 'data' / 'chemical_exposure_grants_filtered.csv'
+CROSSFIELD_DATA_PATH = Path(__file__).parent / 'data' / 'chemical_exposure_with_mp_papers.csv'
 
 # Exposure categories
 EXPOSURES = {
@@ -742,7 +771,6 @@ EXPOSURES = {
 MECHANISMS = {
     'LLM_MECH_INFLAMMATION': 'Inflammation',
     'LLM_MECH_BARRIER': 'Barrier Disruption (e.g. blood-brain)',
-    'LLM_MECH_OXIDATIVE': 'Oxidative Stress',
     'LLM_MECH_NEURODEGENERATION': 'Neurodegeneration',
     'LLM_MECH_METABOLIC': 'Metabolic / Cardiovascular',
     'LLM_MECH_CELL_DEATH': 'Cell Death / Senescence',
@@ -754,33 +782,149 @@ MECHANISMS = {
 }
 
 # Pre-written summaries for each research category (for Cross-Field Insights expander)
-# Updated to use LLM classification keys (April 2026) - based on actual grant content
+# Updated April 2026 - based on analysis of 356 microplastics studies (NIH grants + bioRxiv/medRxiv/PMC papers)
 CATEGORY_SUMMARIES = {
-    'LLM_MECH_INFLAMMATION': """<strong>Cardiovascular & GI Inflammation</strong> (25 grants): Research spans cardiovascular inflammatory responses to environmental pollutants, gastrointestinal inflammation from microplastic ingestion, and systemic inflammatory effects. Key themes include biodistribution-triggered inflammation, plastic food container leaching effects, and PET-based tracking of inflammatory responses. Studies use comparative models (Xenopus, organoids, rodents) to assess tissue-specific inflammatory pathways.""",
+    'LLM_MECH_INFLAMMATION': """<strong>Inflammation</strong>
 
-    'LLM_MECH_OXIDATIVE': """<strong>ROS Generation & Mitochondrial Stress</strong> (19 grants): Research examines oxidative damage from environmentally relevant nanoplastics, mitochondrial dysfunction in liver and neural tissues, and ROS-mediated colorectal tumor progression. Key projects investigate weathered/photoaged plastics, hepatic oxidative stress using cell models, and airborne microplastic-induced oxidative pathways. Studies link alpha-synuclein membrane disruption to oxidative mechanisms.""",
+Research in this area investigates how micro- and nanoplastics trigger inflammatory cascades across multiple organ systems. Key focus areas include:
 
-    'LLM_MECH_NEURODEGENERATION': """<strong>Brain Aging, Alzheimer's & Parkinson's</strong> (19 grants): Research focuses on nasal-to-brain uptake pathways, alpha-synuclein membrane disruption (Parkinson's), amyloid-β aggregation (Alzheimer's), and PINK1/Parkin-mediated mitophagy. Key projects track nanoplastic lifecycle in brain tissue, kinesin-mediated axonal transport, and neurotoxicity modeling. Studies span whole-body to cellular scales using murine and human neural models.""",
+<strong>Gastrointestinal inflammation:</strong> Studies examine how ingested plastics damage intestinal epithelium, activate NLRP3 inflammasome pathways, and trigger IL-1β/IL-6/TNF-α release. Research uses intestinal organoids and comparative animal models (zebrafish, rodents) to track inflammatory progression.
 
-    'LLM_MECH_METABOLIC': """<strong>Atherosclerosis & Vascular Dysfunction</strong> (19 grants): Research examines atherosclerotic lesion development in ApoE-deficient mice, sex-specific cardiovascular effects, and ocean microplastic-accelerated atherosclerosis. Key themes include PXR-mediated cardiovascular disease, uteroplacental vascular effects, and metabolic reprogramming in gut microbiota. Studies link dietary plastic exposure to dyslipidemia and arterial remodeling.""",
+<strong>Cardiovascular inflammation:</strong> Projects investigate how plastic particles induce vascular endothelial inflammation, contributing to atherosclerosis. Studies link microplastic exposure to adipose tissue inflammation and pro-atherogenic secretome changes.
 
-    'LLM_MECH_ENDOCRINE': """<strong>Hormone Disruption & Skeletal Effects</strong> (4 grants): Research examines PXR-mediated endocrine disruption, differential impacts of polystyrene vs PET nanoplastics on hormone systems, and DDT-nanoplastic co-exposure effects. Emerging theme: chronic dietary microplastic exposure weakening skeletal integrity through hormonal pathways.""",
+<strong>Systemic effects:</strong> Research tracks how biodistribution of plastics triggers tissue-specific inflammatory responses, with particular attention to reproductive tissues, lung, and liver.""",
 
-    'LLM_MECH_MICROBIOME': """<strong>Gut-Brain Axis & Dysbiosis</strong> (9 grants): Research investigates microplastic-induced colorectal cancer triggers via pks+ E. coli interactions, gut-brain axis effects on cognition, and metabolic reprogramming in gut bacteria. Key projects use synthetic microbiome models, intestinal organoids, and examine microbiome ratio changes from nanoplastic exposure.""",
+    'LLM_MECH_NEURODEGENERATION': """<strong>Neurotoxicity & Neurodegeneration</strong>
 
-    'LLM_MECH_IMMUNE': """<strong>Macrophage Activation & Immunotoxicity</strong> (8 grants): Research examines cumulative environmental exposures on immune function, macrophage-mediated pro-inflammatory responses, and developmental immunotoxicity (Xenopus models). Key themes include airborne microplastic immunotoxicology, mucosal barrier immune effects, and biodistribution-triggered immune responses.""",
+Research investigates how plastic particles reach and damage the central nervous system:
 
-    'LLM_MECH_DNA_DAMAGE': """<strong>Colorectal Cancer & Genotoxicity</strong> (5 grants): Research focuses on microplastic interactions with genotoxic gut bacteria (pks+ E. coli) in early-onset colorectal cancer, genomic integrity effects from ingested nanoplastic mixtures, and airborne microplastic genotoxicity. Studies use whole-animal models to assess carcinogenic potential.""",
+<strong>Brain entry routes:</strong> Studies demonstrate nasal-to-brain uptake via olfactory neurons, blood-brain barrier (BBB) penetration, and potential vagal nerve transport from gut. Nanoplastics (<100nm) cross the BBB more readily than larger particles.
 
-    'LLM_MECH_RECEPTOR': """<strong>PXR, Ion Channels & Signaling</strong> (7 grants): Research examines PXR-mediated cardiovascular effects, mechanosensitive endothelial ion channel impairment from photoaged microplastics, and intracellular signaling dynamics. Key themes include calcium flux disruption, Notch signaling effects, and colorectal tumor receptor mechanisms.""",
+<strong>Parkinson's disease links:</strong> Research shows nanoplastics promote α-synuclein aggregation and membrane disruption - hallmarks of Parkinson's pathology. Studies track axonal transport disruption via kinesin motor protein interference.
 
-    'LLM_MECH_CELL_DEATH': """<strong>Cytotoxicity & Amyloid Aggregation</strong> (15 grants): Research examines alpha-synuclein membrane disruption, nanoplastic effects on amyloid-β aggregation, and dose-dependent cytotoxicity across placental and immune cell types. Key themes include liver hepatocyte toxicity, coffee cup leachate toxicity, and airborne microplastic-induced cell death.""",
+<strong>Alzheimer's disease links:</strong> Projects examine how plastics accelerate amyloid-β aggregation and tau phosphorylation. The "PRE3BAD" consortium specifically investigates plastic contributions to brain aging and dementia.
 
-    'LLM_MECH_BARRIER': """<strong>Gut Permeability & BBB Penetration</strong> (26 grants): Research investigates intestinal barrier compromise and colorectal cancer progression, BBB penetration via nasal uptake, and uteroplacental barrier effects. Key themes include tampon nanoplastic effects on gynecological barriers, tight junction disruption, and particle translocation/biodistribution.""",
+<strong>Cognitive effects:</strong> Animal studies demonstrate learning/memory deficits, neuroinflammation (microglial activation), and altered neurotransmitter signaling following chronic plastic exposure.""",
 
-    'TYPE_METHODS': """<strong>Spectroscopy & ML Detection</strong> (variable): Research develops Raman spectroscopy, Py-GC/MS, and FTIR techniques for biological samples. Key projects include machine learning quantification pipelines, blank-corrected methods for reproductive tissues, and nanoparticle tracking analysis. Studies address detection limits in CSF, lung lavage, brain tissue, and atmospheric samples.""",
+    'LLM_MECH_METABOLIC': """<strong>Metabolic Disruption & Cardiovascular Disease</strong>
 
-    'TYPE_EXPOSURE': """<strong>Biomonitoring & Dose Assessment</strong> (variable): Research develops biomonitoring frameworks for dietary, inhalation, and dermal exposure routes. Studies measure MNPs in human tissues/fluids, develop exposure biomarkers, and quantify doses from food containers and ambient air. Population-based studies and exposomic frameworks are key approaches.""",
+Research examines how plastic exposure disrupts metabolic homeostasis and accelerates cardiovascular pathology:
+
+<strong>Atherosclerosis:</strong> Studies in ApoE-knockout mice demonstrate microplastics accelerate atherosclerotic plaque formation, with sex-specific effects (males showing greater vulnerability in some studies). Plastics found directly in human atherosclerotic plaques.
+
+<strong>Dyslipidemia:</strong> Research links dietary microplastic exposure to altered lipid profiles, hepatic steatosis, and metabolic syndrome markers.
+
+<strong>Vascular dysfunction:</strong> Projects examine endothelial dysfunction, impaired angiogenesis, and uteroplacental vascular effects during pregnancy. PXR receptor activation is a key mechanistic pathway.
+
+<strong>Metabolic reprogramming:</strong> Studies show plastic exposure alters cellular metabolism via PXR, PPARγ, and related nuclear receptors, affecting glucose homeostasis and adipocyte function.""",
+
+    'LLM_MECH_ENDOCRINE': """<strong>Endocrine Disruption</strong>
+
+Research examines how plastics and their chemical additives interfere with hormone signaling:
+
+<strong>Hormone mimicry:</strong> Studies investigate estrogenic/anti-androgenic effects from plastic particles and leached additives (BPA, phthalates). Polystyrene and PET nanoplastics show differential endocrine-disrupting potency.
+
+<strong>Thyroid effects:</strong> Research documents altered T3/T4 levels and thyroid hormone receptor disruption following plastic exposure, with implications for neurodevelopment.
+
+<strong>Reproductive hormones:</strong> Projects examine effects on testosterone, estradiol, FSH/LH, and downstream fertility impacts. Potentiating effects with co-exposures (e.g., DDT + nanoplastics) are an emerging concern.
+
+<strong>Skeletal effects:</strong> Emerging research links chronic dietary microplastic exposure to weakened skeletal integrity through hormonal pathway disruption.""",
+
+    'LLM_MECH_MICROBIOME': """<strong>Gut Microbiome Alterations</strong>
+
+Research investigates how ingested plastics disrupt the gut microbial ecosystem:
+
+<strong>Dysbiosis patterns:</strong> Studies document shifts in Firmicutes/Bacteroidetes ratios, reduced microbial diversity, and altered short-chain fatty acid (SCFA) production following microplastic exposure. 16S rRNA sequencing reveals species-level changes.
+
+<strong>Gut-brain axis:</strong> Projects examine how microbiome changes affect cognition, behavior, and neuroinflammation through vagal nerve signaling and microbial metabolite alterations.
+
+<strong>Colorectal cancer:</strong> Research investigates microplastic interactions with genotoxic gut bacteria as potential triggers for early-onset colorectal cancer - a growing public health concern.
+
+<strong>Metabolic consequences:</strong> Studies link plastic-induced dysbiosis to altered bile acid metabolism, impaired barrier function, and systemic inflammation. Synthetic gut microbiome models enable controlled mechanistic studies.""",
+
+    'LLM_MECH_IMMUNE': """<strong>Immune Dysfunction & Immunotoxicity</strong>
+
+Research examines how plastic particles alter immune function:
+
+<strong>Macrophage activation:</strong> Studies show plastics are phagocytosed by macrophages, triggering pro-inflammatory cytokine release, NLRP3 inflammasome activation, and potentially immunosuppressive phenotype shifts.
+
+<strong>Developmental immunotoxicity:</strong> Research investigates how prenatal/perinatal plastic exposure affects immune system development, with potential long-term consequences for immune competence.
+
+<strong>Airborne exposure:</strong> Inhalation studies examine how microplastic fibers affect lung-resident immune cells, alveolar macrophages, and mucosal immunity.
+
+<strong>Systemic effects:</strong> Projects track immune cell populations (T cells, B cells, NK cells) and functional markers following chronic plastic exposure. SARS-CoV-2 research shows plastics dysregulate innate immunity in infected lung tissue.""",
+
+    'LLM_MECH_DNA_DAMAGE': """<strong>Genotoxicity & DNA Damage</strong>
+
+Research investigates whether microplastics can damage genetic material:
+
+<strong>DNA strand breaks:</strong> Comet assays reveal increased DNA damage following plastic exposure. Studies examine both direct particle effects and indirect damage via oxidative stress (8-OHdG elevation).
+
+<strong>Chromosomal effects:</strong> Micronucleus assays document chromosomal aberrations and genomic instability. Airborne microplastic genotoxicity is a particular concern.
+
+<strong>Cancer implications:</strong> Research focuses on early-onset colorectal cancer, investigating microplastic interactions with genotoxic gut bacteria and tumor progression mechanisms.
+
+<strong>Transgenerational effects:</strong> Some projects examine whether plastic-induced DNA damage or epigenetic changes transmit across generations.""",
+
+    'LLM_MECH_RECEPTOR': """<strong>Receptor & Signaling Pathway Effects</strong>
+
+Research examines molecular-level interactions between plastics and cellular signaling:
+
+<strong>PXR activation:</strong> Studies show plastics activate pregnane X receptor (PXR), linking to cardiovascular disease, metabolic disruption, and drug-metabolizing enzyme induction.
+
+<strong>Ion channel disruption:</strong> Photoaged microplastics impair mechanosensitive endothelial ion channels, altering calcium flux and vascular function.
+
+<strong>Downstream pathways:</strong> Research tracks MAPK, PI3K/Akt, Notch, and Wnt pathway alterations following plastic exposure, with implications for cell proliferation, differentiation, and survival.
+
+<strong>Toll-like receptors:</strong> Studies examine TLR activation as a mechanism linking plastic particle recognition to inflammatory responses.""",
+
+    'LLM_MECH_CELL_DEATH': """<strong>Cell Death & Cytotoxicity</strong>
+
+Research examines how plastics trigger programmed cell death:
+
+<strong>Apoptosis:</strong> Studies document caspase activation, Bcl-2 family protein changes, and mitochondrial-mediated apoptosis in cells exposed to nanoplastics. Placental and immune cells show particular sensitivity.
+
+<strong>Pyroptosis:</strong> Research links NLRP3 inflammasome activation to inflammatory cell death (pyroptosis), contributing to tissue damage.
+
+<strong>Dose-response relationships:</strong> Polymer type (PS, PET, PE), particle size, and concentration determine cytotoxicity magnitude. Studies establish toxic thresholds across cell types.
+
+<strong>Amyloid interactions:</strong> Research examines how nanoplastics promote α-synuclein and amyloid-β aggregation, linking cytotoxicity to neurodegenerative disease mechanisms.""",
+
+    'LLM_MECH_BARRIER': """<strong>Barrier Disruption & Translocation</strong>
+
+Research investigates how plastics cross and damage biological barriers:
+
+<strong>Gut barrier:</strong> Studies document tight junction disruption (ZO-1, occludin, claudin downregulation), increased intestinal permeability ("leaky gut"), and bacterial translocation following microplastic exposure. TEER measurements in Caco-2 models quantify barrier compromise.
+
+<strong>Blood-brain barrier:</strong> Research demonstrates nanoplastic penetration via nasal uptake routes and potential direct BBB crossing. Studies use microfluidic BBB models and in vivo imaging.
+
+<strong>Placental barrier:</strong> Projects examine fetal exposure via transplacental transport, with implications for developmental toxicity.
+
+<strong>Biodistribution:</strong> Studies track particle translocation from gut to liver, kidney, brain, and reproductive tissues using fluorescent-labeled plastics and mass spectrometry.""",
+
+    'TYPE_METHODS': """<strong>Detection & Quantification Methods</strong>
+
+Research develops and validates analytical techniques for plastics in biological samples:
+
+<strong>Spectroscopy:</strong> FTIR and Raman spectroscopy enable polymer identification in tissues. Machine learning enhances spectral interpretation and automated quantification.
+
+<strong>Mass spectrometry:</strong> Py-GC/MS quantifies plastic mass in complex matrices. Blank correction protocols address laboratory contamination.
+
+<strong>Imaging:</strong> Fluorescence microscopy, confocal imaging, and nanoparticle tracking analysis (NTA) visualize particle distribution in cells and tissues.
+
+<strong>Sample types:</strong> Methods validated for blood, urine, stool, placenta, CSF, lung lavage, and atmospheric samples.""",
+
+    'TYPE_EXPOSURE': """<strong>Exposure Assessment & Biomonitoring</strong>
+
+Research quantifies human plastic exposure across routes:
+
+<strong>Dietary exposure:</strong> Studies measure plastics released from food packaging, bottled water, and food preparation. Dose estimates inform risk assessment.
+
+<strong>Inhalation exposure:</strong> Research quantifies airborne microplastics in indoor/outdoor environments and models respiratory deposition.
+
+<strong>Human biomonitoring:</strong> Projects detect and quantify plastics in blood, urine, stool, and tissues to establish internal exposure levels.
+
+<strong>Exposomics:</strong> Population-based studies integrate plastic exposure with other environmental factors to understand cumulative health risks.""",
 }
 
 # Non-mechanism TYPE categories (for conference abstracts without mechanism focus)
@@ -795,7 +939,6 @@ CONF_TYPE_CATEGORIES = {
 LLM_TO_REGEX_COL = {
     'LLM_MECH_INFLAMMATION': 'MECH_INFLAMMATION',  # Not in crossfield - will use regex pattern
     'LLM_MECH_BARRIER': 'MECH_BARRIER_DISRUPTION',
-    'LLM_MECH_OXIDATIVE': 'MECH_OXIDATIVE_MITOCHONDRIAL',
     'LLM_MECH_NEURODEGENERATION': 'MECH_NEURODEGENERATION',
     'LLM_MECH_METABOLIC': None,  # New category - not in crossfield
     'LLM_MECH_CELL_DEATH': 'MECH_SENESCENCE_CELL_DEATH',
@@ -981,15 +1124,6 @@ MECHANISM_SYSTEMS = {
         r'(?:role|effect|impact).{0,20}(?:of|on).{0,20}inflammat|'
         r'inflammat.{0,20}(?:induc|mediat|driven|caused)|'
         r'pro.?inflammat|anti.?inflammat|inflammasome|nlrp3'),
-    'MECH_OXIDATIVE_MITOCHONDRIAL': ('Oxidative Stress / Mitochondrial',
-        r'(?:aim|goal|objective).{0,50}oxidative|'
-        r'(?:study|investigat|examin).{0,30}oxidative\s+stress|'
-        r'oxidative\s+stress.{0,30}(?:pathway|mechanism|role)|'
-        r'(?:role|effect|impact).{0,20}(?:of|on).{0,20}oxidative|'
-        r'mitochondri.{0,20}(?:dysfunction|damage|toxicity|impair)|'
-        r'(?:study|investigat).{0,30}mitochondri|'
-        r'\bros\b.{0,30}(?:product|generat|level|measur)|'
-        r'reactive\s+oxygen\s+species|lipid\s+peroxidation'),
     'MECH_EPIGENETIC': ('Epigenetic',
         r'(?:aim|goal|objective).{0,50}epigenetic|'
         r'(?:study|investigat|examin).{0,30}epigenetic|'
@@ -1524,13 +1658,15 @@ def filter_grants(df: pd.DataFrame, exposures: list, mechanisms: list,
     """Filter grants by exposure, mechanism, keyword, year, and source."""
     mask = pd.Series([True] * len(df), index=df.index)
 
-    # Filter by source (NIH Grants vs Conference Abstracts)
+    # Filter by source (NIH Grants, Conference Abstracts, Papers)
     if source == "NIH Grants Only":
-        # NIH grants have project numbers that don't start with CONF_
-        mask &= ~df['CORE_PROJECT_NUM'].astype(str).str.startswith('CONF_')
+        mask &= df['SOURCE'].astype(str) == 'NIH'
     elif source == "Conference Abstracts Only":
-        # Conference abstracts have project numbers starting with CONF_
-        mask &= df['CORE_PROJECT_NUM'].astype(str).str.startswith('CONF_')
+        mask &= df['SOURCE'].astype(str) == 'CONFERENCE'
+    elif source == "Published Papers (PMC)":
+        mask &= df['SOURCE'].astype(str).str.contains('PMC', na=False)
+    elif source == "Preprints (bioRxiv/medRxiv)":
+        mask &= df['SOURCE'].astype(str).str.contains('Rxiv', na=False)
 
     # Filter by year (include conference abstracts with NaN fiscal year)
     if years and 'FISCAL_YEAR' in df.columns:
@@ -1633,8 +1769,8 @@ if len(df) == 0:
 # Sidebar filters
 st.sidebar.header("Filters")
 
-# Source filter (NIH Grants vs Conference Abstracts)
-source_options = ["All Sources", "NIH Grants Only", "Conference Abstracts Only"]
+# Source filter (NIH Grants, Conference Abstracts, Papers)
+source_options = ["All Sources", "NIH Grants Only", "Conference Abstracts Only", "Published Papers (PMC)", "Preprints (bioRxiv/medRxiv)"]
 selected_source = st.sidebar.radio(
     "Data Source",
     source_options,
@@ -1697,7 +1833,7 @@ with tab1:
     # About this database info box with hyperlinks
     st.markdown("""
     <div style="background-color: #f0f7f7; border-left: 4px solid #0D3B3C; padding: 12px 16px; margin-bottom: 16px; border-radius: 0 8px 8px 0;">
-        <strong>About this database:</strong> Staying ahead of the curve on research for emerging pollutants, like microplastics, is a challenge. Explore the latest on funded microplastics research from <a href="https://reporter.nih.gov/" target="_blank" style="color: #0D3B3C;">NIH grants</a> (FY2022-2025) and the inaugural <a href="https://hsc.unm.edu/pharmacy/research/areas/cmbm/mnp-conf/_docs/full-digital-program.pdf" target="_blank" style="color: #0D3B3C;">UNM Micro- and Nanoplastics Conference</a>. Check out details based on the affected organ, model organism, molecular mechanism, or your own query. Use <strong>Cross-Field Insights</strong> to find similar approaches for other pollutants and research experts who could directly apply their work to microplastics.
+        <strong>About this database:</strong> Explore 460 microplastics research entries including <a href="https://reporter.nih.gov/" target="_blank" style="color: #0D3B3C;">NIH grants</a> (FY2022-2025), the inaugural <a href="https://hsc.unm.edu/pharmacy/research/areas/cmbm/mnp-conf/_docs/full-digital-program.pdf" target="_blank" style="color: #0D3B3C;">UNM Micro- and Nanoplastics Conference</a>, plus 256 recent papers from <a href="https://www.biorxiv.org/" target="_blank" style="color: #0D3B3C;">bioRxiv</a>/<a href="https://www.medrxiv.org/" target="_blank" style="color: #0D3B3C;">medRxiv</a> preprints and <a href="https://www.ncbi.nlm.nih.gov/pmc/" target="_blank" style="color: #0D3B3C;">PubMed Central</a> (2025-2026). Filter by source type in the sidebar. Use <strong>Cross-Field Insights</strong> to find experts who could apply their work to microplastics.
     </div>
     """, unsafe_allow_html=True)
 
@@ -1778,10 +1914,22 @@ with tab1:
             filtered_sorted['_tag_count'] = filtered_sorted[tag_cols].sum(axis=1)
             filtered_sorted = filtered_sorted.sort_values('_tag_count', ascending=False)
 
-        # Add Source column to identify NIH vs Conference entries
-        filtered_sorted['Source'] = filtered_sorted['CORE_PROJECT_NUM'].apply(
-            lambda x: 'Conference' if str(x).startswith('CONF_') else 'NIH Grant'
-        )
+        # Add Source column to identify entry type
+        def get_source_label(source_val):
+            source_str = str(source_val)
+            if 'PMC' in source_str:
+                return 'Published'
+            elif 'bioRxiv' in source_str:
+                return 'bioRxiv'
+            elif 'medRxiv' in source_str:
+                return 'medRxiv'
+            elif source_str == 'CONFERENCE':
+                return 'Conference'
+            elif source_str == 'NIH':
+                return 'NIH Grant'
+            return 'Unknown'
+
+        filtered_sorted['Source'] = filtered_sorted['SOURCE'].apply(get_source_label)
 
         # Group by project if requested
         if show_unique and 'CORE_PROJECT_NUM' in filtered_sorted.columns:
@@ -1839,7 +1987,8 @@ with tab1:
         )
 
         # Download button
-        csv = filtered_sorted.drop(columns=['_tag_count'], errors='ignore').to_csv(index=False)
+        export_df = clean_export_df(filtered_sorted.drop(columns=['_tag_count'], errors='ignore'))
+        csv = export_df.to_csv(index=False)
         st.download_button(
             "Download Results (CSV)",
             csv,
@@ -2434,7 +2583,7 @@ with tab_organ:
                         )
 
                         # Download button for organ system results
-                        organ_csv = organ_grants.to_csv(index=False)
+                        organ_csv = clean_export_df(organ_grants).to_csv(index=False)
                         st.download_button(
                             f"Download {selected_organ} Projects (CSV)",
                             organ_csv,
@@ -2563,7 +2712,7 @@ with tab_model:
                 )
 
                 # Download button for model system results
-                model_csv = model_grants.to_csv(index=False)
+                model_csv = clean_export_df(model_grants).to_csv(index=False)
                 st.download_button(
                     f"Download {selected_model} Projects (CSV)",
                     model_csv,
@@ -2681,7 +2830,7 @@ with tab_model:
                     )
 
                     # Download button for mechanism results
-                    mech_csv = mech_grants.to_csv(index=False)
+                    mech_csv = clean_export_df(mech_grants).to_csv(index=False)
                     st.download_button(
                         f"Download {selected_mech_stomp} Projects (CSV)",
                         mech_csv,
