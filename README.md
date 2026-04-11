@@ -20,12 +20,11 @@ Microplastics research is a rapidly evolving field where researchers often work 
 
 | Tab | Description |
 |-----|-------------|
-| **Projects** | Browse and search 200+ NIH-funded microplastics grants with filters for mechanisms, organs, models |
-| **Conference Abstracts** | Explore abstracts from the 1st Micro/Nanoplastics & Human Health Conference (New Mexico, January 2026) |
+| **Projects** | Browse and search 350+ microplastics studies (NIH grants, conference abstracts, papers) with filters for mechanisms, organs, models |
 | **Organ Systems** | Visual breakdown of which organ systems are being studied |
 | **Model Organisms** | Distribution of in vitro, rodent, zebrafish, human, and environmental models |
-| **Mechanisms** | Toxicity mechanisms under investigation (oxidative stress, inflammation, etc.) |
-| **Cross-Field Insights** | Search 2,400+ NIH-funded researchers studying similar problems with other pollutants |
+| **Mechanisms** | Toxicity mechanisms under investigation (inflammation, neurodegeneration, barrier disruption, etc.) |
+| **Cross-Field Insights** | Search 3,000+ NIH-funded researchers studying similar problems with other pollutants |
 
 ---
 

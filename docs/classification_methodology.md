@@ -162,3 +162,181 @@ We favor **precision** (avoiding false positives) over recall (capturing all pos
 2. **Word boundaries**: Use `\b` or character class negation to avoid partial matches
 3. **Title priority**: Terms in titles are stronger signals than abstract mentions
 4. **Explicit exclusions**: Remove known false positive triggers before matching
+
+---
+
+## LLM-Based Classification (Papers)
+
+Last updated: April 2026
+
+### Overview
+
+For bioRxiv, medRxiv, and PMC papers (not NIH grants), we use Claude Sonnet for classification. This provides more nuanced categorization than regex matching, especially for determining human health relevance and identifying specific toxicity mechanisms.
+
+### Pre-Processing Pipeline
+
+Before running the LLM classifier, papers go through several pre-processing steps:
+
+#### Step 1: Data Collection
+- **Source**: Papers extracted from bioRxiv, medRxiv, and PMC using Paperclip CLI
+- **Search terms**: "microplastic*", "nanoplastic*", "plastic particle*"
+- **Date range**: 2025-2026
+- **Initial count**: ~300 papers
+
+#### Step 2: Deduplication
+- Remove duplicate papers (same title appearing in multiple sources)
+- Prefer PMC (published) over preprint versions
+- Result: Reduced to ~250 unique papers
+
+#### Step 3: Initial Relevance Filtering
+Manual/semi-automated filtering to remove clearly non-relevant papers:
+- Plant/soil contamination studies (no animal toxicity)
+- Plastic biodegradation by microbes/enzymes
+- Pure methodology papers without biological samples
+- Environmental sampling without health endpoints
+- Result: ~200 papers for classification
+
+#### Step 4: Conference Abstract Integration
+- Added 162 conference abstracts from STOMP 2025 symposium
+- Extracted via PDF parsing (full-digital-program.pdf)
+- Manually corrected 77 entries with garbled PI names/organizations
+
+### LLM Classification Process
+
+#### Model & Cost
+- **Model**: Claude Sonnet (claude-sonnet-4-20250514)
+- **Cost**: ~$1.35 for 198 papers (~$0.007/paper)
+- **Script**: `scripts/llm_classify_all.py`
+
+#### Classification Categories
+
+Each paper is classified across 4 dimensions:
+
+**1. Human Health Relevance**
+```json
+{
+  "human_health_relevant": true/false,
+  "confidence": "high/medium/low"
+}
+```
+
+**2. Study Types**
+- `detection`: Identifying/measuring plastics in biological samples
+- `exposure_assessment`: Estimating human exposure levels/routes
+
+**3. Mechanisms (10 categories)**
+| Key | Description |
+|-----|-------------|
+| oxidative_stress | ROS, mitochondrial dysfunction, antioxidant depletion |
+| inflammation | Cytokines, NLRP3, NF-κB signaling |
+| barrier_disruption | Gut/BBB/placental barrier integrity |
+| microbiome | Dysbiosis, bacterial diversity changes |
+| endocrine | Hormone disruption, estrogenic/androgenic effects |
+| neurodegeneration | Cognitive impairment, Alzheimer's/Parkinson's links |
+| immune_dysfunction | Immunotoxicity, altered immune cell function |
+| dna_damage | Genotoxicity, chromosomal aberrations |
+| receptor_signaling | AhR, TLRs, MAPK pathways |
+| cell_death | Apoptosis, senescence, autophagy |
+
+**4. Organ Systems (9 categories)**
+brain_nervous, cardiovascular, gi_gut, respiratory, reproductive, liver, kidney, immune, endocrine
+
+**5. Model Organisms (6 categories)**
+invitro, rodent, zebrafish, human, environmental, other_animal
+
+#### Prompt Structure
+
+The LLM receives a structured prompt with:
+1. Clear inclusion/exclusion criteria for health relevance
+2. Detailed definitions for each category with examples
+3. Request for JSON-only output (no markdown)
+
+Example prompt excerpt:
+```
+STEP 1: Is this study relevant to HEALTH/TOXICOLOGY?
+Answer TRUE if the study investigates BIOLOGICAL EFFECTS or TOXICITY MECHANISMS...
+
+Answer FALSE only if:
+- Plant or soil contamination studies (no animal toxicity)
+- Plastic biodegradation by microbes/enzymes
+- Pure methodology/analytical development without biological samples
+
+STEP 2: Classify across all categories...
+```
+
+#### Output Format
+
+LLM returns structured JSON:
+```json
+{
+  "human_health_relevant": true,
+  "confidence": "high",
+  "study_types": {"detection": false, "exposure_assessment": true},
+  "mechanisms": {"oxidative_stress": true, "inflammation": true, ...},
+  "organs": {"gi_gut": true, "liver": true, ...},
+  "models": {"rodent": true, "invitro": false, ...}
+}
+```
+
+Results are flattened to columns with `LLM_` prefix:
+- `LLM_HUMAN_HEALTH_RELEVANT`
+- `LLM_CONFIDENCE`
+- `LLM_MECH_INFLAMMATION`, `LLM_MECH_BARRIER_DISRUPTION`, etc.
+- `LLM_ORGAN_BRAIN_NERVOUS`, `LLM_ORGAN_GI_GUT`, etc.
+- `LLM_MODEL_RODENT`, `LLM_MODEL_HUMAN`, etc.
+
+### Post-Classification Filtering
+
+After LLM classification:
+
+#### Step 5: Health Relevance Filter
+- Papers with `LLM_HUMAN_HEALTH_RELEVANT = 0` were reviewed
+- 104 papers filtered out as non-health-relevant (saved to `filtered_non_health_papers.csv`)
+- Categories filtered: plant studies, environmental sampling only, pure detection methods
+
+#### Step 6: Manual Validation
+- Spot-checked ~20% of classifications
+- Corrected obvious errors (e.g., zebrafish developmental toxicity miscategorized)
+- Adjusted confidence thresholds based on abstract quality
+
+### Final Data Integration
+
+The final dataset combines:
+1. **NIH Grants** (204 entries) - regex-classified using MODEL_*, ORGAN_*, MECH_* columns
+2. **Conference Abstracts** (152 entries) - LLM-classified
+3. **Papers** (152 entries from bioRxiv/medRxiv/PMC) - LLM-classified
+
+**Total**: 356 unique entries in `microplastic_grants_with_papers.csv`
+
+### Running the LLM Classifier
+
+```bash
+# Set API key
+export ANTHROPIC_API_KEY="your-key-here"
+
+# Run classifier
+source venv/bin/activate
+python scripts/llm_classify_all.py
+
+# Output files:
+# - data/llm_full_classifications.csv (classifications only)
+# - data/papers_for_classification.csv (updated with LLM columns)
+```
+
+### Limitations
+
+1. **Confidence varies**: Papers with brief abstracts get lower confidence scores
+2. **Category overlap**: Some mechanisms co-occur (e.g., oxidative stress → inflammation)
+3. **Model vs. regex**: LLM columns (LLM_MODEL_*) don't always match regex columns (MODEL_*) for the same paper
+4. **Cost**: Re-running on large datasets requires API budget
+
+### Merging LLM + Regex Classifications
+
+The app uses:
+- **Mechanisms tab**: `LLM_MECH_*` columns (from LLM classification)
+- **Model Organisms tab**: `MODEL_*` columns (from regex classification)
+- **Organ Systems tab**: Mix of `ORGAN_*` (regex) and `LLM_ORGAN_*` (LLM)
+
+This hybrid approach leverages:
+- Regex precision for well-defined terms (cell lines, species names)
+- LLM nuance for complex concepts (mechanisms, health relevance)
