@@ -19,6 +19,7 @@ Output:
 """
 
 import os
+import sys
 import json
 import time
 import pandas as pd
@@ -237,9 +238,14 @@ def main():
 
     client = Anthropic(api_key=api_key)
 
-    # Load data
+    # Load data - accept command line argument or use default
     data_dir = Path(__file__).parent.parent / "data"
-    csv_path = data_dir / "papers_for_classification.csv"
+    if len(sys.argv) > 1:
+        csv_path = Path(sys.argv[1])
+        if not csv_path.is_absolute():
+            csv_path = data_dir / csv_path
+    else:
+        csv_path = data_dir / "papers_for_classification.csv"
 
     print(f"Loading {csv_path}")
     df = pd.read_csv(csv_path)
@@ -253,6 +259,9 @@ def main():
     print("Estimated cost: ~$1.35")
     print("=" * 60)
 
+    # Progress checkpoint file
+    checkpoint_path = data_dir / "llm_checkpoint.csv"
+
     for idx, row in df.iterrows():
         # Support both column naming conventions
         doc_id = row.get("CORE_PROJECT_NUM", row.get("doc_id", f"row_{idx}"))
@@ -263,7 +272,7 @@ def main():
         if len(str(abstract)) > 3000:
             abstract = str(abstract)[:3000] + "..."
 
-        print(f"[{idx+1}/{total}] {str(title)[:50]}...")
+        print(f"[{idx+1}/{total}] {str(title)[:50]}...", flush=True)
 
         classification = classify_paper(client, title, abstract)
         flat_row = flatten_result(classification, doc_id)
@@ -272,6 +281,14 @@ def main():
         # Rate limiting
         if (idx + 1) % 10 == 0:
             time.sleep(0.5)
+
+        # Save checkpoint every 30 entries
+        if (idx + 1) % 30 == 0:
+            checkpoint_df = pd.DataFrame(results)
+            checkpoint_df.to_csv(checkpoint_path, index=False)
+            print(f"\n>>> CHECKPOINT: Saved {idx+1}/{total} entries to {checkpoint_path}", flush=True)
+            print(f">>> Health relevant so far: {checkpoint_df['LLM_HUMAN_HEALTH_RELEVANT'].sum()}/{len(checkpoint_df)}", flush=True)
+            print("=" * 60, flush=True)
 
     # Create results dataframe
     results_df = pd.DataFrame(results)

@@ -37,11 +37,11 @@ EXPORT_COLUMNS = [
     # LLM classifications
     'LLM_HUMAN_HEALTH_RELEVANT', 'LLM_CONFIDENCE',
     'LLM_STUDY_DETECTION', 'LLM_STUDY_EXPOSURE_ASSESSMENT',
-    # LLM Mechanisms
-    'LLM_MECH_OXIDATIVE_STRESS', 'LLM_MECH_INFLAMMATION', 'LLM_MECH_BARRIER_DISRUPTION',
+    # LLM Mechanisms (cleaned up column names - April 2026)
+    'LLM_MECH_OXIDATIVE_STRESS', 'LLM_MECH_INFLAMMATION', 'LLM_MECH_BARRIER',
     'LLM_MECH_MICROBIOME', 'LLM_MECH_ENDOCRINE', 'LLM_MECH_NEURODEGENERATION',
-    'LLM_MECH_IMMUNE_DYSFUNCTION', 'LLM_MECH_DNA_DAMAGE', 'LLM_MECH_RECEPTOR_SIGNALING',
-    'LLM_MECH_CELL_DEATH',
+    'LLM_MECH_IMMUNE', 'LLM_MECH_DNA_DAMAGE', 'LLM_MECH_RECEPTOR',
+    'LLM_MECH_CELL_DEATH', 'LLM_MECH_METABOLIC',
     # LLM Organs
     'LLM_ORGAN_BRAIN_NERVOUS', 'LLM_ORGAN_CARDIOVASCULAR', 'LLM_ORGAN_GI_GUT',
     'LLM_ORGAN_RESPIRATORY', 'LLM_ORGAN_REPRODUCTIVE', 'LLM_ORGAN_LIVER',
@@ -782,29 +782,32 @@ MECHANISMS = {
 }
 
 # Pre-written summaries for each research category (for Cross-Field Insights expander)
-# Updated April 2026 - based on analysis of 356 microplastics studies (NIH grants + bioRxiv/medRxiv/PMC papers)
+# Updated April 2026 - evidence-based summaries from analysis of 356 microplastics studies
+# (NIH grants, conference abstracts, bioRxiv/medRxiv/PMC papers - reviewed for accuracy)
 CATEGORY_SUMMARIES = {
-    'LLM_MECH_INFLAMMATION': """<strong>Inflammation</strong>
+    'LLM_MECH_INFLAMMATION': """<strong>Inflammation (49 studies)</strong>
 
-Research in this area investigates how micro- and nanoplastics trigger inflammatory cascades across multiple organ systems. Key focus areas include:
+Research investigates inflammatory responses to micro- and nanoplastics across multiple organ systems and exposure routes:
 
-<strong>Gastrointestinal inflammation:</strong> Studies examine how ingested plastics damage intestinal epithelium, activate NLRP3 inflammasome pathways, and trigger IL-1β/IL-6/TNF-α release. Research uses intestinal organoids and comparative animal models (zebrafish, rodents) to track inflammatory progression.
+<strong>Gastrointestinal inflammation:</strong> Multiple NIH grants and studies examine how ingested plastics trigger gut inflammation, NLRP3 inflammasome activation, and IL-1β/IL-6/TNF-α release. Studies use 3D intestinal organoids (Caco-2, patient-derived models), zebrafish, and mouse models. Research links inflammation to IBD exacerbation, ulcerative colitis, and colorectal cancer progression (PIEZO1-dependent oxidative stress, HIF-3α signaling).
 
-<strong>Cardiovascular inflammation:</strong> Projects investigate how plastic particles induce vascular endothelial inflammation, contributing to atherosclerosis. Studies link microplastic exposure to adipose tissue inflammation and pro-atherogenic secretome changes.
+<strong>Cardiovascular inflammation:</strong> Studies document NLRP3 inflammasome activation in aortas of exposed mice and link MNP exposure to atherosclerosis. Ocean-derived microplastics increase IL-1β secretion in macrophages. PET-MPs trigger endothelial glycocalyx loss via ER stress and ROS, promoting vascular injury.
 
-<strong>Systemic effects:</strong> Research tracks how biodistribution of plastics triggers tissue-specific inflammatory responses, with particular attention to reproductive tissues, lung, and liver.""",
+<strong>Pulmonary inflammation:</strong> Research on inhaled microplastic fibers shows dose-dependent lung inflammation, with PMMA nanoplastics inducing inflammatory cytokines in BALF and serum. Textile-derived fibers with azo dyes are investigated for combined fibrotic and allergic responses.
 
-    'LLM_MECH_NEURODEGENERATION': """<strong>Neurotoxicity & Neurodegeneration</strong>
+<strong>Neuroinflammation:</strong> Studies link MNP exposure to microglial activation, GFAP changes, and neuroinflammatory cytokines, particularly in Alzheimer's disease models.""",
 
-Research investigates how plastic particles reach and damage the central nervous system:
+    'LLM_MECH_NEURODEGENERATION': """<strong>Neurotoxicity & Neurodegeneration (31 studies)</strong>
 
-<strong>Brain entry routes:</strong> Studies demonstrate nasal-to-brain uptake via olfactory neurons, blood-brain barrier (BBB) penetration, and potential vagal nerve transport from gut. Nanoplastics (<100nm) cross the BBB more readily than larger particles.
+Research investigates how plastic particles reach, accumulate in, and damage the central nervous system:
 
-<strong>Parkinson's disease links:</strong> Research shows nanoplastics promote α-synuclein aggregation and membrane disruption - hallmarks of Parkinson's pathology. Studies track axonal transport disruption via kinesin motor protein interference.
+<strong>Brain entry routes:</strong> Studies demonstrate nose-to-brain uptake via olfactory sensory neurons, with nanoplastics transported via kinesin motor proteins along axons. Research shows particles reach the olfactory bulb within hours of intranasal exposure. BBB penetration and potential gut-brain axis transport are also investigated.
 
-<strong>Alzheimer's disease links:</strong> Projects examine how plastics accelerate amyloid-β aggregation and tau phosphorylation. The "PRE3BAD" consortium specifically investigates plastic contributions to brain aging and dementia.
+<strong>Alzheimer's disease:</strong> Multiple studies examine MNP effects in APP/PS1 and APOE4 transgenic mouse models. Research shows nanoplastics accelerate amyloid-β fibrillization in cell-free assays and worsen cognitive impairments in AD mice. The PRE3BAD consortium investigates environmental contaminants (including microplastics) and brain aging/dementia. Proteomic studies identify collagen-integrin signaling disruption in glial-neuronal communication.
 
-<strong>Cognitive effects:</strong> Animal studies demonstrate learning/memory deficits, neuroinflammation (microglial activation), and altered neurotransmitter signaling following chronic plastic exposure.""",
+<strong>Parkinson's disease:</strong> Studies show polystyrene nanoplastics promote TDP-43 hyperphosphorylation (ALS-linked), α-synuclein aggregation, and dopamine depletion. PINK1/Parkin-mediated mitophagy is identified as a key pathway in neuronal injury from inhaled nanoplastics.
+
+<strong>Co-exposure synergy:</strong> Research demonstrates nanoplastics potentiate neurotoxicity of lipophilic pesticides (rotenone, fenpyroximate, DDT), suggesting MNPs may act as carriers that increase brain bioavailability of neurotoxicants.""",
 
     'LLM_MECH_METABOLIC': """<strong>Metabolic Disruption & Cardiovascular Disease</strong>
 
@@ -818,89 +821,89 @@ Research examines how plastic exposure disrupts metabolic homeostasis and accele
 
 <strong>Metabolic reprogramming:</strong> Studies show plastic exposure alters cellular metabolism via PXR, PPARγ, and related nuclear receptors, affecting glucose homeostasis and adipocyte function.""",
 
-    'LLM_MECH_ENDOCRINE': """<strong>Endocrine Disruption</strong>
+    'LLM_MECH_ENDOCRINE': """<strong>Endocrine Disruption (17 studies)</strong>
 
 Research examines how plastics and their chemical additives interfere with hormone signaling:
 
-<strong>Hormone mimicry:</strong> Studies investigate estrogenic/anti-androgenic effects from plastic particles and leached additives (BPA, phthalates). Polystyrene and PET nanoplastics show differential endocrine-disrupting potency.
+<strong>Reproductive effects:</strong> Studies document effects on ovarian follicle development, testosterone levels, and sperm function. PLA microplastics reduce sperm ATP production, interfere with meiosis, and increase sperm deformity rates. Polystyrene MPs detected in human semen, testes, and endometrium of infertile women.
 
-<strong>Thyroid effects:</strong> Research documents altered T3/T4 levels and thyroid hormone receptor disruption following plastic exposure, with implications for neurodevelopment.
+<strong>PXR/nuclear receptor signaling:</strong> Research identifies pregnane X receptor (PXR) activation as a key mechanism linking MNP exposure to metabolic and cardiovascular effects. Studies examine PPARγ and related nuclear receptor pathways.
 
-<strong>Reproductive hormones:</strong> Projects examine effects on testosterone, estradiol, FSH/LH, and downstream fertility impacts. Potentiating effects with co-exposures (e.g., DDT + nanoplastics) are an emerging concern.
+<strong>Pesticide potentiation:</strong> Zebrafish studies demonstrate nanoplastics potentiate DDT toxicity, with >3-fold increase in LC50. Research shows AChE inhibition and altered transcriptional patterns for endocrine-related genes when pesticides co-occur with MNPs.
 
-<strong>Skeletal effects:</strong> Emerging research links chronic dietary microplastic exposure to weakened skeletal integrity through hormonal pathway disruption.""",
+<strong>Gestational exposure:</strong> Studies investigate sexually dimorphic metabolic dysfunction in rat offspring after gestational MNP aerosol exposure. Research links prenatal exposure to altered glucose tolerance and potential insulin resistance in female offspring.""",
 
-    'LLM_MECH_MICROBIOME': """<strong>Gut Microbiome Alterations</strong>
+    'LLM_MECH_MICROBIOME': """<strong>Gut Microbiome Alterations (23 studies)</strong>
 
-Research investigates how ingested plastics disrupt the gut microbial ecosystem:
+Research investigates how ingested micro- and nanoplastics disrupt the gut microbial ecosystem:
 
-<strong>Dysbiosis patterns:</strong> Studies document shifts in Firmicutes/Bacteroidetes ratios, reduced microbial diversity, and altered short-chain fatty acid (SCFA) production following microplastic exposure. 16S rRNA sequencing reveals species-level changes.
+<strong>Dysbiosis patterns:</strong> Studies consistently document decreased Firmicutes/Bacteroidetes (F/B) ratios following MNP exposure in rodent models. Metagenomic shotgun sequencing reveals sex-specific and dose-dependent changes in gut microbiome composition. Mixed plastic exposures (PS, PE, PLGA) alter bacterial diversity and predicted metabolic pathways.
 
-<strong>Gut-brain axis:</strong> Projects examine how microbiome changes affect cognition, behavior, and neuroinflammation through vagal nerve signaling and microbial metabolite alterations.
+<strong>SCFA and metabolite changes:</strong> Targeted metabolomics shows significant changes in neuroprotective short-chain fatty acid levels. Serum metabolomics reveals MNP-induced alterations in amino acid metabolism and mitochondrial function markers.
 
-<strong>Colorectal cancer:</strong> Research investigates microplastic interactions with genotoxic gut bacteria as potential triggers for early-onset colorectal cancer - a growing public health concern.
+<strong>Gut-brain axis:</strong> Research demonstrates that oral nanoplastic feeding induces intestinal IL-1β-producing macrophages, which triggers microglial activation and Th17 differentiation in the brain, correlating with cognitive and memory decline in mice.
 
-<strong>Metabolic consequences:</strong> Studies link plastic-induced dysbiosis to altered bile acid metabolism, impaired barrier function, and systemic inflammation. Synthetic gut microbiome models enable controlled mechanistic studies.""",
+<strong>Colorectal cancer links:</strong> Studies investigate how MNPs compromise mucosal barriers enabling genotoxic pks+ E. coli invasion, potentially contributing to rising early-onset colorectal cancer rates. PET microplastics activate NF-κB pathway and disrupt bile acid metabolism through intestinal microbiota changes.""",
 
-    'LLM_MECH_IMMUNE': """<strong>Immune Dysfunction & Immunotoxicity</strong>
+    'LLM_MECH_IMMUNE': """<strong>Immune Dysfunction & Immunotoxicity (22 studies)</strong>
 
-Research examines how plastic particles alter immune function:
+Research examines how plastic particles alter immune cell function and systemic immunity:
 
-<strong>Macrophage activation:</strong> Studies show plastics are phagocytosed by macrophages, triggering pro-inflammatory cytokine release, NLRP3 inflammasome activation, and potentially immunosuppressive phenotype shifts.
+<strong>Macrophage responses:</strong> Studies show polystyrene MPs enhance metabolic and phagocytic activity of M1 macrophages, increasing IL-1β and TNF-α secretion. Conversely, MPs suppress IL-10 in M2 macrophages, disrupting pro-resolving phenotypes. Repeated PET nanoparticle exposure induces oxidative stress and pro-inflammatory responses in macrophages.
 
-<strong>Developmental immunotoxicity:</strong> Research investigates how prenatal/perinatal plastic exposure affects immune system development, with potential long-term consequences for immune competence.
+<strong>Single-cell immune profiling:</strong> scRNA-seq studies of PBMCs reveal dose-dependent, cell-type-specific responses. Monocytes and dendritic cells show upregulation of lysosomal trafficking, oxidative stress, and inflammatory genes. T and NK cells shift toward activated/stress phenotypes.
 
-<strong>Airborne exposure:</strong> Inhalation studies examine how microplastic fibers affect lung-resident immune cells, alveolar macrophages, and mucosal immunity.
+<strong>SARS-CoV-2 interactions:</strong> Research shows microplastic co-exposure suppresses early innate immune responses to viral infection but promotes a "cytokine release syndrome" signature at later timepoints, potentially through inhibition of phagocytosis of infected cells.
 
-<strong>Systemic effects:</strong> Projects track immune cell populations (T cells, B cells, NK cells) and functional markers following chronic plastic exposure. SARS-CoV-2 research shows plastics dysregulate innate immunity in infected lung tissue.""",
+<strong>Developmental immunotoxicity:</strong> Xenopus laevis studies investigate how post-embryonic MP exposure perturbs immune homeostasis, induces chronic inflammation, and impairs antimicrobial immunity - effects exacerbated at higher temperatures.""",
 
-    'LLM_MECH_DNA_DAMAGE': """<strong>Genotoxicity & DNA Damage</strong>
+    'LLM_MECH_DNA_DAMAGE': """<strong>Genotoxicity & DNA Damage (11 studies)</strong>
 
-Research investigates whether microplastics can damage genetic material:
+Research investigates whether micro- and nanoplastics cause genetic damage:
 
-<strong>DNA strand breaks:</strong> Comet assays reveal increased DNA damage following plastic exposure. Studies examine both direct particle effects and indirect damage via oxidative stress (8-OHdG elevation).
+<strong>Micronucleus formation:</strong> Studies in human lung epithelial cells show 100nm PS, PMMA, and PET microplastics induce micronuclei formation, a marker of chromosomal damage. Smaller particle fractions are more genotoxic than larger counterparts.
 
-<strong>Chromosomal effects:</strong> Micronucleus assays document chromosomal aberrations and genomic instability. Airborne microplastic genotoxicity is a particular concern.
+<strong>Early-onset colorectal cancer:</strong> A key NIH grant investigates how MNPs may facilitate invasion by pks+ E. coli carrying the colibactin genotoxin, potentially contributing to rising rates of early-onset CRC. Colibactin's DNA mutation signature is enriched in young CRC patients.
 
-<strong>Cancer implications:</strong> Research focuses on early-onset colorectal cancer, investigating microplastic interactions with genotoxic gut bacteria and tumor progression mechanisms.
+<strong>Oxidative DNA damage:</strong> Fecal microplastic burden correlates with urinary 8-OHdG levels (oxidative DNA damage marker) and MDA (lipid peroxidation) in human biomonitoring studies. Higher placental MNP loads associate with increased γ-H2AX (DNA damage marker).
 
-<strong>Transgenerational effects:</strong> Some projects examine whether plastic-induced DNA damage or epigenetic changes transmit across generations.""",
+<strong>Model organism studies:</strong> C. elegans research examines genomic integrity effects of nanoplastic-pesticide mixtures. Studies assess mutation frequency and DNA repair pathway responses following environmental chemical co-exposures with nanoplastics.""",
 
-    'LLM_MECH_RECEPTOR': """<strong>Receptor & Signaling Pathway Effects</strong>
+    'LLM_MECH_RECEPTOR': """<strong>Receptor & Signaling Pathway Effects (12 studies)</strong>
 
 Research examines molecular-level interactions between plastics and cellular signaling:
 
-<strong>PXR activation:</strong> Studies show plastics activate pregnane X receptor (PXR), linking to cardiovascular disease, metabolic disruption, and drug-metabolizing enzyme induction.
+<strong>Piezo1/calcium signaling:</strong> Photoaged microplastics impair mechanosensitive Piezo1 channels in endothelial cells, reducing calcium influx and suppressing Notch1 signaling. CRISPR-Cas9 Piezo1 inhibition corroborates the Notch signaling suppression mechanism.
 
-<strong>Ion channel disruption:</strong> Photoaged microplastics impair mechanosensitive endothelial ion channels, altering calcium flux and vascular function.
+<strong>Collagen-integrin axis:</strong> CellChat proteomic analysis shows nanoplastics enhance neuroglial communication via collagen-integrin signaling in Alzheimer's models. TC-I 15 blockade of collagen signaling rescues cognition in MNP-exposed APP/PS1 mice.
 
-<strong>Downstream pathways:</strong> Research tracks MAPK, PI3K/Akt, Notch, and Wnt pathway alterations following plastic exposure, with implications for cell proliferation, differentiation, and survival.
+<strong>AKT/ERK survival pathways:</strong> Polystyrene nanoplastics increase AKT and ERK phosphorylation in non-malignant lung cells, promoting survival pathway activation alongside DNA damage - suggesting potential tumor-promoting effects.
 
-<strong>Toll-like receptors:</strong> Studies examine TLR activation as a mechanism linking plastic particle recognition to inflammatory responses.""",
+<strong>NF-κB pathway:</strong> PET microplastics activate NF-κB signaling, linking to the "intestine-lung-heart" damage network and cardiovascular risk. Studies examine inflammasome-driven downstream cytokine cascades.""",
 
-    'LLM_MECH_CELL_DEATH': """<strong>Cell Death & Cytotoxicity</strong>
+    'LLM_MECH_CELL_DEATH': """<strong>Cell Death & Cytotoxicity (23 studies)</strong>
 
-Research examines how plastics trigger programmed cell death:
+Research examines how micro- and nanoplastics trigger cell death across multiple cell types:
 
-<strong>Apoptosis:</strong> Studies document caspase activation, Bcl-2 family protein changes, and mitochondrial-mediated apoptosis in cells exposed to nanoplastics. Placental and immune cells show particular sensitivity.
+<strong>Cell-type susceptibility:</strong> Studies measure CC50 values across polymers (PE, PS, PVC), sizes, and timepoints. Trophoblasts (BeWo, JEG3) show susceptibility windows at 24h with PS-Small particles. Human kidney cells (HK-2) show dose- and polymer-dependent cytotoxicity, with PE nanoplastics causing largest viability reductions.
 
-<strong>Pyroptosis:</strong> Research links NLRP3 inflammasome activation to inflammatory cell death (pyroptosis), contributing to tissue damage.
+<strong>Phagocyte cell death:</strong> Plasma-coated microplastics induce neutrophil and monocyte death after phagocytosis. A single 10µm particle triggers neutrophil death within hours, characterized by extracellular DNA release (potential DAMP-mediated inflammation).
 
-<strong>Dose-response relationships:</strong> Polymer type (PS, PET, PE), particle size, and concentration determine cytotoxicity magnitude. Studies establish toxic thresholds across cell types.
+<strong>Mitophagy and mitochondrial dysfunction:</strong> PINK1/Parkin-mediated mitophagy drives neuronal injury from inhaled nanoplastics. Studies show mitochondrial accumulation of particles, membrane potential disruption, and altered respiration. PET particles may induce mitochondrial hormesis at sub-toxic doses.
 
-<strong>Amyloid interactions:</strong> Research examines how nanoplastics promote α-synuclein and amyloid-β aggregation, linking cytotoxicity to neurodegenerative disease mechanisms.""",
+<strong>Reproductive toxicity:</strong> BPA (plastic leachate) disrupts mitochondrial function in placental mesenchymal cells, triggering p53 stabilization, Bax/Bcl-2 imbalance, and senescence-associated secretory phenotype (SASP). Nanoplastics co-exposed with 6PPD induce ferroptosis-linked oxidative stress and retinal cell death in zebrafish.""",
 
-    'LLM_MECH_BARRIER': """<strong>Barrier Disruption & Translocation</strong>
+    'LLM_MECH_BARRIER': """<strong>Barrier Disruption & Translocation (32 studies)</strong>
 
-Research investigates how plastics cross and damage biological barriers:
+Research investigates how micro- and nanoplastics cross and damage biological barriers:
 
-<strong>Gut barrier:</strong> Studies document tight junction disruption (ZO-1, occludin, claudin downregulation), increased intestinal permeability ("leaky gut"), and bacterial translocation following microplastic exposure. TEER measurements in Caco-2 models quantify barrier compromise.
+<strong>Intestinal barrier:</strong> Multiple studies demonstrate MNP-induced tight junction disruption (ZO-1, occludin, claudin downregulation), increased intestinal permeability, and bacterial translocation. Research uses 3D organoid models, Caco-2 monolayers, and TEER measurements. F/B ratio decreases correlate with barrier injury.
 
-<strong>Blood-brain barrier:</strong> Research demonstrates nanoplastic penetration via nasal uptake routes and potential direct BBB crossing. Studies use microfluidic BBB models and in vivo imaging.
+<strong>Blood-brain barrier:</strong> Studies confirm nanoplastic penetration via nasal-olfactory routes (kinesin-mediated axonal transport) and potential direct BBB crossing. MNPs detected in human CSF samples. Research shows BBB compromise correlates with microhemorrhage and vascular leakage in brain tissue.
 
-<strong>Placental barrier:</strong> Projects examine fetal exposure via transplacental transport, with implications for developmental toxicity.
+<strong>Placental barrier:</strong> Tampon-derived nanoplastics (17 billion particles/use) are investigated for penetration of vaginal/cervical mucosal barriers. Studies examine transplacental transport and fetal tissue accumulation using PET imaging. Research links placental MNP burden to DNA damage markers (γ-H2AX).
 
-<strong>Biodistribution:</strong> Studies track particle translocation from gut to liver, kidney, brain, and reproductive tissues using fluorescent-labeled plastics and mass spectrometry.""",
+<strong>Systemic translocation:</strong> Intravital microscopy captures neutrophil phagocytosis of microplastics in liver. Studies track particle distribution to fetal tissues within 24 hours of maternal oral exposure. Gold core-plastic shell particles enable quantification of biodistribution.""",
 
     'TYPE_METHODS': """<strong>Detection & Quantification Methods</strong>
 
@@ -934,20 +937,14 @@ CONF_TYPE_CATEGORIES = {
     'TYPE_EXPOSURE': 'Exposure Assessment',
 }
 
-# Mapping from LLM column names to regex column names (for Cross-Field compatibility)
-# Cross-Field Insights uses chemical_exposure_grants_filtered.csv which has regex columns
-LLM_TO_REGEX_COL = {
-    'LLM_MECH_INFLAMMATION': 'MECH_INFLAMMATION',  # Not in crossfield - will use regex pattern
-    'LLM_MECH_BARRIER': 'MECH_BARRIER_DISRUPTION',
-    'LLM_MECH_NEURODEGENERATION': 'MECH_NEURODEGENERATION',
-    'LLM_MECH_METABOLIC': None,  # New category - not in crossfield
-    'LLM_MECH_CELL_DEATH': 'MECH_SENESCENCE_CELL_DEATH',
-    'LLM_MECH_MICROBIOME': 'MECH_MICROBIOME',
-    'LLM_MECH_IMMUNE': 'MECH_IMMUNE_DYSFUNCTION',
-    'LLM_MECH_RECEPTOR': 'MECH_RECEPTOR_SIGNALING',
-    'LLM_MECH_DNA_DAMAGE': 'MECH_DNA_DAMAGE',
-    'LLM_MECH_ENDOCRINE': 'MECH_ENDOCRINE',
-}
+# Mechanism columns are now unified under LLM_MECH_* naming
+# (Old regex-based MECH_* columns removed April 2026)
+LLM_MECH_COLUMNS = [
+    'LLM_MECH_OXIDATIVE_STRESS', 'LLM_MECH_INFLAMMATION', 'LLM_MECH_BARRIER',
+    'LLM_MECH_MICROBIOME', 'LLM_MECH_ENDOCRINE', 'LLM_MECH_NEURODEGENERATION',
+    'LLM_MECH_IMMUNE', 'LLM_MECH_DNA_DAMAGE', 'LLM_MECH_RECEPTOR',
+    'LLM_MECH_CELL_DEATH', 'LLM_MECH_METABOLIC',
+]
 
 # Regex patterns for TYPE_ categories (used for dynamic classification in Cross-Field Insights)
 # TYPE_METHODS tightened to detection-only (reduced from 83 to ~47 matches)
@@ -2193,12 +2190,9 @@ Microplastics research is just getting started. Leverage existing biotech expert
             if use_regex_filter:
                 type_pattern = TYPE_PATTERNS[my_mechanism]
                 other_field_mask = other_field_mask & text_combined.str.contains(type_pattern, regex=True, flags=re.IGNORECASE, na=False)
-            elif my_mechanism.startswith('LLM_MECH_'):
-                # For LLM mechanisms, use corresponding regex column for non-MP grants
-                regex_col = LLM_TO_REGEX_COL.get(my_mechanism)
-                if regex_col and regex_col in cf_df.columns:
-                    other_field_mask = other_field_mask & (cf_df[regex_col] == 1)
-                # If no regex column (e.g., LLM_MECH_METABOLIC), other_grants will be empty
+            elif my_mechanism.startswith('LLM_MECH_') and my_mechanism in cf_df.columns:
+                # Use unified LLM_MECH_* columns (now available in both CSVs)
+                other_field_mask = other_field_mask & (cf_df[my_mechanism] == 1)
             elif my_mechanism in cf_df.columns:
                 other_field_mask = other_field_mask & (cf_df[my_mechanism] == 1)
         other_grants = cf_df[other_field_mask]
@@ -2213,13 +2207,9 @@ Microplastics research is just getting started. Leverage existing biotech expert
                     type_pattern = TYPE_PATTERNS[my_mechanism]
                     type_mask = text_combined.str.contains(type_pattern, regex=True, flags=re.IGNORECASE, na=False)
                     count = ((cf_df[exp_col] == 1) & type_mask & (cf_df[my_exposure] == 0)).sum()
-                elif my_mechanism.startswith('LLM_MECH_'):
-                    # For LLM mechanisms, use corresponding regex column for non-MP grants
-                    regex_col = LLM_TO_REGEX_COL.get(my_mechanism)
-                    if regex_col and regex_col in cf_df.columns:
-                        count = ((cf_df[exp_col] == 1) & (cf_df[regex_col] == 1) & (cf_df[my_exposure] == 0)).sum()
-                    else:
-                        count = 0  # No regex equivalent (e.g., LLM_MECH_METABOLIC)
+                elif my_mechanism.startswith('LLM_MECH_') and my_mechanism in cf_df.columns:
+                    # Use unified LLM_MECH_* columns
+                    count = ((cf_df[exp_col] == 1) & (cf_df[my_mechanism] == 1) & (cf_df[my_exposure] == 0)).sum()
                 elif my_mechanism in cf_df.columns:
                     count = ((cf_df[exp_col] == 1) & (cf_df[my_mechanism] == 1) & (cf_df[my_exposure] == 0)).sum()
                 else:
