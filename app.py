@@ -772,7 +772,7 @@ MECHANISMS = {
 # Updated April 2026 - evidence-based summaries from analysis of 356 microplastics studies
 # (NIH grants, conference abstracts, bioRxiv/medRxiv/PMC papers - reviewed for accuracy)
 CATEGORY_SUMMARIES = {
-    'LLM_MECH_INFLAMMATION': """<strong>Inflammation (49 studies)</strong>
+    'LLM_MECH_INFLAMMATION': """<strong>Inflammation</strong>
 
 Research investigates inflammatory responses to micro- and nanoplastics across multiple organ systems and exposure routes:
 
@@ -784,7 +784,7 @@ Research investigates inflammatory responses to micro- and nanoplastics across m
 
 <strong>Neuroinflammation:</strong> Studies link MNP exposure to microglial activation, GFAP changes, and neuroinflammatory cytokines, particularly in Alzheimer's disease models.""",
 
-    'LLM_MECH_NEURODEGENERATION': """<strong>Neurotoxicity & Neurodegeneration (31 studies)</strong>
+    'LLM_MECH_NEURODEGENERATION': """<strong>Neurotoxicity & Neurodegeneration</strong>
 
 Research investigates how plastic particles reach, accumulate in, and damage the central nervous system:
 
@@ -808,7 +808,7 @@ Research examines how plastic exposure disrupts metabolic homeostasis and accele
 
 <strong>Metabolic reprogramming:</strong> Studies show plastic exposure alters cellular metabolism via PXR, PPARγ, and related nuclear receptors, affecting glucose homeostasis and adipocyte function.""",
 
-    'LLM_MECH_ENDOCRINE': """<strong>Endocrine Disruption (17 studies)</strong>
+    'LLM_MECH_ENDOCRINE': """<strong>Endocrine Disruption</strong>
 
 Research examines how plastics and their chemical additives interfere with hormone signaling:
 
@@ -820,7 +820,7 @@ Research examines how plastics and their chemical additives interfere with hormo
 
 <strong>Gestational exposure:</strong> Studies investigate sexually dimorphic metabolic dysfunction in rat offspring after gestational MNP aerosol exposure. Research links prenatal exposure to altered glucose tolerance and potential insulin resistance in female offspring.""",
 
-    'LLM_MECH_MICROBIOME': """<strong>Gut Microbiome Alterations (23 studies)</strong>
+    'LLM_MECH_MICROBIOME': """<strong>Gut Microbiome Alterations</strong>
 
 Research investigates how ingested micro- and nanoplastics disrupt the gut microbial ecosystem:
 
@@ -832,7 +832,7 @@ Research investigates how ingested micro- and nanoplastics disrupt the gut micro
 
 <strong>Colorectal cancer links:</strong> Studies investigate how MNPs compromise mucosal barriers enabling genotoxic pks+ E. coli invasion, potentially contributing to rising early-onset colorectal cancer rates. PET microplastics activate NF-κB pathway and disrupt bile acid metabolism through intestinal microbiota changes.""",
 
-    'LLM_MECH_IMMUNE': """<strong>Immune Dysfunction & Immunotoxicity (22 studies)</strong>
+    'LLM_MECH_IMMUNE': """<strong>Immune Dysfunction & Immunotoxicity</strong>
 
 Research examines how plastic particles alter immune cell function and systemic immunity:
 
@@ -844,7 +844,7 @@ Research examines how plastic particles alter immune cell function and systemic 
 
 <strong>Developmental immunotoxicity:</strong> Xenopus laevis studies investigate how post-embryonic MP exposure perturbs immune homeostasis, induces chronic inflammation, and impairs antimicrobial immunity - effects exacerbated at higher temperatures.""",
 
-    'LLM_MECH_DNA_DAMAGE': """<strong>Genotoxicity & DNA Damage (11 studies)</strong>
+    'LLM_MECH_DNA_DAMAGE': """<strong>Genotoxicity & DNA Damage</strong>
 
 Research investigates whether micro- and nanoplastics cause genetic damage:
 
@@ -856,7 +856,7 @@ Research investigates whether micro- and nanoplastics cause genetic damage:
 
 <strong>Model organism studies:</strong> C. elegans research examines genomic integrity effects of nanoplastic-pesticide mixtures. Studies assess mutation frequency and DNA repair pathway responses following environmental chemical co-exposures with nanoplastics.""",
 
-    'LLM_MECH_RECEPTOR': """<strong>Receptor & Signaling Pathway Effects (12 studies)</strong>
+    'LLM_MECH_RECEPTOR': """<strong>Receptor & Signaling Pathway Effects</strong>
 
 Research examines molecular-level interactions between plastics and cellular signaling:
 
@@ -868,7 +868,7 @@ Research examines molecular-level interactions between plastics and cellular sig
 
 <strong>NF-κB pathway:</strong> PET microplastics activate NF-κB signaling, linking to the "intestine-lung-heart" damage network and cardiovascular risk. Studies examine inflammasome-driven downstream cytokine cascades.""",
 
-    'LLM_MECH_CELL_DEATH': """<strong>Cell Death & Cytotoxicity (23 studies)</strong>
+    'LLM_MECH_CELL_DEATH': """<strong>Cell Death & Cytotoxicity</strong>
 
 Research examines how micro- and nanoplastics trigger cell death across multiple cell types:
 
@@ -880,7 +880,7 @@ Research examines how micro- and nanoplastics trigger cell death across multiple
 
 <strong>Reproductive toxicity:</strong> BPA (plastic leachate) disrupts mitochondrial function in placental mesenchymal cells, triggering p53 stabilization, Bax/Bcl-2 imbalance, and senescence-associated secretory phenotype (SASP). Nanoplastics co-exposed with 6PPD induce ferroptosis-linked oxidative stress and retinal cell death in zebrafish.""",
 
-    'LLM_MECH_BARRIER': """<strong>Barrier Disruption & Translocation (32 studies)</strong>
+    'LLM_MECH_BARRIER': """<strong>Barrier Disruption & Translocation</strong>
 
 Research investigates how micro- and nanoplastics cross and damage biological barriers:
 
