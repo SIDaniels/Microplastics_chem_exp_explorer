@@ -30,25 +30,12 @@ ER_GRADIENT = ['#0D3B3C', '#1a5455', '#2d7170', '#46B3A9', '#5FA872', '#D4A84B']
 # ============== CLEAN EXPORT COLUMNS ==============
 
 # Columns to include in CSV exports (clean, user-friendly)
+# Note: Categorization columns (LLM_*, MECH_*, ORGAN_*, MODEL_*, EXP_*, etc.) are excluded
+# to provide clean exports with just project metadata
 EXPORT_COLUMNS = [
-    # Core metadata
+    # Core metadata only - no categorization columns
     'PROJECT_TITLE', 'ABSTRACT_TEXT', 'CORE_PROJECT_NUM', 'PI_NAMEs',
     'ORG_NAME', 'FISCAL_YEAR', 'SOURCE', 'doi', 'pub_date',
-    # LLM classifications
-    'LLM_HUMAN_HEALTH_RELEVANT', 'LLM_CONFIDENCE',
-    'LLM_STUDY_DETECTION', 'LLM_STUDY_EXPOSURE_ASSESSMENT',
-    # LLM Mechanisms (cleaned up column names - April 2026)
-    'LLM_MECH_OXIDATIVE_STRESS', 'LLM_MECH_INFLAMMATION', 'LLM_MECH_BARRIER',
-    'LLM_MECH_MICROBIOME', 'LLM_MECH_ENDOCRINE', 'LLM_MECH_NEURODEGENERATION',
-    'LLM_MECH_IMMUNE', 'LLM_MECH_DNA_DAMAGE', 'LLM_MECH_RECEPTOR',
-    'LLM_MECH_CELL_DEATH', 'LLM_MECH_METABOLIC',
-    # LLM Organs
-    'LLM_ORGAN_BRAIN_NERVOUS', 'LLM_ORGAN_CARDIOVASCULAR', 'LLM_ORGAN_GI_GUT',
-    'LLM_ORGAN_RESPIRATORY', 'LLM_ORGAN_REPRODUCTIVE', 'LLM_ORGAN_LIVER',
-    'LLM_ORGAN_KIDNEY', 'LLM_ORGAN_IMMUNE', 'LLM_ORGAN_ENDOCRINE',
-    # LLM Models
-    'LLM_MODEL_INVITRO', 'LLM_MODEL_RODENT', 'LLM_MODEL_ZEBRAFISH',
-    'LLM_MODEL_HUMAN', 'LLM_MODEL_ENVIRONMENTAL', 'LLM_MODEL_OTHER_ANIMAL',
 ]
 
 def clean_export_df(df: pd.DataFrame) -> pd.DataFrame:
@@ -2117,39 +2104,11 @@ Microplastics research is just getting started. Leverage existing biotech expert
             cat_grants = cf_df[cat_mask]
             cat_text = cat_grants['PROJECT_TITLE'].fillna('') + ' ' + cat_grants['ABSTRACT_TEXT'].fillna('')
 
-            # Find organ systems
-            cat_organs = []
-            for organ_key, (organ_label, pattern) in ORGAN_SYSTEMS.items():
-                matches = cat_text.str.contains(pattern, regex=True, flags=re.IGNORECASE, na=False)
-                pct = 100 * matches.sum() / len(cat_text) if len(cat_text) > 0 else 0
-                if pct >= 10:
-                    cat_organs.append((organ_label, round(pct, 0)))
-            cat_organs.sort(key=lambda x: x[1], reverse=True)
-
-            # Find model systems
-            cat_models = []
-            for model_name, pattern in MODEL_SYSTEMS.items():
-                matches = cat_text.str.contains(pattern, regex=True, flags=re.IGNORECASE, na=False)
-                pct = 100 * matches.sum() / len(cat_text) if len(cat_text) > 0 else 0
-                if pct >= 10:
-                    cat_models.append((model_name, round(pct, 0)))
-            cat_models.sort(key=lambda x: x[1], reverse=True)
-
             # Styled summary card
             summary_text = summary if summary else f"{mp_count} microplastics grants studying {mech_label}."
 
-            # Build tags HTML
-            tags_html = ""
-            if cat_organs:
-                organ_tags = ' '.join([f'<span style="background: #e8f4f5; color: #0D3B3C; padding: 2px 8px; border-radius: 12px; font-size: 0.75rem;">{org[0]}</span>' for org in cat_organs[:4]])
-                tags_html += f'<div style="margin: 0.5rem 0;"><strong style="color: #666; font-size: 0.8rem;">Organs:</strong> {organ_tags}</div>'
-            if cat_models:
-                model_tags = ' '.join([f'<span style="background: #f5f0e8; color: #8B6914; padding: 2px 8px; border-radius: 12px; font-size: 0.75rem;">{mod[0]}</span>' for mod in cat_models[:4]])
-                tags_html += f'<div style="margin: 0.5rem 0;"><strong style="color: #666; font-size: 0.8rem;">Models:</strong> {model_tags}</div>'
-
             st.markdown(f"""<div style="background: #f8f9fa; padding: 1rem; border-radius: 10px; border-left: 4px solid #0D3B3C;">
 <h5 style="margin: 0 0 0.5rem 0; color: #0D3B3C; font-size: 1.1rem;">{mech_label} <span style="background: #0D3B3C; color: white; padding: 2px 8px; border-radius: 10px; font-size: 0.8rem; font-weight: normal;">{mp_count} grants</span></h5>
-{tags_html}
 <p style="margin: 0; color: #444; font-size: 0.85rem; line-height: 1.5;">{summary_text}</p>
 </div>""", unsafe_allow_html=True)
         else:
