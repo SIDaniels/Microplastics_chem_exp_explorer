@@ -933,6 +933,22 @@ LLM_MECH_COLUMNS = [
     'LLM_MECH_CELL_DEATH', 'LLM_MECH_METABOLIC',
 ]
 
+# Mapping from LLM_MECH_* columns to MECH_* columns for non-MP grants
+# Non-MP grants use regex-based MECH_* columns, not LLM classifications
+LLM_TO_REGEX_MECH = {
+    'LLM_MECH_OXIDATIVE_STRESS': 'MECH_OXIDATIVE_MITOCHONDRIAL',
+    'LLM_MECH_INFLAMMATION': 'MECH_INFLAMMATION',
+    'LLM_MECH_BARRIER': 'MECH_BARRIER_DISRUPTION',
+    'LLM_MECH_MICROBIOME': 'MECH_MICROBIOME',
+    'LLM_MECH_ENDOCRINE': 'MECH_ENDOCRINE',
+    'LLM_MECH_NEURODEGENERATION': 'MECH_NEURODEGENERATION',
+    'LLM_MECH_IMMUNE': 'MECH_IMMUNE_DYSFUNCTION',
+    'LLM_MECH_DNA_DAMAGE': 'MECH_DNA_DAMAGE',
+    'LLM_MECH_RECEPTOR': 'MECH_RECEPTOR_SIGNALING',
+    'LLM_MECH_CELL_DEATH': 'MECH_SENESCENCE_CELL_DEATH',
+    'LLM_MECH_METABOLIC': 'ORGAN_CARDIOVASCULAR',
+}
+
 # Regex patterns for TYPE_ categories (used for dynamic classification in Cross-Field Insights)
 # TYPE_METHODS tightened to detection-only (reduced from 83 to ~47 matches)
 TYPE_PATTERNS = {
@@ -2027,9 +2043,11 @@ with tab4:
     <div style="background-color: #f0f7f7; border-left: 4px solid #0D3B3C; padding: 12px 16px; margin-bottom: 16px; border-radius: 0 8px 8px 0;">
 Microplastics research is just getting started. Leverage existing biotech expertise from those working in adjacent spaces. Search 2,400+ NIH-funded researchers working on similar problems for other pollutants who likely have transferable knowledge for microplastics.
         <br><br>
-        <strong>Step 1:</strong> Choose a microplastics research category to view a summary of what's currently studied.
+        <strong>Step 1:</strong> Pick a microplastics research category from the dropdown.
         <br>
-        <strong>Step 2:</strong> Scroll down to view the populated list of experts whose funded research spans the same category across other pollutants. Refine your query and download results.
+        <strong>Step 2:</strong> Explore experts working on similar problems with other pollutants (heavy metals, PFAS, pesticides, etc.).
+        <br>
+        <strong>Step 3:</strong> Refine with filters or search the full database. You may download your results as a .csv
     </div>
     """, unsafe_allow_html=True)
 
@@ -2079,14 +2097,16 @@ Microplastics research is just getting started. Leverage existing biotech expert
 
         selected_label = st.selectbox(
             "Select category:",
-            ["Select a category..."] + category_labels,
+            ["All Categories (Browse All)"] + category_labels,
             key="cf_category_selector"
         )
 
     # Get the mechanism key from the selected label (outside the with block)
-    my_mechanism = label_to_key.get(selected_label) if selected_label != "Select a category..." else None
-    mech_label = MECHANISMS_AND_TYPES.get(my_mechanism, my_mechanism) if my_mechanism else None
-    mp_count = category_mp_counts.get(my_mechanism, 0) if my_mechanism else 0
+    # "All Categories" means no mechanism filter - show all grants
+    is_all_categories = selected_label == "All Categories (Browse All)"
+    my_mechanism = None if is_all_categories else label_to_key.get(selected_label)
+    mech_label = "All Categories" if is_all_categories else (MECHANISMS_AND_TYPES.get(my_mechanism, my_mechanism) if my_mechanism else None)
+    mp_count = len(cf_df[cf_df['EXP_MICROPLASTICS'] == 1]) if is_all_categories else (category_mp_counts.get(my_mechanism, 0) if my_mechanism else 0)
 
     with summary_col:
         if my_mechanism:
@@ -2111,14 +2131,21 @@ Microplastics research is just getting started. Leverage existing biotech expert
 <h5 style="margin: 0 0 0.5rem 0; color: #0D3B3C; font-size: 1.1rem;">{mech_label} <span style="background: #0D3B3C; color: white; padding: 2px 8px; border-radius: 10px; font-size: 0.8rem; font-weight: normal;">{mp_count} grants</span></h5>
 <p style="margin: 0; color: #444; font-size: 0.85rem; line-height: 1.5;">{summary_text}</p>
 </div>""", unsafe_allow_html=True)
+        elif is_all_categories:
+            # All Categories mode - show browse all message
+            total_other = len(cf_df[cf_df['EXP_MICROPLASTICS'] == 0])
+            st.markdown(f"""<div style="background: #f8f9fa; padding: 1rem; border-radius: 10px; border-left: 4px solid #46B3A9;">
+<h5 style="margin: 0 0 0.5rem 0; color: #0D3B3C; font-size: 1.1rem;">Browse All Recently Funded Research on Pollutants <span style="background: #46B3A9; color: white; padding: 2px 8px; border-radius: 10px; font-size: 0.8rem; font-weight: normal;">{total_other:,} grants</span></h5>
+<p style="margin: 0; color: #444; font-size: 0.85rem; line-height: 1.5;">Use keyword search and model filters below to find specific experts.</p>
+</div>""", unsafe_allow_html=True)
         else:
             # No category selected - show prompt
             st.markdown("""<div style="background: #f8f9fa; padding: 1rem; border-radius: 10px; border-left: 4px solid #ccc;">
 <p style="margin: 0; color: #666; font-size: 0.9rem; font-style: italic;">Select a research category to view the summary and find related experts in adjacent fields.</p>
 </div>""", unsafe_allow_html=True)
 
-    # Only show results if a category is selected
-    if my_mechanism:
+    # Show results if a category is selected OR if browsing all categories
+    if my_mechanism or is_all_categories:
         # Always run - exposure is fixed to Microplastics
         exp_label = EXPOSURES.get(my_exposure, my_exposure)
         mech_label = MECHANISMS_AND_TYPES.get(my_mechanism, my_mechanism) if my_mechanism else "All Categories"
@@ -2149,11 +2176,16 @@ Microplastics research is just getting started. Leverage existing biotech expert
             if use_regex_filter:
                 type_pattern = TYPE_PATTERNS[my_mechanism]
                 other_field_mask = other_field_mask & text_combined.str.contains(type_pattern, regex=True, flags=re.IGNORECASE, na=False)
-            elif my_mechanism.startswith('LLM_MECH_') and my_mechanism in cf_df.columns:
-                # Use unified LLM_MECH_* columns (now available in both CSVs)
-                other_field_mask = other_field_mask & (cf_df[my_mechanism] == 1)
+            elif my_mechanism.startswith('LLM_MECH_'):
+                # Non-MP grants use MECH_* columns (regex-based), not LLM_MECH_*
+                regex_mech_col = LLM_TO_REGEX_MECH.get(my_mechanism)
+                if regex_mech_col and regex_mech_col in cf_df.columns:
+                    other_field_mask = other_field_mask & (cf_df[regex_mech_col] == 1)
+                elif my_mechanism in cf_df.columns:
+                    other_field_mask = other_field_mask & (cf_df[my_mechanism] == 1)
             elif my_mechanism in cf_df.columns:
                 other_field_mask = other_field_mask & (cf_df[my_mechanism] == 1)
+        # For "All Categories" mode, show all non-MP grants (no mechanism filter)
         other_grants = cf_df[other_field_mask]
 
         # Count by chemical field for the gap ratio display
@@ -2166,9 +2198,15 @@ Microplastics research is just getting started. Leverage existing biotech expert
                     type_pattern = TYPE_PATTERNS[my_mechanism]
                     type_mask = text_combined.str.contains(type_pattern, regex=True, flags=re.IGNORECASE, na=False)
                     count = ((cf_df[exp_col] == 1) & type_mask & (cf_df[my_exposure] == 0)).sum()
-                elif my_mechanism.startswith('LLM_MECH_') and my_mechanism in cf_df.columns:
-                    # Use unified LLM_MECH_* columns
-                    count = ((cf_df[exp_col] == 1) & (cf_df[my_mechanism] == 1) & (cf_df[my_exposure] == 0)).sum()
+                elif my_mechanism.startswith('LLM_MECH_'):
+                    # Non-MP grants use MECH_* columns (regex-based), not LLM_MECH_*
+                    regex_mech_col = LLM_TO_REGEX_MECH.get(my_mechanism)
+                    if regex_mech_col and regex_mech_col in cf_df.columns:
+                        count = ((cf_df[exp_col] == 1) & (cf_df[regex_mech_col] == 1) & (cf_df[my_exposure] == 0)).sum()
+                    elif my_mechanism in cf_df.columns:
+                        count = ((cf_df[exp_col] == 1) & (cf_df[my_mechanism] == 1) & (cf_df[my_exposure] == 0)).sum()
+                    else:
+                        count = ((cf_df[exp_col] == 1) & (cf_df[my_exposure] == 0)).sum()
                 elif my_mechanism in cf_df.columns:
                     count = ((cf_df[exp_col] == 1) & (cf_df[my_mechanism] == 1) & (cf_df[my_exposure] == 0)).sum()
                 else:
@@ -2216,7 +2254,11 @@ Microplastics research is just getting started. Leverage existing biotech expert
                 grant_word = "grant" if count == 1 else "grants"
                 chem_items.append(f'<span style="display: inline-block; background: rgba(70,179,169,0.2); padding: 6px 12px; border-radius: 16px; margin: 3px 6px 3px 0; font-size: 0.9rem;"><strong>{name}</strong> <span style="background: rgba(70,179,169,0.4); padding: 2px 6px; border-radius: 10px; margin-left: 4px; font-size: 0.8rem;">{count:,} {grant_word}</span></span>')
             chem_badges = " ".join(chem_items)
-            st.markdown(f'<div style="margin-bottom: 1rem; padding: 12px 16px; background: #f8f9fa; border-radius: 8px; border-left: 4px solid #46B3A9;"><div style="font-weight: 600; margin-bottom: 8px;">Top research fields also studying {mech_label}:</div><div>{chem_badges}</div></div>', unsafe_allow_html=True)
+            if is_all_categories:
+                header_text = "Grants by pollutant type:"
+            else:
+                header_text = f"Top research fields also studying {mech_label}:"
+            st.markdown(f'<div style="margin-bottom: 1rem; padding: 12px 16px; background: #f8f9fa; border-radius: 8px; border-left: 4px solid #46B3A9;"><div style="font-weight: 600; margin-bottom: 8px;">{header_text}</div><div>{chem_badges}</div></div>', unsafe_allow_html=True)
 
         # Secondary filters row - moved below "Top research fields"
         st.markdown("<div style='height: 12px'></div>", unsafe_allow_html=True)
@@ -2237,26 +2279,29 @@ Microplastics research is just getting started. Leverage existing biotech expert
                 key='crossfield_keyword'
             )
 
-        if len(my_grants) > 0:
-            my_text = my_grants['PROJECT_TITLE'].fillna('') + ' ' + my_grants['ABSTRACT_TEXT'].fillna('')
-
-            # Find which organ systems are most studied in source field
+        # In "All Categories" mode, we skip the my_grants requirement and show all other grants
+        if len(my_grants) > 0 or is_all_categories:
+            # Compute organ/model stats from my_grants (only if we have them)
             my_organs = []
-            for key, (label, pattern) in ORGAN_SYSTEMS.items():
-                matches = my_text.str.contains(pattern, regex=True, flags=re.IGNORECASE, na=False)
-                pct = 100 * matches.sum() / len(my_text)
-                if pct >= 10:
-                    my_organs.append((label, round(pct, 0)))
-            my_organs.sort(key=lambda x: x[1], reverse=True)
-
-            # Find which model systems are used in source field
             my_models = []
-            for model_name, pattern in MODEL_SYSTEMS.items():
-                matches = my_text.str.contains(pattern, regex=True, flags=re.IGNORECASE, na=False)
-                pct = 100 * matches.sum() / len(my_text)
-                if pct >= 10:
-                    my_models.append((model_name, round(pct, 0)))
-            my_models.sort(key=lambda x: x[1], reverse=True)
+            if len(my_grants) > 0:
+                my_text = my_grants['PROJECT_TITLE'].fillna('') + ' ' + my_grants['ABSTRACT_TEXT'].fillna('')
+
+                # Find which organ systems are most studied in source field
+                for key, (label, pattern) in ORGAN_SYSTEMS.items():
+                    matches = my_text.str.contains(pattern, regex=True, flags=re.IGNORECASE, na=False)
+                    pct = 100 * matches.sum() / len(my_text)
+                    if pct >= 10:
+                        my_organs.append((label, round(pct, 0)))
+                my_organs.sort(key=lambda x: x[1], reverse=True)
+
+                # Find which model systems are used in source field
+                for model_name, pattern in MODEL_SYSTEMS.items():
+                    matches = my_text.str.contains(pattern, regex=True, flags=re.IGNORECASE, na=False)
+                    pct = 100 * matches.sum() / len(my_text)
+                    if pct >= 10:
+                        my_models.append((model_name, round(pct, 0)))
+                my_models.sort(key=lambda x: x[1], reverse=True)
 
             if len(other_grants) > 0:
                 # Compute similarity scores with enhanced weighting
@@ -2328,6 +2373,7 @@ Microplastics research is just getting started. Leverage existing biotech expert
                         }
                         full_display_df.columns = [col_rename.get(c, c) for c in display_cols]
 
+                        st.markdown("##### Experts in Adjacent Fields")
                         st.caption(f"Found **{len(inspiring):,}** experts - click a row to view details")
 
                         # Paginate the results (25 per page)
