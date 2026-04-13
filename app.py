@@ -735,7 +735,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # Data path - unified dataset with grants + conference abstracts + papers (460 total)
-DATA_PATH = Path(__file__).parent / 'data' / 'microplastic_grants_with_papers.csv'
+DATA_PATH = Path(__file__).parent / 'data' / 'microplastic_grants_with_stomp.csv'
 # Cross-field data path - use full chemical exposure dataset for Cross-Field Insights
 CROSSFIELD_DATA_PATH = Path(__file__).parent / 'data' / 'chemical_exposure_with_mp_papers.csv'
 
@@ -756,6 +756,7 @@ EXPOSURES = {
 # Mechanism categories - using LLM classifications (more accurate than regex)
 # LLM classifications done via Claude Sonnet in April 2026
 MECHANISMS = {
+    'LLM_MECH_OXIDATIVE_STRESS': 'Oxidative Stress',
     'LLM_MECH_INFLAMMATION': 'Inflammation',
     'LLM_MECH_BARRIER': 'Barrier Disruption (e.g. blood-brain)',
     'LLM_MECH_NEURODEGENERATION': 'Neurodegeneration',
@@ -772,6 +773,16 @@ MECHANISMS = {
 # Updated April 2026 - evidence-based summaries from analysis of 356 microplastics studies
 # (NIH grants, conference abstracts, bioRxiv/medRxiv/PMC papers - reviewed for accuracy)
 CATEGORY_SUMMARIES = {
+    'LLM_MECH_OXIDATIVE_STRESS': """<strong>Oxidative Stress & Mitochondrial Dysfunction</strong>
+
+Research investigates ROS generation, antioxidant depletion, and mitochondrial damage induced by micro- and nanoplastics:
+
+<strong>ROS generation:</strong> Multiple studies demonstrate that MNPs induce reactive oxygen species in various cell types and model organisms. Polystyrene nanoplastics trigger dose-dependent ROS increases in hepatocytes, intestinal epithelial cells, and macrophages.
+
+<strong>Antioxidant depletion:</strong> Research shows MNP exposure depletes glutathione (GSH), reduces SOD and catalase activity, and disrupts the Nrf2/ARE antioxidant pathway. Studies measure oxidative stress markers including MDA and 8-OHdG.
+
+<strong>Mitochondrial dysfunction:</strong> Nanoplastics accumulate in mitochondria, disrupting membrane potential, ATP production, and electron transport chain function. This is linked to downstream effects including apoptosis and cellular senescence.""",
+
     'LLM_MECH_INFLAMMATION': """<strong>Inflammation</strong>
 
 Research investigates inflammatory responses to micro- and nanoplastics across multiple organ systems and exposure routes:
@@ -1616,7 +1627,7 @@ def compute_cooccurrence(df: pd.DataFrame) -> dict:
 
 
 @st.cache_data
-def load_data(_cache_version: str = "v16_llm_mechanisms") -> pd.DataFrame:
+def load_data(_cache_version: str = "v19_correct_data_file") -> pd.DataFrame:
     """Load pre-filtered grant data (6,500 chemical exposure grants + conference abstracts)."""
     if not DATA_PATH.exists():
         return pd.DataFrame()
@@ -1658,7 +1669,7 @@ def filter_grants(df: pd.DataFrame, exposures: list, mechanisms: list,
     """Filter grants by exposure, mechanism, keyword, year, and source."""
     mask = pd.Series([True] * len(df), index=df.index)
 
-    # Filter by source (NIH Grants, Conference Abstracts, Papers)
+    # Filter by source (NIH Grants, Conference Abstracts, Papers, STOMP Teaming)
     if source == "NIH Grants Only":
         mask &= df['SOURCE'].astype(str) == 'NIH'
     elif source == "Conference Abstracts Only":
@@ -1667,6 +1678,8 @@ def filter_grants(df: pd.DataFrame, exposures: list, mechanisms: list,
         mask &= df['SOURCE'].astype(str).str.contains('PMC', na=False)
     elif source == "Preprints (bioRxiv/medRxiv)":
         mask &= df['SOURCE'].astype(str).str.contains('Rxiv', na=False)
+    elif source == "STOMP Teaming":
+        mask &= df['SOURCE'].astype(str) == 'STOMP Teaming'
 
     # Filter by year (include conference abstracts with NaN fiscal year)
     if years and 'FISCAL_YEAR' in df.columns:
@@ -1770,7 +1783,7 @@ if len(df) == 0:
 st.sidebar.header("Filters")
 
 # Source filter (NIH Grants, Conference Abstracts, Papers)
-source_options = ["All Sources", "NIH Grants Only", "Conference Abstracts Only", "Published Papers (PMC)", "Preprints (bioRxiv/medRxiv)"]
+source_options = ["All Sources", "NIH Grants Only", "Conference Abstracts Only", "Published Papers (PMC)", "Preprints (bioRxiv/medRxiv)", "STOMP Teaming"]
 selected_source = st.sidebar.radio(
     "Data Source",
     source_options,
@@ -1827,13 +1840,13 @@ filtered_unique = filtered.drop_duplicates(subset=['PROJECT_TITLE'], keep='first
 
 
 # Main content - tabs
-tab1, tab_organ, tab_model, tab_mech, tab4 = st.tabs(["Projects", "Organ Systems", "Model Organisms", "Mechanisms", "Cross-Field Insights"])
+tab1, tab_organ, tab_model, tab_mech, tab_detection, tab4 = st.tabs(["Projects", "Organ Systems", "Model Organisms", "Mechanisms", "Detection & Exposure", "Cross-Field Insights"])
 
 with tab1:
     # About this database info box with hyperlinks
     st.markdown("""
     <div style="background-color: #f0f7f7; border-left: 4px solid #0D3B3C; padding: 12px 16px; margin-bottom: 16px; border-radius: 0 8px 8px 0;">
-        <strong>About this database:</strong> Explore 356 microplastics research entries including <a href="https://reporter.nih.gov/" target="_blank" style="color: #0D3B3C;">NIH grants</a> (FY2022-2025), the inaugural <a href="https://hsc.unm.edu/pharmacy/research/areas/cmbm/mnp-conf/_docs/full-digital-program.pdf" target="_blank" style="color: #0D3B3C;">UNM Micro- and Nanoplastics Conference</a>, plus 152 recent papers from <a href="https://www.biorxiv.org/" target="_blank" style="color: #0D3B3C;">bioRxiv</a>/<a href="https://www.medrxiv.org/" target="_blank" style="color: #0D3B3C;">medRxiv</a> preprints and <a href="https://www.ncbi.nlm.nih.gov/pmc/" target="_blank" style="color: #0D3B3C;">PubMed Central</a> (2022-2026). Filter by source type in the sidebar. Use <strong>Cross-Field Insights</strong> to find experts who could apply their work to microplastics.
+        <strong>About this database:</strong> Explore 445 microplastics research entries including <a href="https://reporter.nih.gov/" target="_blank" style="color: #0D3B3C;">NIH grants</a> (FY2022-2025), the inaugural <a href="https://hsc.unm.edu/pharmacy/research/areas/cmbm/mnp-conf/_docs/full-digital-program.pdf" target="_blank" style="color: #0D3B3C;">UNM Micro- and Nanoplastics Conference</a>, 89 <a href="https://arpa-h.gov/research-and-funding/programs/stomp" target="_blank" style="color: #0D3B3C;">ARPA-H STOMP</a> teaming partner profiles, plus 152 recent papers from <a href="https://www.biorxiv.org/" target="_blank" style="color: #0D3B3C;">bioRxiv</a>/<a href="https://www.medrxiv.org/" target="_blank" style="color: #0D3B3C;">medRxiv</a> preprints and <a href="https://www.ncbi.nlm.nih.gov/pmc/" target="_blank" style="color: #0D3B3C;">PubMed Central</a> (2022-2026). Filter by source type in the sidebar. Use <strong>Cross-Field Insights</strong> to find experts who could apply their work to microplastics.
     </div>
     """, unsafe_allow_html=True)
 
@@ -1927,6 +1940,8 @@ with tab1:
                 return 'Conference'
             elif source_str == 'NIH':
                 return 'NIH Grant'
+            elif source_str == 'STOMP Teaming':
+                return 'STOMP'
             return 'Unknown'
 
         filtered_sorted['Source'] = filtered_sorted['SOURCE'].apply(get_source_label)
@@ -2035,6 +2050,198 @@ with tab1:
             """, unsafe_allow_html=True)
     else:
         st.info("No grants match your filters. Try broadening your search.")
+
+with tab_detection:
+    if len(filtered) > 0:
+        # Get both detection and exposure assessment studies
+        detection_col = 'LLM_STUDY_DETECTION'
+        exposure_col = 'LLM_STUDY_EXPOSURE_ASSESSMENT'
+
+        # Combine: detection OR exposure assessment
+        has_detection = filtered.get(detection_col, pd.Series([0]*len(filtered))) == 1
+        has_exposure = filtered.get(exposure_col, pd.Series([0]*len(filtered))) == 1
+        combined_df = filtered[has_detection | has_exposure].copy()
+
+        # Deduplicate
+        combined_df = combined_df.drop_duplicates(subset=['PROJECT_TITLE'], keep='first')
+
+        n_total = len(combined_df)
+        n_filtered = len(filtered.drop_duplicates(subset=['PROJECT_TITLE']))
+        coverage_pct = round(100 * n_total / n_filtered, 1) if n_filtered > 0 else 0
+
+        st.markdown("#### What sample types and methods are being used for detection?")
+
+        # Define sample types (true biospecimens for detection studies)
+        sample_categories = {
+            'Blood/Serum/Plasma': r'(?:blood|serum|plasma).{0,30}(?:sample|collect|analys|detect|measur)|(?:sample|collect|analys|detect|measur).{0,30}(?:blood|serum|plasma)|human.{0,20}(?:blood|serum|plasma)',
+            'Placenta': r'placent',
+            'Urine': r'\burine\b',
+            'Stool/Feces': r'\bstool\b|\bfeces\b|\bfecal\b|\bfaeces\b|\bfaecal\b|stool.?sample|fecal.?sample',
+            'Breast Milk': r'breast.?milk|human.?milk|lactation|lactat',
+            'Semen': r'\bsemen\b|sperm.+sample|seminal',
+            'Biospecimens (General)': r'biological.?sample|biospecimen|human.?sample',
+        }
+
+        # Define analytical methods (unambiguous - specific to detection)
+        method_categories = {
+            'Pyrolysis-GC/MS': r'pyrolysis|py-gc|pyr-gc|thermal.desorption',
+            'FTIR Spectroscopy': r'\bftir\b|fourier.transform.infrared|infrared.spectro',
+            'Raman Spectroscopy': r'\braman\b',
+            'Fluorescence/Nile Red': r'nile.red|fluorescen.+dye|fluorescen.+stain',
+            'SEM/TEM Imaging': r'\bsem\b|\btem\b|electron.microscop|scanning.electron|transmission.electron',
+            'Mass Spectrometry (LC-MS/HRMS)': r'mass.spectro|lc-ms|hplc-ms|hrms|orbitrap|tof-ms',
+        }
+
+        # Calculate counts for each category
+        abstract_text = combined_df['ABSTRACT_TEXT'].fillna('').str.lower()
+
+        sample_data = {}
+        for name, pattern in sample_categories.items():
+            count = abstract_text.str.contains(pattern, regex=True, na=False).sum()
+            if count > 0:
+                sample_data[name] = count
+
+        method_data = {}
+        for name, pattern in method_categories.items():
+            count = abstract_text.str.contains(pattern, regex=True, na=False).sum()
+            if count > 0:
+                method_data[name] = count
+
+        # Sort by count
+        sample_data = dict(sorted(sample_data.items(), key=lambda x: x[1], reverse=True))
+        method_data = dict(sorted(method_data.items(), key=lambda x: x[1], reverse=True))
+
+        # Show sample types chart
+        col1, col2 = st.columns([2, 1])
+        with col1:
+            if sample_data:
+                st.markdown("**Sample Types**")
+                chart = create_horizontal_bar_chart(sample_data, value_label="Projects")
+                st.altair_chart(chart, use_container_width=True)
+            else:
+                st.info("No specific sample types mentioned in abstracts")
+
+        with col2:
+            # Summary table for samples
+            if sample_data:
+                table_data = []
+                for name, count in list(sample_data.items())[:7]:
+                    pct = round(100 * count / n_total, 1) if n_total > 0 else 0
+                    table_data.append({'Sample Type': name, 'Count': count, '%': f"{pct}%"})
+                st.dataframe(pd.DataFrame(table_data), hide_index=True, use_container_width=True)
+
+        # Show methods chart
+        col3, col4 = st.columns([2, 1])
+        with col3:
+            if method_data:
+                st.markdown("**Analytical Methods**")
+                chart = create_horizontal_bar_chart(method_data, value_label="Projects")
+                st.altair_chart(chart, use_container_width=True)
+            else:
+                st.info("No specific analytical methods mentioned in abstracts")
+
+        with col4:
+            # Summary table for methods
+            if method_data:
+                table_data = []
+                for name, count in list(method_data.items())[:6]:
+                    pct = round(100 * count / n_total, 1) if n_total > 0 else 0
+                    table_data.append({'Method': name, 'Count': count, '%': f"{pct}%"})
+                st.dataframe(pd.DataFrame(table_data), hide_index=True, use_container_width=True)
+
+        st.info(f"{n_total:,} projects ({coverage_pct}%) involve detection or exposure assessment (remaining {100-coverage_pct:.1f}% are focused on toxicity mechanisms)")
+        st.markdown("---")
+
+        # Drill-down with selectbox - both samples and methods
+        all_options = []
+        for name, count in sample_data.items():
+            all_options.append((f"Sample: {name} ({count})", name, sample_categories[name], count))
+        for name, count in method_data.items():
+            all_options.append((f"Method: {name} ({count})", name, method_categories[name], count))
+
+        # Sort by count
+        all_options = sorted(all_options, key=lambda x: x[3], reverse=True)
+
+        if all_options:
+            option_labels = [opt[0] for opt in all_options]
+            selected_option = st.selectbox(
+                "Explore projects by sample type or method",
+                ["Select a category..."] + option_labels,
+                key="detection_select"
+            )
+
+            if selected_option != "Select a category...":
+                # Find the matching option
+                selected_name = None
+                selected_pattern = None
+                for opt in all_options:
+                    if opt[0] == selected_option:
+                        selected_name = opt[1]
+                        selected_pattern = opt[2]
+                        break
+
+                if selected_name and selected_pattern:
+                    # Filter to projects mentioning this category
+                    text_col = combined_df['ABSTRACT_TEXT'].fillna('').str.lower()
+                    matches = text_col.str.contains(selected_pattern, regex=True, na=False)
+                    study_grants = combined_df[matches].copy()
+
+                    st.markdown(f"### {selected_name}")
+
+                    display_cols = ['PROJECT_TITLE', 'PI_NAMEs', 'ORG_NAME', 'SOURCE']
+                    display_cols = [c for c in display_cols if c in study_grants.columns]
+                    if display_cols and len(study_grants) > 0:
+                        # Prepare full display dataframe
+                        full_grants_display = study_grants[display_cols].copy()
+                        if 'PI_NAMEs' in full_grants_display.columns:
+                            full_grants_display['PI_NAMEs'] = full_grants_display['PI_NAMEs'].apply(clean_pi_names)
+                        col_names = {'PROJECT_TITLE': 'Title', 'PI_NAMEs': 'Contact Researcher Name', 'ORG_NAME': 'Organization', 'SOURCE': 'Source'}
+                        full_grants_display.columns = [col_names.get(c, c) for c in display_cols]
+                        st.caption("Select a row to view abstract below")
+
+                        # Paginate the results (25 per page)
+                        grants_display = paginated_dataframe(full_grants_display, key="detection_table", page_size=25)
+
+                        detection_selection = st.dataframe(
+                            grants_display,
+                            hide_index=True,
+                            use_container_width=True,
+                            height=300,
+                            on_select="rerun",
+                            selection_mode="single-row",
+                            column_config={
+                                "Title": st.column_config.TextColumn("Title", width="large"),
+                            }
+                        )
+
+                        # Download button for detection results
+                        detection_csv = clean_export_df(study_grants).to_csv(index=False)
+                        st.download_button(
+                            f"Download {selected_name} Projects (CSV)",
+                            detection_csv,
+                            f"{selected_name.lower().replace('/', '_').replace(' ', '_')}_projects.csv",
+                            "text/csv",
+                            key="detection_download"
+                        )
+
+                        # Show abstract for selected row
+                        if detection_selection and detection_selection.selection and detection_selection.selection.rows:
+                            selected_idx = detection_selection.selection.rows[0]
+                            grant_row = study_grants.iloc[selected_idx]
+                            st.markdown("---")
+                            st.markdown(f"**{grant_row['PROJECT_TITLE']}**")
+                            pi_name = clean_pi_names(grant_row.get('PI_NAMEs', 'Unknown'))
+                            org = grant_row.get('ORG_NAME', 'Unknown')
+                            source = grant_row.get('SOURCE', 'Unknown')
+                            st.markdown(f"*Contact Researcher:* {pi_name} | *Org:* {org} | *Source:* {source}")
+                            abstract = grant_row.get('ABSTRACT_TEXT', 'No abstract available')
+                            if pd.isna(abstract):
+                                abstract = 'No abstract available'
+                            st.markdown("**Abstract:**")
+                            st.write(abstract)
+
+    else:
+        st.info("Filter projects to see detection and exposure assessment analysis.")
 
 with tab4:
     st.markdown("#### Who is studying similar topics with other pollutants?")
@@ -2614,7 +2821,7 @@ with tab_model:
 
         # Calculate projects with any model system identified using pre-classified columns
         n_grants = len(filtered_stomp)
-        model_cols = ['MODEL_INVITRO', 'MODEL_RODENT', 'MODEL_ZEBRAFISH', 'MODEL_OTHER_ANIMAL', 'MODEL_HUMAN', 'MODEL_ENVIRONMENTAL']
+        model_cols = ['MODEL_INVITRO', 'MODEL_RODENT', 'MODEL_ZEBRAFISH', 'MODEL_OTHER_ANIMAL', 'MODEL_HUMAN']
         any_model_mask = pd.Series([False] * len(filtered_stomp))
         for col in model_cols:
             if col in filtered_stomp.columns:
@@ -2630,7 +2837,6 @@ with tab_model:
             'Rodent': 'MODEL_RODENT',
             'Zebrafish': 'MODEL_ZEBRAFISH',
             'Human': 'MODEL_HUMAN',
-            'Environmental': 'MODEL_ENVIRONMENTAL',
             'Other Animal': 'MODEL_OTHER_ANIMAL',
         }
 
@@ -2731,6 +2937,7 @@ with tab_model:
     with tab_mech:
         # Use pre-classified MECH_* columns from CSV (same as Cross-Field Insights tab)
         # This provides consistent categorization across both tabs
+        filtered_stomp = filtered.drop_duplicates(subset=['PROJECT_TITLE'], keep='first')
         mech_name_to_key = {}
         mech_data = {}
         n_grants = len(filtered_stomp)
