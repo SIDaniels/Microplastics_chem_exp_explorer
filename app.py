@@ -1964,6 +1964,333 @@ def get_crossfield_category_counts(_cache_version: str = "v1_category_counts") -
     return category_mp_counts
 
 
+@st.cache_data
+def get_category_title_sets(_cache_version: str = "v1") -> dict:
+    """Pre-compute title sets for each category (organs, models, mechanisms) on full dataset.
+
+    This follows the same pattern as get_detection_regex_masks() - compute once on full
+    dataset, then use fast set intersection in each tab.
+
+    Returns dict with:
+        - organ_titles: {label: set of matching PROJECT_TITLEs}
+        - model_titles: {label: set of matching PROJECT_TITLEs}
+        - mech_titles: {label: set of matching PROJECT_TITLEs}
+        - all_titles: set of all PROJECT_TITLEs in the dataset
+        - col_maps: {organ_col_map, model_col_map, mech_col_map} for reverse lookups
+    """
+    df = load_data()
+    if df.empty:
+        return {
+            'organ_titles': {}, 'model_titles': {}, 'mech_titles': {},
+            'all_titles': set(), 'col_maps': {}
+        }
+
+    # Deduplicate by PROJECT_TITLE
+    dedup_df = df.drop_duplicates(subset=['PROJECT_TITLE'], keep='first')
+    all_titles = set(dedup_df['PROJECT_TITLE'].tolist())
+
+    # Organ systems
+    organ_col_map = {
+        'Brain/Nervous System': 'ORGAN_BRAIN_NERVOUS',
+        'Cardiovascular': 'ORGAN_CARDIOVASCULAR',
+        'GI/Gut': 'ORGAN_GI_GUT',
+        'Liver': 'ORGAN_LIVER',
+        'Kidney': 'ORGAN_KIDNEY',
+        'Respiratory/Lung': 'ORGAN_RESPIRATORY',
+        'Reproductive': 'ORGAN_REPRODUCTIVE',
+        'Immune': 'ORGAN_IMMUNE',
+    }
+
+    organ_titles = {}
+    for label, col in organ_col_map.items():
+        if col in dedup_df.columns:
+            mask = dedup_df[col] == 1
+            matching_titles = set(dedup_df.loc[mask, 'PROJECT_TITLE'].tolist())
+            organ_titles[label] = matching_titles
+
+    # Model organisms
+    model_col_map = {
+        'In Vitro': 'MODEL_INVITRO',
+        'Rodent': 'MODEL_RODENT',
+        'Zebrafish': 'MODEL_ZEBRAFISH',
+        'Human': 'MODEL_HUMAN',
+        'Other Animal': 'MODEL_OTHER_ANIMAL',
+    }
+
+    model_titles = {}
+    for label, col in model_col_map.items():
+        if col in dedup_df.columns:
+            mask = dedup_df[col] == 1
+            matching_titles = set(dedup_df.loc[mask, 'PROJECT_TITLE'].tolist())
+            model_titles[label] = matching_titles
+
+    # Mechanisms - use LLM_MECH_* columns
+    mech_col_map = {
+        'Inflammatory Response': 'LLM_MECH_INFLAMMATION',
+        'Oxidative Stress': 'LLM_MECH_OXIDATIVE_STRESS',
+        'Neurodegeneration': 'LLM_MECH_NEURODEGENERATION',
+        'Endocrine Disruption': 'LLM_MECH_ENDOCRINE',
+        'Gut Microbiome': 'LLM_MECH_MICROBIOME',
+        'Immune Dysfunction': 'LLM_MECH_IMMUNE',
+        'DNA Damage': 'LLM_MECH_DNA_DAMAGE',
+        'Receptor/Signaling': 'LLM_MECH_RECEPTOR',
+        'Cell Death/Senescence': 'LLM_MECH_CELL_DEATH',
+        'Barrier Disruption': 'LLM_MECH_BARRIER',
+        'Metabolic Dysfunction': 'LLM_MECH_METABOLIC',
+    }
+
+    mech_titles = {}
+    for label, col in mech_col_map.items():
+        if col in dedup_df.columns:
+            mask = dedup_df[col] == 1
+            matching_titles = set(dedup_df.loc[mask, 'PROJECT_TITLE'].tolist())
+            mech_titles[label] = matching_titles
+
+    return {
+        'organ_titles': organ_titles,
+        'model_titles': model_titles,
+        'mech_titles': mech_titles,
+        'all_titles': all_titles,
+        'col_maps': {
+            'organ_col_map': organ_col_map,
+            'model_col_map': model_col_map,
+            'mech_col_map': mech_col_map,
+        }
+    }
+
+
+@st.cache_data
+def get_category_stats_for_titles(_cache_version: str, title_set_hash: str) -> dict:
+    """Pre-compute category stats (organs, models, mechanisms) for a set of project titles.
+
+    This function caches the expensive operations:
+    - Deduplication by PROJECT_TITLE
+    - Column-based lookups for all categories
+    - Mask building for "any category" counts
+
+    Args:
+        _cache_version: Cache version string
+        title_set_hash: Hash of the filtered PROJECT_TITLE set (changes when filter changes)
+
+    Returns dict with:
+        - organ_data: {label: {count, pct, col}}
+        - model_data: {label: {count, pct, col}}
+        - mech_data: {label: {count, pct, key}}
+        - any_organ: count of projects with any organ
+        - any_model: count of projects with any model
+        - any_mech: count of projects with any mechanism
+        - n_grants: total deduplicated count
+        - dedup_indices: list of indices for the deduplicated dataframe
+    """
+    df = load_data()
+    if df.empty:
+        return {
+            'organ_data': {}, 'model_data': {}, 'mech_data': {},
+            'any_organ': 0, 'any_model': 0, 'any_mech': 0,
+            'n_grants': 0, 'dedup_indices': []
+        }
+
+    # Deduplicate by PROJECT_TITLE
+    dedup_df = df.drop_duplicates(subset=['PROJECT_TITLE'], keep='first')
+    n_grants = len(dedup_df)
+    dedup_indices = dedup_df.index.tolist()
+
+    # Organ systems
+    organ_col_map = {
+        'Brain/Nervous System': 'ORGAN_BRAIN_NERVOUS',
+        'Cardiovascular': 'ORGAN_CARDIOVASCULAR',
+        'GI/Gut': 'ORGAN_GI_GUT',
+        'Liver': 'ORGAN_LIVER',
+        'Kidney': 'ORGAN_KIDNEY',
+        'Respiratory/Lung': 'ORGAN_RESPIRATORY',
+        'Reproductive': 'ORGAN_REPRODUCTIVE',
+        'Immune': 'ORGAN_IMMUNE',
+    }
+    organ_cols = ['ORGAN_BRAIN_NERVOUS', 'ORGAN_GI_GUT', 'ORGAN_RESPIRATORY', 'ORGAN_CARDIOVASCULAR',
+                  'ORGAN_REPRODUCTIVE', 'ORGAN_LIVER', 'ORGAN_KIDNEY', 'ORGAN_IMMUNE', 'ORGAN_SKIN', 'ORGAN_ENDOCRINE']
+
+    organ_data = {}
+    any_organ_mask = pd.Series(False, index=dedup_df.index)
+    for label, col in organ_col_map.items():
+        if col in dedup_df.columns:
+            mask = dedup_df[col] == 1
+            count = int(mask.sum())
+            any_organ_mask = any_organ_mask | mask
+            pct = round(100 * count / n_grants, 1) if n_grants > 0 else 0
+            organ_data[label] = {'count': count, 'pct': pct, 'col': col}
+    any_organ = int(any_organ_mask.sum())
+
+    # Model organisms
+    model_col_map = {
+        'In Vitro': 'MODEL_INVITRO',
+        'Rodent': 'MODEL_RODENT',
+        'Zebrafish': 'MODEL_ZEBRAFISH',
+        'Human': 'MODEL_HUMAN',
+        'Other Animal': 'MODEL_OTHER_ANIMAL',
+    }
+    model_cols = ['MODEL_INVITRO', 'MODEL_RODENT', 'MODEL_ZEBRAFISH', 'MODEL_OTHER_ANIMAL', 'MODEL_HUMAN']
+
+    model_data = {}
+    any_model_mask = pd.Series(False, index=dedup_df.index)
+    for label, col in model_col_map.items():
+        if col in dedup_df.columns:
+            mask = dedup_df[col] == 1
+            count = int(mask.sum())
+            any_model_mask = any_model_mask | mask
+            pct = round(100 * count / n_grants, 1) if n_grants > 0 else 0
+            model_data[label] = {'count': count, 'pct': pct, 'col': col}
+    any_model = int(any_model_mask.sum())
+
+    # Mechanisms - use LLM_MECH_* columns (the actual column names in the data)
+    mech_keys = [
+        ('LLM_MECH_INFLAMMATION', 'Inflammatory Response'),
+        ('LLM_MECH_OXIDATIVE_STRESS', 'Oxidative Stress'),
+        ('LLM_MECH_NEURODEGENERATION', 'Neurodegeneration'),
+        ('LLM_MECH_ENDOCRINE', 'Endocrine Disruption'),
+        ('LLM_MECH_MICROBIOME', 'Gut Microbiome'),
+        ('LLM_MECH_IMMUNE', 'Immune Dysfunction'),
+        ('LLM_MECH_DNA_DAMAGE', 'DNA Damage'),
+        ('LLM_MECH_RECEPTOR', 'Receptor/Signaling'),
+        ('LLM_MECH_CELL_DEATH', 'Cell Death/Senescence'),
+        ('LLM_MECH_BARRIER', 'Barrier Disruption'),
+        ('LLM_MECH_METABOLIC', 'Metabolic Dysfunction'),
+    ]
+
+    mech_data = {}
+    any_mech_mask = pd.Series(False, index=dedup_df.index)
+    for key, label in mech_keys:
+        if key in dedup_df.columns:
+            mask = dedup_df[key] == 1
+            count = int(mask.sum())
+            any_mech_mask = any_mech_mask | mask
+            pct = round(100 * count / n_grants, 1) if n_grants > 0 else 0
+            mech_data[label] = {'count': count, 'pct': pct, 'key': key}
+    any_mech = int(any_mech_mask.sum())
+
+    return {
+        'organ_data': organ_data,
+        'model_data': model_data,
+        'mech_data': mech_data,
+        'any_organ': any_organ,
+        'any_model': any_model,
+        'any_mech': any_mech,
+        'n_grants': n_grants,
+        'dedup_indices': dedup_indices,
+        'organ_col_map': organ_col_map,
+        'model_col_map': model_col_map,
+    }
+
+
+def get_filtered_category_stats(filtered_df: pd.DataFrame) -> dict:
+    """Compute category stats for a filtered dataframe (optimized version).
+
+    This is a fast path that uses vectorized operations on the filtered data.
+    """
+    if filtered_df.empty:
+        return {
+            'organ_data': {}, 'model_data': {}, 'mech_data': {},
+            'any_organ': 0, 'any_model': 0, 'any_mech': 0,
+            'n_grants': 0, 'dedup_df': pd.DataFrame()
+        }
+
+    # Deduplicate by PROJECT_TITLE
+    dedup_df = filtered_df.drop_duplicates(subset=['PROJECT_TITLE'], keep='first')
+    n_grants = len(dedup_df)
+
+    # Organ systems
+    organ_col_map = {
+        'Brain/Nervous System': 'ORGAN_BRAIN_NERVOUS',
+        'Cardiovascular': 'ORGAN_CARDIOVASCULAR',
+        'GI/Gut': 'ORGAN_GI_GUT',
+        'Liver': 'ORGAN_LIVER',
+        'Kidney': 'ORGAN_KIDNEY',
+        'Respiratory/Lung': 'ORGAN_RESPIRATORY',
+        'Reproductive': 'ORGAN_REPRODUCTIVE',
+        'Immune': 'ORGAN_IMMUNE',
+    }
+
+    organ_data = {}
+    # Vectorized: check all organ columns at once
+    organ_cols_present = [col for col in organ_col_map.values() if col in dedup_df.columns]
+    if organ_cols_present:
+        organ_matrix = dedup_df[organ_cols_present].fillna(0).values
+        any_organ = int((organ_matrix.sum(axis=1) > 0).sum())
+    else:
+        any_organ = 0
+
+    for label, col in organ_col_map.items():
+        if col in dedup_df.columns:
+            count = int((dedup_df[col] == 1).sum())
+            pct = round(100 * count / n_grants, 1) if n_grants > 0 else 0
+            organ_data[label] = {'count': count, 'pct': pct, 'col': col}
+
+    # Model organisms
+    model_col_map = {
+        'In Vitro': 'MODEL_INVITRO',
+        'Rodent': 'MODEL_RODENT',
+        'Zebrafish': 'MODEL_ZEBRAFISH',
+        'Human': 'MODEL_HUMAN',
+        'Other Animal': 'MODEL_OTHER_ANIMAL',
+    }
+
+    model_data = {}
+    model_cols_present = [col for col in model_col_map.values() if col in dedup_df.columns]
+    if model_cols_present:
+        model_matrix = dedup_df[model_cols_present].fillna(0).values
+        any_model = int((model_matrix.sum(axis=1) > 0).sum())
+    else:
+        any_model = 0
+
+    for label, col in model_col_map.items():
+        if col in dedup_df.columns:
+            count = int((dedup_df[col] == 1).sum())
+            pct = round(100 * count / n_grants, 1) if n_grants > 0 else 0
+            model_data[label] = {'count': count, 'pct': pct, 'col': col}
+
+    # Mechanisms - use LLM_MECH_* columns (the actual column names in the data)
+    mech_col_map = {
+        'Inflammatory Response': 'LLM_MECH_INFLAMMATION',
+        'Oxidative Stress': 'LLM_MECH_OXIDATIVE_STRESS',
+        'Neurodegeneration': 'LLM_MECH_NEURODEGENERATION',
+        'Endocrine Disruption': 'LLM_MECH_ENDOCRINE',
+        'Gut Microbiome': 'LLM_MECH_MICROBIOME',
+        'Immune Dysfunction': 'LLM_MECH_IMMUNE',
+        'DNA Damage': 'LLM_MECH_DNA_DAMAGE',
+        'Receptor/Signaling': 'LLM_MECH_RECEPTOR',
+        'Cell Death/Senescence': 'LLM_MECH_CELL_DEATH',
+        'Barrier Disruption': 'LLM_MECH_BARRIER',
+        'Metabolic Dysfunction': 'LLM_MECH_METABOLIC',
+    }
+
+    mech_data = {}
+    mech_cols_present = [col for col in mech_col_map.values() if col in dedup_df.columns]
+    if mech_cols_present:
+        mech_matrix = dedup_df[mech_cols_present].fillna(0).values
+        any_mech = int((mech_matrix.sum(axis=1) > 0).sum())
+    else:
+        any_mech = 0
+
+    for label, col in mech_col_map.items():
+        if col in dedup_df.columns:
+            count = int((dedup_df[col] == 1).sum())
+            pct = round(100 * count / n_grants, 1) if n_grants > 0 else 0
+            mech_data[label] = {'count': count, 'pct': pct, 'key': col}
+
+    return {
+        'organ_data': organ_data,
+        'model_data': model_data,
+        'mech_data': mech_data,
+        'any_organ': any_organ,
+        'any_model': any_model,
+        'any_mech': any_mech,
+        'n_grants': n_grants,
+        'dedup_df': dedup_df,
+        'organ_col_map': organ_col_map,
+        'model_col_map': model_col_map,
+        'mech_col_map': mech_col_map,
+    }
+
+
 def filter_grants(df: pd.DataFrame, exposures: list, mechanisms: list,
                   keyword: str, years: list, source: str = "All Sources") -> pd.DataFrame:
     """Filter grants by exposure, mechanism, keyword, year, and source."""
@@ -2136,8 +2463,12 @@ cooccur = get_full_cooccurrence()
 cooccur_filtered = compute_cooccurrence(filtered) if len(filtered) > 0 else {}
 
 # ============== SUMMARY CARD & ACTIVE FILTERS ==============
-# Get deduplicated data for summary
+# Get deduplicated data for summary - compute ONCE for use by all tabs
 filtered_unique = filtered.drop_duplicates(subset=['PROJECT_TITLE'], keep='first') if group_by_project else filtered
+# Pre-compute title set for fast set intersection in category tabs
+filtered_titles = set(filtered_unique['PROJECT_TITLE'].tolist()) if len(filtered_unique) > 0 else set()
+# Fetch cached category title sets ONCE (used by Organ, Model, Mechanism tabs)
+cached_categories = get_category_title_sets("v1")
 
 # Main content - tabs
 tab1, tab_organ, tab_model, tab_mech, tab_detection, tab4 = st.tabs(["Projects", "Organ Systems", "Model Organisms", "Mechanisms", "Detection & Exposure", "Cross-Field Insights"])
@@ -2937,42 +3268,33 @@ Microplastics research is just getting started. Leverage existing biotech expert
 # Organ Systems Tab
 with tab_organ:
     if len(filtered) > 0:
-        # Deduplicate for this tab
-        filtered_stomp = filtered.drop_duplicates(subset=['PROJECT_TITLE'], keep='first')
+        # Use pre-fetched cached_categories (computed once before all tabs)
+        organ_titles = cached_categories.get('organ_titles', {})
+        organ_col_map = cached_categories.get('col_maps', {}).get('organ_col_map', {})
 
-        # Use pre-classified ORGAN_* columns directly (much faster than regex)
-        n_grants = len(filtered_stomp)
-        organ_col_map = {
-            'Brain/Nervous System': 'ORGAN_BRAIN_NERVOUS',
-            'Cardiovascular': 'ORGAN_CARDIOVASCULAR',
-            'GI/Gut': 'ORGAN_GI_GUT',
-            'Liver': 'ORGAN_LIVER',
-            'Kidney': 'ORGAN_KIDNEY',
-            'Respiratory/Lung': 'ORGAN_RESPIRATORY',
-            'Reproductive': 'ORGAN_REPRODUCTIVE',
-            'Immune': 'ORGAN_IMMUNE',
-        }
+        # Use pre-computed filtered_titles and filtered_unique (computed once before tabs)
+        current_titles = filtered_titles
+        n_grants = len(current_titles)
 
+        # Compute organ counts using fast set intersection
         organ_data = {}
-        for label, col in organ_col_map.items():
-            if col in filtered_stomp.columns:
-                count = (filtered_stomp[col] == 1).sum()
+        any_organ_count = 0
+        any_organ_titles = set()
+        for label, matching_titles in organ_titles.items():
+            count = len(matching_titles & current_titles)
+            if count > 0:
                 pct = round(100 * count / n_grants, 1) if n_grants > 0 else 0
-                organ_data[label] = {'count': int(count), 'pct': pct}
+                organ_data[label] = {'count': count, 'pct': pct, 'col': organ_col_map.get(label)}
+                any_organ_titles.update(matching_titles & current_titles)
+        any_organ = len(any_organ_titles)
+        any_organ_pct = round(100 * any_organ / n_grants, 1) if n_grants > 0 else 0
+        not_categorized = n_grants - any_organ
+        not_categorized_pct = round(100 * not_categorized / n_grants, 1) if n_grants > 0 else 0
+
+        # Use pre-computed filtered_unique for drill-down (no redundant deduplication)
+        filtered_stomp = filtered_unique
 
         if organ_data:
-            # Calculate projects with any organ system identified using CSV columns directly
-            n_grants = len(filtered_stomp)
-            organ_cols = ['ORGAN_BRAIN_NERVOUS', 'ORGAN_GI_GUT', 'ORGAN_RESPIRATORY', 'ORGAN_CARDIOVASCULAR',
-                         'ORGAN_REPRODUCTIVE', 'ORGAN_LIVER', 'ORGAN_KIDNEY', 'ORGAN_IMMUNE', 'ORGAN_SKIN', 'ORGAN_ENDOCRINE']
-            any_organ_mask = pd.Series([False] * len(filtered_stomp), index=filtered_stomp.index)
-            for col in organ_cols:
-                if col in filtered_stomp.columns:
-                    any_organ_mask = any_organ_mask | (filtered_stomp[col] == 1)
-            any_organ = any_organ_mask.sum()
-            any_organ_pct = round(100 * any_organ / n_grants, 1) if n_grants > 0 else 0
-            not_categorized = n_grants - any_organ
-            not_categorized_pct = round(100 * not_categorized / n_grants, 1) if n_grants > 0 else 0
             # Sort by count
             sorted_organs = sorted(organ_data.items(), key=lambda x: x[1]['count'], reverse=True)
 
@@ -3071,39 +3393,33 @@ with tab_organ:
 # Model Systems Tab
 with tab_model:
     if len(filtered) > 0:
-        # Deduplicate for this tab
-        filtered_stomp = filtered.drop_duplicates(subset=['PROJECT_TITLE'], keep='first')
+        # Use pre-fetched cached_categories (computed once before all tabs)
+        model_titles = cached_categories.get('model_titles', {})
+        model_col_map = cached_categories.get('col_maps', {}).get('model_col_map', {})
 
-        # Calculate projects with any model system identified using pre-classified columns
-        n_grants = len(filtered_stomp)
-        model_cols = ['MODEL_INVITRO', 'MODEL_RODENT', 'MODEL_ZEBRAFISH', 'MODEL_OTHER_ANIMAL', 'MODEL_HUMAN']
-        any_model_mask = pd.Series([False] * len(filtered_stomp))
-        for col in model_cols:
-            if col in filtered_stomp.columns:
-                any_model_mask = any_model_mask | (filtered_stomp[col] == 1)
-        any_model = any_model_mask.sum()
+        # Use pre-computed filtered_titles and filtered_unique (computed once before tabs)
+        current_titles = filtered_titles
+        n_grants = len(current_titles)
+
+        # Compute model counts using fast set intersection
+        model_data = {}
+        any_model_titles = set()
+        for label, matching_titles in model_titles.items():
+            count = len(matching_titles & current_titles)
+            pct = round(100 * count / n_grants, 1) if n_grants > 0 else 0
+            model_data[label] = {'count': count, 'pct': pct, 'col': model_col_map.get(label)}
+            if count > 0:
+                any_model_titles.update(matching_titles & current_titles)
+        any_model = len(any_model_titles)
         any_model_pct = round(100 * any_model / n_grants, 1) if n_grants > 0 else 0
+
+        # Use pre-computed filtered_unique for drill-down (no redundant deduplication)
+        filtered_stomp = filtered_unique
 
         st.markdown("#### What model organisms are being used?")
 
-        # Model systems - use pre-classified columns from CSV
-        MODEL_COL_MAP = {
-            'In Vitro': 'MODEL_INVITRO',
-            'Rodent': 'MODEL_RODENT',
-            'Zebrafish': 'MODEL_ZEBRAFISH',
-            'Human': 'MODEL_HUMAN',
-            'Other Animal': 'MODEL_OTHER_ANIMAL',
-        }
-
-        n_total = len(filtered_stomp)
-
-        model_counts = {}
-        for name, col in MODEL_COL_MAP.items():
-            if col in filtered_stomp.columns:
-                count = (filtered_stomp[col] == 1).sum()
-                model_counts[name] = {'count': count, 'pct': round(100 * count / n_total, 1) if n_total > 0 else 0, 'col': col}
-
-        sorted_models = sorted(model_counts.items(), key=lambda x: x[1]['count'], reverse=True)
+        # Convert model_data to sorted list format
+        sorted_models = sorted(model_data.items(), key=lambda x: x[1]['count'], reverse=True)
 
         col1, col2 = st.columns([2, 1])
         with col1:
@@ -3134,9 +3450,12 @@ with tab_model:
         else:
             selected_model = None
 
-        if selected_model and selected_model in MODEL_COL_MAP:
-            model_col = MODEL_COL_MAP[selected_model]
-            model_grants = filtered_stomp[filtered_stomp[model_col] == 1].copy()
+        if selected_model and selected_model in model_col_map:
+            model_col = model_col_map[selected_model]
+            if model_col in filtered_stomp.columns:
+                model_grants = filtered_stomp[filtered_stomp[model_col] == 1].copy()
+            else:
+                model_grants = filtered_stomp.head(0)  # Empty dataframe
 
             st.markdown(f"### {selected_model}")
             st.markdown(f"**{len(model_grants):,} projects** using this model")
@@ -3188,37 +3507,40 @@ with tab_model:
                         abstract = 'No abstract available'
                     st.markdown("**Abstract:**")
                     st.write(abstract)
+    else:
+        st.info("Filter grants to see model organism analysis.")
 
-    with tab_mech:
-        # Use pre-classified MECH_* columns from CSV (same as Cross-Field Insights tab)
-        # This provides consistent categorization across both tabs
-        # Deduplicate for this tab
-        filtered_stomp = filtered.drop_duplicates(subset=['PROJECT_TITLE'], keep='first')
-        mech_name_to_key = {}
+# Mechanisms Tab
+with tab_mech:
+    if len(filtered) > 0:
+        # Use pre-fetched cached_categories (computed once before all tabs)
+        mech_titles = cached_categories.get('mech_titles', {})
+        mech_col_map = cached_categories.get('col_maps', {}).get('mech_col_map', {})
+
+        # Use pre-computed filtered_titles and filtered_unique (computed once before tabs)
+        current_titles = filtered_titles
+        n_grants = len(current_titles)
+
+        # Compute mechanism counts using fast set intersection
         mech_data = {}
-        n_grants = len(filtered_stomp)
-
-        # Only show mechanisms from MECHANISMS dict (excludes oxidative, developmental, epigenetic)
-        for key, label in MECHANISMS.items():
-            # Use pre-classified column
-            if key in filtered_stomp.columns:
-                matches = filtered_stomp[key] == 1
-                count = int(matches.sum())
-            else:
-                count = 0
+        any_mech_titles = set()
+        for label, matching_titles in mech_titles.items():
+            count = len(matching_titles & current_titles)
             pct = round(100 * count / n_grants, 1) if n_grants > 0 else 0
-            mech_data[label] = {'count': count, 'pct': pct, 'key': key}
-            mech_name_to_key[label] = key
+            col = mech_col_map.get(label)
+            mech_data[label] = {'count': count, 'pct': pct, 'key': col}
+            if count > 0:
+                any_mech_titles.update(matching_titles & current_titles)
+        any_mech = len(any_mech_titles)
+        any_pct = round(100 * any_mech / n_grants, 1) if n_grants > 0 else 0
+
+        # Use pre-computed filtered_unique for drill-down (no redundant deduplication)
+        filtered_stomp = filtered_unique
+
+        # Build reverse mapping (label -> column name) for drill-down
+        mech_name_to_key = {label: info['key'] for label, info in mech_data.items()}
 
         if mech_data:
-            # Calculate mechanism stats for header
-            any_mech_mask = pd.Series(False, index=filtered_stomp.index)
-            for label, info in mech_data.items():
-                key = info['key']
-                if key in filtered_stomp.columns:
-                    any_mech_mask = any_mech_mask | (filtered_stomp[key] == 1)
-            any_mech = any_mech_mask.sum()
-            any_pct = round(100 * any_mech / n_grants, 1) if n_grants > 0 else 0
 
             st.markdown("#### What biological mechanisms are being studied?")
 
@@ -3252,8 +3574,8 @@ with tab_model:
 
             if selected_mech_stomp and selected_mech_stomp in mech_name_to_key:
                 mech_key = mech_name_to_key[selected_mech_stomp]
-                # Use pre-classified column for drill-down (same as Cross-Field Insights)
-                if mech_key in filtered_stomp.columns:
+                # Use pre-classified column for drill-down
+                if mech_key and mech_key in filtered_stomp.columns:
                     mech_grants = filtered_stomp[filtered_stomp[mech_key] == 1].copy()
                 else:
                     mech_grants = pd.DataFrame()
@@ -3312,4 +3634,6 @@ with tab_model:
 
         else:
             st.info("No mechanism patterns matched in the current dataset.")
+    else:
+        st.info("Filter grants to see mechanism analysis.")
 
