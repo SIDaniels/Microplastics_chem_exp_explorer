@@ -1968,7 +1968,7 @@ with tab1:
     """, unsafe_allow_html=True)
 
     # Show title first
-    st.subheader(f"Recent Projects and Funded Grants: {len(filtered):,}")
+    st.subheader(f"Grants, Papers, and Research Profiles: {len(filtered):,}")
 
     # Text search box with regex support - use columns to put help icon closer to label
     st.markdown("""
