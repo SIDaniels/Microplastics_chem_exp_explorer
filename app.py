@@ -1744,7 +1744,7 @@ def compute_cooccurrence(df: pd.DataFrame) -> dict:
 
 
 @st.cache_data
-def load_data(_cache_version: str = "v22_revert_precompute") -> pd.DataFrame:
+def load_data(_cache_version: str = "v24_direct_column_lookup") -> pd.DataFrame:
     """Load pre-filtered grant data (6,500 chemical exposure grants + conference abstracts)."""
     if not DATA_PATH.exists():
         return pd.DataFrame()
@@ -2795,13 +2795,29 @@ Microplastics research is just getting started. Leverage existing biotech expert
 # Organ Systems Tab
 with tab_organ:
     if len(filtered) > 0:
-        # Compute STOMP classification for this tab
-        stomp_results = classify_stomp_categories(filtered)
-
         # Deduplicate for this tab
         filtered_stomp = filtered.drop_duplicates(subset=['PROJECT_TITLE'], keep='first')
 
-        organ_data = stomp_results['organs']
+        # Use pre-classified ORGAN_* columns directly (much faster than regex)
+        n_grants = len(filtered_stomp)
+        organ_col_map = {
+            'Brain/Nervous System': 'ORGAN_BRAIN_NERVOUS',
+            'Cardiovascular': 'ORGAN_CARDIOVASCULAR',
+            'GI/Gut': 'ORGAN_GI_GUT',
+            'Liver': 'ORGAN_LIVER',
+            'Kidney': 'ORGAN_KIDNEY',
+            'Respiratory/Lung': 'ORGAN_RESPIRATORY',
+            'Reproductive': 'ORGAN_REPRODUCTIVE',
+            'Immune': 'ORGAN_IMMUNE',
+        }
+
+        organ_data = {}
+        for label, col in organ_col_map.items():
+            if col in filtered_stomp.columns:
+                count = (filtered_stomp[col] == 1).sum()
+                pct = round(100 * count / n_grants, 1) if n_grants > 0 else 0
+                organ_data[label] = {'count': int(count), 'pct': pct}
+
         if organ_data:
             # Calculate projects with any organ system identified using CSV columns directly
             n_grants = len(filtered_stomp)
@@ -2847,35 +2863,14 @@ with tab_organ:
                 selected_organ = None
 
             if selected_organ:
-                # Find the pattern and column for this organ
-                organ_pattern = None
-                organ_col = None
-                organ_col_map = {
-                    'ORGAN_BRAIN': 'ORGAN_BRAIN_NERVOUS',
-                    'ORGAN_CARDIOVASCULAR': 'ORGAN_CARDIOVASCULAR',
-                    'ORGAN_GI': 'ORGAN_GI_GUT',
-                    'ORGAN_LIVER': 'ORGAN_LIVER',
-                    'ORGAN_KIDNEY': 'ORGAN_KIDNEY',
-                    'ORGAN_LUNG': 'ORGAN_RESPIRATORY',
-                    'ORGAN_REPRODUCTIVE': 'ORGAN_REPRODUCTIVE',
-                    'ORGAN_IMMUNE': 'ORGAN_IMMUNE',
-                }
-                for key, (label, pattern) in ORGAN_SYSTEMS.items():
-                    if label == selected_organ:
-                        organ_pattern = pattern
-                        organ_col = organ_col_map.get(key)
-                        break
+                # Use pre-classified column directly (no regex needed)
+                organ_col = organ_col_map.get(selected_organ)
+                if organ_col and organ_col in filtered_stomp.columns:
+                    organ_grants = filtered_stomp[filtered_stomp[organ_col] == 1].copy()
+                else:
+                    organ_grants = filtered_stomp.head(0)  # Empty dataframe
 
-                if organ_pattern:
-                    text = filtered_stomp['PROJECT_TITLE'].fillna('') + ' ' + filtered_stomp['ABSTRACT_TEXT'].fillna('')
-                    keyword_matches = text.str.contains(organ_pattern, regex=True, flags=re.IGNORECASE, na=False)
-                    # Also check pre-classified column
-                    if organ_col and organ_col in filtered_stomp.columns:
-                        preclassified = filtered_stomp[organ_col] == 1
-                        organ_matches = keyword_matches | preclassified
-                    else:
-                        organ_matches = keyword_matches
-                    organ_grants = filtered_stomp[organ_matches].copy()
+                if len(organ_grants) > 0:
 
                     st.markdown(f"### {selected_organ}")
 
@@ -2934,9 +2929,6 @@ with tab_organ:
 # Model Systems Tab
 with tab_model:
     if len(filtered) > 0:
-        # Compute STOMP classification for this tab
-        stomp_results = classify_stomp_categories(filtered)
-
         # Deduplicate for this tab
         filtered_stomp = filtered.drop_duplicates(subset=['PROJECT_TITLE'], keep='first')
 
