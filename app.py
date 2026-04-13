@@ -1374,15 +1374,8 @@ RESEARCH_PHASES = {
 
 
 
-@st.cache_data(ttl=3600, show_spinner=False)
-def _classify_stomp_cached(df_hash: str, df_json: str, deduplicate: bool = True) -> dict:
-    """Cached inner function for STOMP classification."""
-    df = pd.read_json(df_json, orient='split')
-    return _classify_stomp_impl(df, deduplicate)
-
-
 def classify_stomp_categories(df: pd.DataFrame, deduplicate: bool = True) -> dict:
-    """Classify grants by STOMP-inspired categories (cached).
+    """Classify grants by STOMP-inspired categories.
 
     Uses pre-classified ORGAN_*/TYPE_* columns if available (for conference abstracts),
     otherwise falls back to keyword pattern matching on abstract text.
@@ -1394,23 +1387,8 @@ def classify_stomp_categories(df: pd.DataFrame, deduplicate: bool = True) -> dic
     if len(df) == 0:
         return {'organs': {}, 'phases': {}, 'research_types': {}}
 
-    # Create a hash key based on relevant columns and length
-    key_cols = ['PROJECT_TITLE', 'ABSTRACT_TEXT']
-    existing_cols = [c for c in key_cols if c in df.columns]
-    df_hash = f"{len(df)}_{hash(tuple(df[existing_cols].values.tobytes() if existing_cols else []))}"
-
-    # Use only necessary columns for caching to reduce memory
-    cache_cols = ['PROJECT_TITLE', 'ABSTRACT_TEXT'] + [c for c in df.columns if c.startswith('ORGAN_') or c.startswith('TYPE_')]
-    cache_cols = [c for c in cache_cols if c in df.columns]
-    df_subset = df[cache_cols].copy()
-
-    return _classify_stomp_cached(df_hash, df_subset.to_json(orient='split'), deduplicate)
-
-
-def _classify_stomp_impl(df: pd.DataFrame, deduplicate: bool = True) -> dict:
-    """Internal implementation of STOMP classification."""
     # Deduplicate by PROJECT_TITLE if requested
-    if deduplicate and 'PROJECT_TITLE' in df.columns:
+    if deduplicate:
         df_unique = df.drop_duplicates(subset=['PROJECT_TITLE'], keep='first')
     else:
         df_unique = df
@@ -1766,7 +1744,7 @@ def compute_cooccurrence(df: pd.DataFrame) -> dict:
 
 
 @st.cache_data
-def load_data(_cache_version: str = "v23_cached_stomp_classify") -> pd.DataFrame:
+def load_data(_cache_version: str = "v22_revert_precompute") -> pd.DataFrame:
     """Load pre-filtered grant data (6,500 chemical exposure grants + conference abstracts)."""
     if not DATA_PATH.exists():
         return pd.DataFrame()
