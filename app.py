@@ -1787,15 +1787,15 @@ def filter_grants(df: pd.DataFrame, exposures: list, mechanisms: list,
     mask = pd.Series([True] * len(df), index=df.index)
 
     # Filter by source (NIH Grants, Conference Abstracts, Papers, STOMP Teaming)
-    if source == "NIH Grants Only":
+    if source == "NIH Grants":
         mask &= df['SOURCE'].astype(str) == 'NIH'
-    elif source == "Conference Abstracts Only":
+    elif source == "Microplastics Conference Abstracts":
         mask &= df['SOURCE'].astype(str) == 'CONFERENCE'
-    elif source == "Published Papers (PMC)":
+    elif source == "Recent Papers (PMC)":
         mask &= df['SOURCE'].astype(str).str.contains('PMC', na=False)
     elif source == "Preprints (bioRxiv/medRxiv)":
         mask &= df['SOURCE'].astype(str).str.contains('Rxiv', na=False)
-    elif source == "STOMP Teaming":
+    elif source == "ARPA-H STOMP Team Search":
         mask &= df['SOURCE'].astype(str) == 'STOMP Teaming'
 
     # Filter by year (include conference abstracts with NaN fiscal year)
@@ -1900,7 +1900,7 @@ if len(df) == 0:
 st.sidebar.header("Filters")
 
 # Source filter (NIH Grants, Conference Abstracts, Papers)
-source_options = ["All Sources", "NIH Grants Only", "Conference Abstracts Only", "Published Papers (PMC)", "Preprints (bioRxiv/medRxiv)", "STOMP Teaming"]
+source_options = ["All Sources", "NIH Grants", "Microplastics Conference Abstracts", "Recent Papers (PMC)", "Preprints (bioRxiv/medRxiv)", "ARPA-H STOMP Team Search"]
 selected_source = st.sidebar.radio(
     "Data Source",
     source_options,
