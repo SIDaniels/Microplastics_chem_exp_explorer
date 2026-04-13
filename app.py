@@ -731,6 +731,123 @@ st.markdown("""
         word-wrap: break-word !important;
         overflow-wrap: break-word !important;
     }
+
+    /* ============ MOBILE RESPONSIVE STYLES ============ */
+    @media (max-width: 768px) {
+        /* Reduce padding on mobile */
+        .block-container {
+            padding-left: 0.5rem !important;
+            padding-right: 0.5rem !important;
+            padding-top: 0.5rem !important;
+        }
+
+        /* Make sidebar collapsible and easier to use on mobile */
+        [data-testid="stSidebar"] {
+            min-width: 0 !important;
+        }
+        [data-testid="stSidebar"][aria-expanded="true"] {
+            min-width: 280px !important;
+        }
+
+        /* Smaller font sizes on mobile */
+        h1 {
+            font-size: 1.5rem !important;
+        }
+        h2, h3 {
+            font-size: 1.2rem !important;
+        }
+
+        /* Make tabs scrollable on mobile */
+        .stTabs [data-baseweb="tab-list"] {
+            overflow-x: auto !important;
+            flex-wrap: nowrap !important;
+            -webkit-overflow-scrolling: touch !important;
+        }
+        .stTabs [data-baseweb="tab"] {
+            white-space: nowrap !important;
+            font-size: 0.85rem !important;
+            padding: 0.5rem 0.75rem !important;
+        }
+
+        /* Make tables responsive */
+        [data-testid="stDataFrame"] {
+            overflow-x: auto !important;
+            max-width: 100% !important;
+        }
+        [data-testid="stDataFrame"] td {
+            max-width: 200px !important;
+            font-size: 0.8rem !important;
+        }
+
+        /* Stack columns vertically on mobile */
+        [data-testid="column"] {
+            width: 100% !important;
+            flex: 1 1 100% !important;
+        }
+
+        /* Smaller charts on mobile */
+        .vega-embed {
+            width: 100% !important;
+        }
+
+        /* Make expanders easier to tap */
+        .streamlit-expanderHeader {
+            padding: 0.75rem !important;
+            font-size: 0.9rem !important;
+        }
+
+        /* Make buttons touch-friendly */
+        .stButton button {
+            min-height: 44px !important;
+            padding: 0.5rem 1rem !important;
+        }
+
+        /* Improve info box readability on mobile */
+        div[style*="background-color: #f0f7f7"] {
+            font-size: 0.85rem !important;
+            padding: 10px !important;
+        }
+
+        /* Radio buttons - stack vertically */
+        .stRadio > div {
+            flex-direction: column !important;
+        }
+        .stRadio label {
+            padding: 0.5rem 0 !important;
+        }
+
+        /* Better select boxes on mobile */
+        .stSelectbox {
+            font-size: 0.9rem !important;
+        }
+
+        /* Pagination buttons */
+        div[data-testid="stHorizontalBlock"] button {
+            min-width: 40px !important;
+            padding: 0.25rem 0.5rem !important;
+        }
+    }
+
+    /* Extra small screens (phones in portrait) */
+    @media (max-width: 480px) {
+        .block-container {
+            padding-left: 0.25rem !important;
+            padding-right: 0.25rem !important;
+        }
+
+        h1 {
+            font-size: 1.25rem !important;
+        }
+
+        .stTabs [data-baseweb="tab"] {
+            font-size: 0.75rem !important;
+            padding: 0.4rem 0.5rem !important;
+        }
+
+        [data-testid="stDataFrame"] td {
+            font-size: 0.7rem !important;
+        }
+    }
 </style>
 """, unsafe_allow_html=True)
 
