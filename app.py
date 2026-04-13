@@ -1789,7 +1789,7 @@ def filter_grants(df: pd.DataFrame, exposures: list, mechanisms: list,
     # Filter by source (NIH Grants, Conference Abstracts, Papers, STOMP Teaming)
     if source == "NIH Grants":
         mask &= df['SOURCE'].astype(str) == 'NIH'
-    elif source == "Microplastics Conference Abstracts":
+    elif source == "MP Conference Abstracts":
         mask &= df['SOURCE'].astype(str) == 'CONFERENCE'
     elif source == "Recent Papers (PMC)":
         mask &= df['SOURCE'].astype(str).str.contains('PMC', na=False)
@@ -1900,7 +1900,7 @@ if len(df) == 0:
 st.sidebar.header("Filters")
 
 # Source filter (NIH Grants, Conference Abstracts, Papers)
-source_options = ["All Sources", "NIH Grants", "Microplastics Conference Abstracts", "Recent Papers (PMC)", "Preprints (bioRxiv/medRxiv)", "ARPA-H STOMP Team Search"]
+source_options = ["All Sources", "NIH Grants", "MP Conference Abstracts", "Recent Papers (PMC)", "Preprints (bioRxiv/medRxiv)", "ARPA-H STOMP Team Search"]
 selected_source = st.sidebar.radio(
     "Data Source",
     source_options,
