@@ -2469,6 +2469,69 @@ filtered_unique = filtered.drop_duplicates(subset=['PROJECT_TITLE'], keep='first
 filtered_titles = set(filtered_unique['PROJECT_TITLE'].tolist()) if len(filtered_unique) > 0 else set()
 # Fetch cached category title sets ONCE (used by Organ, Model, Mechanism tabs)
 cached_categories = get_category_title_sets("v1")
+n_grants = len(filtered_titles)
+
+# ============== PRE-COMPUTE TAB DATA (eliminates first-click lag) ==============
+# Pre-compute all category counts/chart data BEFORE tabs render
+# This moves expensive set intersection loops outside lazy tab blocks
+
+# Organ Systems data
+organ_titles = cached_categories.get('organ_titles', {})
+organ_col_map = cached_categories.get('col_maps', {}).get('organ_col_map', {})
+precomputed_organ_data = {}
+any_organ_titles = set()
+for label, matching_titles in organ_titles.items():
+    count = len(matching_titles & filtered_titles)
+    if count > 0:
+        pct = round(100 * count / n_grants, 1) if n_grants > 0 else 0
+        precomputed_organ_data[label] = {'count': count, 'pct': pct, 'col': organ_col_map.get(label)}
+        any_organ_titles.update(matching_titles & filtered_titles)
+any_organ = len(any_organ_titles)
+any_organ_pct = round(100 * any_organ / n_grants, 1) if n_grants > 0 else 0
+not_categorized_organ = n_grants - any_organ
+not_categorized_organ_pct = round(100 * not_categorized_organ / n_grants, 1) if n_grants > 0 else 0
+
+# Model Organisms data
+model_titles = cached_categories.get('model_titles', {})
+model_col_map = cached_categories.get('col_maps', {}).get('model_col_map', {})
+precomputed_model_data = {}
+any_model_titles = set()
+for label, matching_titles in model_titles.items():
+    count = len(matching_titles & filtered_titles)
+    if count > 0:
+        pct = round(100 * count / n_grants, 1) if n_grants > 0 else 0
+        precomputed_model_data[label] = {'count': count, 'pct': pct, 'col': model_col_map.get(label)}
+        any_model_titles.update(matching_titles & filtered_titles)
+any_model = len(any_model_titles)
+any_model_pct = round(100 * any_model / n_grants, 1) if n_grants > 0 else 0
+not_categorized_model = n_grants - any_model
+not_categorized_model_pct = round(100 * not_categorized_model / n_grants, 1) if n_grants > 0 else 0
+
+# Mechanisms data
+mech_titles = cached_categories.get('mech_titles', {})
+mech_col_map = cached_categories.get('col_maps', {}).get('mech_col_map', {})
+precomputed_mech_data = {}
+any_mech_titles = set()
+for label, matching_titles in mech_titles.items():
+    count = len(matching_titles & filtered_titles)
+    if count > 0:
+        pct = round(100 * count / n_grants, 1) if n_grants > 0 else 0
+        precomputed_mech_data[label] = {'count': count, 'pct': pct, 'col': mech_col_map.get(label)}
+        any_mech_titles.update(matching_titles & filtered_titles)
+any_mech = len(any_mech_titles)
+any_mech_pct = round(100 * any_mech / n_grants, 1) if n_grants > 0 else 0
+not_categorized_mech = n_grants - any_mech
+not_categorized_mech_pct = round(100 * not_categorized_mech / n_grants, 1) if n_grants > 0 else 0
+
+# Sort all pre-computed data by count (done once, not inside tabs)
+sorted_organs = sorted(precomputed_organ_data.items(), key=lambda x: x[1]['count'], reverse=True)
+sorted_models = sorted(precomputed_model_data.items(), key=lambda x: x[1]['count'], reverse=True)
+sorted_mechs = sorted(precomputed_mech_data.items(), key=lambda x: x[1]['count'], reverse=True)
+
+# Pre-create chart data dicts (used directly by tabs)
+organ_chart_data = {k: v['count'] for k, v in sorted_organs if v['count'] > 0}
+model_chart_data = {k: v['count'] for k, v in sorted_models if v['count'] > 0}
+mech_chart_data = {k: v['count'] for k, v in sorted_mechs if v['count'] > 0}
 
 # Main content - tabs
 tab1, tab_organ, tab_model, tab_mech, tab_detection, tab4 = st.tabs(["Projects", "Organ Systems", "Model Organisms", "Mechanisms", "Detection & Exposure", "Cross-Field Insights"])
@@ -3267,170 +3330,115 @@ Microplastics research is just getting started. Leverage existing biotech expert
 
 # Organ Systems Tab
 with tab_organ:
-    if len(filtered) > 0:
-        # Use pre-fetched cached_categories (computed once before all tabs)
-        organ_titles = cached_categories.get('organ_titles', {})
-        organ_col_map = cached_categories.get('col_maps', {}).get('organ_col_map', {})
+    if len(filtered) > 0 and precomputed_organ_data:
+        # All data pre-computed above tabs - just render UI
+        st.markdown("#### Which body systems are being studied?")
 
-        # Use pre-computed filtered_titles and filtered_unique (computed once before tabs)
-        current_titles = filtered_titles
-        n_grants = len(current_titles)
+        col1, col2 = st.columns([2, 1])
+        with col1:
+            # Use pre-computed chart data (no loops inside tab)
+            chart = create_horizontal_bar_chart(organ_chart_data, value_label="Projects")
+            st.altair_chart(chart, use_container_width=True)
 
-        # Compute organ counts using fast set intersection
-        organ_data = {}
-        any_organ_count = 0
-        any_organ_titles = set()
-        for label, matching_titles in organ_titles.items():
-            count = len(matching_titles & current_titles)
-            if count > 0:
-                pct = round(100 * count / n_grants, 1) if n_grants > 0 else 0
-                organ_data[label] = {'count': count, 'pct': pct, 'col': organ_col_map.get(label)}
-                any_organ_titles.update(matching_titles & current_titles)
-        any_organ = len(any_organ_titles)
-        any_organ_pct = round(100 * any_organ / n_grants, 1) if n_grants > 0 else 0
-        not_categorized = n_grants - any_organ
-        not_categorized_pct = round(100 * not_categorized / n_grants, 1) if n_grants > 0 else 0
+        with col2:
+            organ_table = [{'Organ System': k, 'Projects': v['count'], '%': f"{v['pct']}%"}
+                          for k, v in sorted_organs[:8]]
+            st.dataframe(pd.DataFrame(organ_table), hide_index=True, use_container_width=True)
 
-        # Use pre-computed filtered_unique for drill-down (no redundant deduplication)
-        filtered_stomp = filtered_unique
+        st.info(f"{any_organ:,} projects ({any_organ_pct}%) have at least one organ system identified (remaining {not_categorized_organ_pct}% are general toxicity, environmental monitoring, or methods development studies)")
+        st.markdown("---")
 
-        if organ_data:
-            # Sort by count
-            sorted_organs = sorted(organ_data.items(), key=lambda x: x[1]['count'], reverse=True)
+        # Drill-down with selectbox
+        organ_options = [f"{name} ({info['count']})" for name, info in sorted_organs if info['count'] > 0]
+        if organ_options:
+            selected_organ_option = st.selectbox(
+                "Explore projects by organ system",
+                ["Select an organ system..."] + organ_options,
+                key="organ_select"
+            )
+            selected_organ = selected_organ_option.rsplit(" (", 1)[0] if selected_organ_option != "Select an organ system..." else None
+        else:
+            selected_organ = None
 
-            st.markdown("#### Which body systems are being studied?")
-
-            col1, col2 = st.columns([2, 1])
-            with col1:
-                chart_data = {k: v['count'] for k, v in sorted_organs if v['count'] > 0}
-                chart = create_horizontal_bar_chart(chart_data, value_label="Projects")
-                st.altair_chart(chart, use_container_width=True)
-
-            with col2:
-                organ_table = [{'Organ System': k, 'Projects': v['count'], '%': f"{v['pct']}%"}
-                              for k, v in sorted_organs[:8]]
-                st.dataframe(pd.DataFrame(organ_table), hide_index=True, use_container_width=True)
-
-            st.info(f"{any_organ:,} projects ({any_organ_pct}%) have at least one organ system identified (remaining {not_categorized_pct}% are general toxicity, environmental monitoring, or methods development studies)")
-            st.markdown("---")
-
-            # Drill-down with selectbox
-            organ_options = [f"{name} ({info['count']})" for name, info in sorted_organs if info['count'] > 0]
-            if organ_options:
-                selected_organ_option = st.selectbox(
-                    "Explore projects by organ system",
-                    ["Select an organ system..."] + organ_options,
-                    key="organ_select"
-                )
-                selected_organ = selected_organ_option.rsplit(" (", 1)[0] if selected_organ_option != "Select an organ system..." else None
+        if selected_organ:
+            # Use pre-classified column directly (no regex needed)
+            organ_col = organ_col_map.get(selected_organ)
+            if organ_col and organ_col in filtered_unique.columns:
+                organ_grants = filtered_unique[filtered_unique[organ_col] == 1].copy()
             else:
-                selected_organ = None
+                organ_grants = filtered_unique.head(0)  # Empty dataframe
 
-            if selected_organ:
-                # Use pre-classified column directly (no regex needed)
-                organ_col = organ_col_map.get(selected_organ)
-                if organ_col and organ_col in filtered_stomp.columns:
-                    organ_grants = filtered_stomp[filtered_stomp[organ_col] == 1].copy()
-                else:
-                    organ_grants = filtered_stomp.head(0)  # Empty dataframe
+            if len(organ_grants) > 0:
 
-                if len(organ_grants) > 0:
+                st.markdown(f"### {selected_organ}")
 
-                    st.markdown(f"### {selected_organ}")
+                display_cols = ['PROJECT_TITLE', 'PI_NAMEs', 'ORG_NAME', 'FISCAL_YEAR']
+                display_cols = [c for c in display_cols if c in organ_grants.columns]
+                if display_cols:
+                    # Prepare full display dataframe
+                    full_grants_display = organ_grants[display_cols].copy()
+                    if 'PI_NAMEs' in full_grants_display.columns:
+                        full_grants_display['PI_NAMEs'] = full_grants_display['PI_NAMEs'].apply(clean_pi_names)
+                    col_names = {'PROJECT_TITLE': 'Title', 'PI_NAMEs': 'Contact Researcher Name', 'ORG_NAME': 'Organization', 'FISCAL_YEAR': 'FY'}
+                    full_grants_display.columns = [col_names.get(c, c) for c in display_cols]
+                    st.caption("Select a row to view abstract below")
 
-                    display_cols = ['PROJECT_TITLE', 'PI_NAMEs', 'ORG_NAME', 'FISCAL_YEAR']
-                    display_cols = [c for c in display_cols if c in organ_grants.columns]
-                    if display_cols:
-                        # Prepare full display dataframe
-                        full_grants_display = organ_grants[display_cols].copy()
-                        if 'PI_NAMEs' in full_grants_display.columns:
-                            full_grants_display['PI_NAMEs'] = full_grants_display['PI_NAMEs'].apply(clean_pi_names)
-                        col_names = {'PROJECT_TITLE': 'Title', 'PI_NAMEs': 'Contact Researcher Name', 'ORG_NAME': 'Organization', 'FISCAL_YEAR': 'FY'}
-                        full_grants_display.columns = [col_names.get(c, c) for c in display_cols]
-                        st.caption("Select a row to view abstract below")
+                    # Paginate the results (25 per page)
+                    grants_display = paginated_dataframe(full_grants_display, key="organ_systems_table", page_size=25)
 
-                        # Paginate the results (25 per page)
-                        grants_display = paginated_dataframe(full_grants_display, key="organ_systems_table", page_size=25)
+                    organ_selection = st.dataframe(
+                        grants_display,
+                        hide_index=True,
+                        use_container_width=True,
+                        height=300,
+                        on_select="rerun",
+                        selection_mode="single-row",
+                        column_config={
+                            "Title": st.column_config.TextColumn("Title", width="large"),
+                        }
+                    )
 
-                        organ_selection = st.dataframe(
-                            grants_display,
-                            hide_index=True,
-                            use_container_width=True,
-                            height=300,
-                            on_select="rerun",
-                            selection_mode="single-row",
-                            column_config={
-                                "Title": st.column_config.TextColumn("Title", width="large"),
-                            }
-                        )
+                    # Download button for organ system results
+                    organ_csv = clean_export_df(organ_grants).to_csv(index=False)
+                    st.download_button(
+                        f"Download {selected_organ} Projects (CSV)",
+                        organ_csv,
+                        f"{selected_organ.lower().replace(' ', '_')}_projects.csv",
+                        "text/csv",
+                        key="organ_download"
+                    )
 
-                        # Download button for organ system results
-                        organ_csv = clean_export_df(organ_grants).to_csv(index=False)
-                        st.download_button(
-                            f"Download {selected_organ} Projects (CSV)",
-                            organ_csv,
-                            f"{selected_organ.lower().replace(' ', '_')}_projects.csv",
-                            "text/csv",
-                            key="organ_download"
-                        )
-
-                        # Show abstract for selected row
-                        if organ_selection and organ_selection.selection and organ_selection.selection.rows:
-                            selected_idx = organ_selection.selection.rows[0]
-                            grant_row = organ_grants.iloc[selected_idx]
-                            st.markdown("---")
-                            st.markdown(f"**{grant_row['PROJECT_TITLE']}**")
-                            st.markdown(f"*Contact Researcher:* {clean_pi_names(grant_row.get('PI_NAMEs', 'Unknown'))} | *Org:* {grant_row.get('ORG_NAME', 'Unknown')} | *FY:* {int(grant_row.get('FISCAL_YEAR', 0))}")
-                            abstract = grant_row.get('ABSTRACT_TEXT', 'No abstract available')
-                            if pd.isna(abstract):
-                                abstract = 'No abstract available'
-                            st.markdown("**Abstract:**")
-                            st.write(abstract)
+                    # Show abstract for selected row
+                    if organ_selection and organ_selection.selection and organ_selection.selection.rows:
+                        selected_idx = organ_selection.selection.rows[0]
+                        grant_row = organ_grants.iloc[selected_idx]
+                        st.markdown("---")
+                        st.markdown(f"**{grant_row['PROJECT_TITLE']}**")
+                        st.markdown(f"*Contact Researcher:* {clean_pi_names(grant_row.get('PI_NAMEs', 'Unknown'))} | *Org:* {grant_row.get('ORG_NAME', 'Unknown')} | *FY:* {int(grant_row.get('FISCAL_YEAR', 0))}")
+                        abstract = grant_row.get('ABSTRACT_TEXT', 'No abstract available')
+                        if pd.isna(abstract):
+                            abstract = 'No abstract available'
+                        st.markdown("**Abstract:**")
+                        st.write(abstract)
 
     else:
         st.info("Filter grants to see organ system analysis.")
 
 # Model Systems Tab
 with tab_model:
-    if len(filtered) > 0:
-        # Use pre-fetched cached_categories (computed once before all tabs)
-        model_titles = cached_categories.get('model_titles', {})
-        model_col_map = cached_categories.get('col_maps', {}).get('model_col_map', {})
-
-        # Use pre-computed filtered_titles and filtered_unique (computed once before tabs)
-        current_titles = filtered_titles
-        n_grants = len(current_titles)
-
-        # Compute model counts using fast set intersection
-        model_data = {}
-        any_model_titles = set()
-        for label, matching_titles in model_titles.items():
-            count = len(matching_titles & current_titles)
-            pct = round(100 * count / n_grants, 1) if n_grants > 0 else 0
-            model_data[label] = {'count': count, 'pct': pct, 'col': model_col_map.get(label)}
-            if count > 0:
-                any_model_titles.update(matching_titles & current_titles)
-        any_model = len(any_model_titles)
-        any_model_pct = round(100 * any_model / n_grants, 1) if n_grants > 0 else 0
-
-        # Use pre-computed filtered_unique for drill-down (no redundant deduplication)
-        filtered_stomp = filtered_unique
-
+    if len(filtered) > 0 and precomputed_model_data:
+        # All data pre-computed above tabs - just render UI
         st.markdown("#### What model organisms are being used?")
-
-        # Convert model_data to sorted list format
-        sorted_models = sorted(model_data.items(), key=lambda x: x[1]['count'], reverse=True)
 
         col1, col2 = st.columns([2, 1])
         with col1:
-            # Include all model organisms (even with 0 count) for complete view
-            chart_data = {k: v['count'] for k, v in sorted_models}
-            if chart_data:
-                chart = create_horizontal_bar_chart(chart_data, value_label="Projects")
+            # Use pre-computed chart data (no loops inside tab)
+            if model_chart_data:
+                chart = create_horizontal_bar_chart(model_chart_data, value_label="Projects")
                 st.altair_chart(chart, use_container_width=True)
 
         with col2:
-            # Show all model organisms in table
+            # Show all model organisms in table using pre-computed sorted_models
             model_table = [{'Model Organism': k, 'Projects': v['count'], '%': f"{v['pct']}%"}
                           for k, v in sorted_models]
             st.dataframe(pd.DataFrame(model_table), hide_index=True, use_container_width=True)
@@ -3438,7 +3446,7 @@ with tab_model:
         st.info(f"{any_model:,} projects ({any_model_pct}%) have at least one model organism identified (many projects use multiple model systems)")
         st.markdown("---")
 
-        # Drill-down
+        # Drill-down using pre-computed sorted_models
         model_options = [f"{name} ({info['count']})" for name, info in sorted_models if info['count'] > 0]
         if model_options:
             selected_model_option = st.selectbox(
@@ -3452,10 +3460,10 @@ with tab_model:
 
         if selected_model and selected_model in model_col_map:
             model_col = model_col_map[selected_model]
-            if model_col in filtered_stomp.columns:
-                model_grants = filtered_stomp[filtered_stomp[model_col] == 1].copy()
+            if model_col in filtered_unique.columns:
+                model_grants = filtered_unique[filtered_unique[model_col] == 1].copy()
             else:
-                model_grants = filtered_stomp.head(0)  # Empty dataframe
+                model_grants = filtered_unique.head(0)  # Empty dataframe
 
             st.markdown(f"### {selected_model}")
             st.markdown(f"**{len(model_grants):,} projects** using this model")
@@ -3512,74 +3520,49 @@ with tab_model:
 
 # Mechanisms Tab
 with tab_mech:
-    if len(filtered) > 0:
-        # Use pre-fetched cached_categories (computed once before all tabs)
-        mech_titles = cached_categories.get('mech_titles', {})
-        mech_col_map = cached_categories.get('col_maps', {}).get('mech_col_map', {})
-
-        # Use pre-computed filtered_titles and filtered_unique (computed once before tabs)
-        current_titles = filtered_titles
-        n_grants = len(current_titles)
-
-        # Compute mechanism counts using fast set intersection
-        mech_data = {}
-        any_mech_titles = set()
-        for label, matching_titles in mech_titles.items():
-            count = len(matching_titles & current_titles)
-            pct = round(100 * count / n_grants, 1) if n_grants > 0 else 0
-            col = mech_col_map.get(label)
-            mech_data[label] = {'count': count, 'pct': pct, 'key': col}
-            if count > 0:
-                any_mech_titles.update(matching_titles & current_titles)
-        any_mech = len(any_mech_titles)
-        any_pct = round(100 * any_mech / n_grants, 1) if n_grants > 0 else 0
-
-        # Use pre-computed filtered_unique for drill-down (no redundant deduplication)
-        filtered_stomp = filtered_unique
-
+    if len(filtered) > 0 and precomputed_mech_data:
+        # All data pre-computed above tabs - just render UI
         # Build reverse mapping (label -> column name) for drill-down
-        mech_name_to_key = {label: info['key'] for label, info in mech_data.items()}
+        mech_name_to_key = {label: info['col'] for label, info in precomputed_mech_data.items()}
 
-        if mech_data:
+        st.markdown("#### What biological mechanisms are being studied?")
 
-            st.markdown("#### What biological mechanisms are being studied?")
+        col1, col2 = st.columns([2, 1])
+        with col1:
+            # Use pre-computed chart data (no loops inside tab)
+            chart = create_horizontal_bar_chart(mech_chart_data, value_label="Projects")
+            st.altair_chart(chart, use_container_width=True)
 
-            sorted_mechs = sorted(mech_data.items(), key=lambda x: x[1]['count'], reverse=True)
+        with col2:
+            mech_table = [{'Mechanism': k, 'Projects': v['count'], '%': f"{v['pct']}%"}
+                          for k, v in sorted_mechs[:10]]
+            st.dataframe(pd.DataFrame(mech_table), hide_index=True, use_container_width=True)
 
-            col1, col2 = st.columns([2, 1])
-            with col1:
-                chart_data = {k: v['count'] for k, v in sorted_mechs if v['count'] > 0}
-                chart = create_horizontal_bar_chart(chart_data, value_label="Projects")
-                st.altair_chart(chart, use_container_width=True)
+        st.info(f"{any_mech:,} projects ({any_mech_pct}%) have at least one mechanism identified (many projects study multiple mechanisms)")
+        st.markdown("---")
 
-            with col2:
-                mech_table = [{'Mechanism': k, 'Projects': v['count'], '%': f"{v['pct']}%"}
-                              for k, v in sorted_mechs[:10]]
-                st.dataframe(pd.DataFrame(mech_table), hide_index=True, use_container_width=True)
+        # Drill-down with selectbox using pre-computed sorted_mechs
+        mech_options = [f"{name} ({info['count']})" for name, info in sorted_mechs if info['count'] > 0]
+        if mech_options:
+            selected_mech_option = st.selectbox(
+                "Explore projects by mechanism",
+                ["Select a mechanism..."] + mech_options,
+                key="mech_select"
+            )
+            selected_mech_stomp = selected_mech_option.rsplit(" (", 1)[0] if selected_mech_option != "Select a mechanism..." else None
+        else:
+            selected_mech_stomp = None
 
-            st.info(f"{any_mech:,} projects ({any_pct}%) have at least one mechanism identified (many projects study multiple mechanisms)")
-            st.markdown("---")
-
-            # Drill-down with selectbox
-            mech_options = [f"{name} ({info['count']})" for name, info in sorted_mechs if info['count'] > 0]
-            if mech_options:
-                selected_mech_option = st.selectbox(
-                    "Explore projects by mechanism",
-                    ["Select a mechanism..."] + mech_options,
-                    key="mech_select"
-                )
-                selected_mech_stomp = selected_mech_option.rsplit(" (", 1)[0] if selected_mech_option != "Select a mechanism..." else None
+        if selected_mech_stomp and selected_mech_stomp in mech_name_to_key:
+            mech_key = mech_name_to_key[selected_mech_stomp]
+            # Use pre-classified column for drill-down
+            if mech_key and mech_key in filtered_unique.columns:
+                mech_grants = filtered_unique[filtered_unique[mech_key] == 1].copy()
             else:
-                selected_mech_stomp = None
+                mech_grants = pd.DataFrame()
 
-            if selected_mech_stomp and selected_mech_stomp in mech_name_to_key:
-                mech_key = mech_name_to_key[selected_mech_stomp]
-                # Use pre-classified column for drill-down
-                if mech_key and mech_key in filtered_stomp.columns:
-                    mech_grants = filtered_stomp[filtered_stomp[mech_key] == 1].copy()
-                else:
-                    mech_grants = pd.DataFrame()
-
+            # Display mechanism grants (if any)
+            if len(mech_grants) > 0:
                 st.markdown(f"### {selected_mech_stomp}")
                 st.markdown(f"**{len(mech_grants):,} projects** studying this mechanism")
 
@@ -3631,9 +3614,6 @@ with tab_mech:
                             abstract = 'No abstract available'
                         st.markdown("**Abstract:**")
                         st.write(abstract)
-
-        else:
-            st.info("No mechanism patterns matched in the current dataset.")
     else:
         st.info("Filter grants to see mechanism analysis.")
 
