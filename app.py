@@ -1549,52 +1549,71 @@ def compute_grant_similarity(source_grants: pd.DataFrame, target_grants: pd.Data
         elif selected_category in MECHANISMS:
             selected_label = MECHANISMS[selected_category]
 
-    # Score each target grant
+    # Use cached pre-computed data for target grants (major performance boost)
+    cached_scores = get_crossfield_target_scores()
+    cached_models = cached_scores.get('model_systems', {})
+    cached_patterns = cached_scores.get('pattern_matches', {})
+
+    # Score each target grant using cached lookups (set operations instead of regex)
     scores = []
     matching_features_list = []
-    model_systems = []
+    model_systems_list = []
+
+    # Pre-compile keyword pattern if provided
+    keyword_pattern = None
+    if keyword_filter and keyword_filter.strip():
+        try:
+            keyword_pattern = re.compile(keyword_filter.strip(), re.IGNORECASE)
+        except re.error:
+            keyword_pattern = None
 
     for idx, text in target_text.items():
-        # Detect model system
-        model = detect_model_system(text)
-        model_systems.append(model)
+        # Use cached model system (no regex needed)
+        model = cached_models.get(idx, 'Unknown')
+        model_systems_list.append(model)
 
         matches = []
         score = 0
 
-        # HIGHEST PRIORITY: Keyword filter match (+10)
-        # Supports regex patterns - user can enter patterns like "inflam.*" or "gut|intestin"
+        # HIGHEST PRIORITY: Keyword filter match (+10) - still need regex for user input
         if keyword_filter and keyword_filter.strip():
-            try:
-                # Try to use input as regex pattern directly
-                pattern = re.compile(keyword_filter.strip(), re.IGNORECASE)
-                match = pattern.search(text)
+            if keyword_pattern:
+                match = keyword_pattern.search(text)
                 if match:
                     score += 10
                     matches.insert(0, f"Keyword: {match.group()}")
-            except re.error:
-                # If invalid regex, fall back to literal comma-separated keywords
+            else:
+                # Fall back to literal comma-separated keywords
                 keywords = [k.strip() for k in keyword_filter.split(',')]
                 for kw in keywords:
                     if kw and re.search(re.escape(kw), text, re.IGNORECASE):
                         score += 10
                         matches.insert(0, f"Keyword: {kw}")
-                        break  # Only count once
+                        break
 
-        # HIGH PRIORITY: Selected category match (+5)
-        if selected_pattern and re.search(selected_pattern, text, re.IGNORECASE):
-            score += 5
-            if selected_label and selected_label not in matches:
-                matches.append(f"★{selected_label}")
+        # HIGH PRIORITY: Selected category match (+5) - use cached sets
+        if selected_category:
+            # Check mechanisms cache
+            if selected_category in cached_patterns.get('mechanisms', {}):
+                if idx in cached_patterns['mechanisms'][selected_category]:
+                    score += 5
+                    if selected_label:
+                        matches.append(f"★{selected_label}")
+            # Check organs cache
+            elif selected_category in cached_patterns.get('organs', {}):
+                if idx in cached_patterns['organs'][selected_category]:
+                    score += 5
+                    if selected_label:
+                        matches.append(f"★{selected_label}")
 
-        # MEDIUM PRIORITY: Mechanism matches (+3 each, max 2)
-        mech_matches = 0
+        # MEDIUM PRIORITY: Mechanism matches (+3 each, max 2) - use cached sets
+        mech_match_count = 0
         for key, label, pattern in source_mechanisms:
-            if mech_matches >= 2:
+            if mech_match_count >= 2:
                 break
-            if re.search(pattern, text, re.IGNORECASE):
+            if key in cached_patterns.get('mechanisms', {}) and idx in cached_patterns['mechanisms'][key]:
                 score += 3
-                mech_matches += 1
+                mech_match_count += 1
                 if label not in matches and f"★{label}" not in matches:
                     matches.append(label)
 
@@ -1603,25 +1622,23 @@ def compute_grant_similarity(source_grants: pd.DataFrame, target_grants: pd.Data
             score += 2
             matches.append(f"Model: {model}")
 
-        # MEDIUM PRIORITY: Subtheme/pathway matches (+2 each, max 2)
-        subtheme_matches = 0
+        # MEDIUM PRIORITY: Subtheme/pathway matches (+2 each, max 2) - use cached sets
+        subtheme_match_count = 0
         for key, pattern in source_subthemes:
-            if subtheme_matches >= 2:
+            if subtheme_match_count >= 2:
                 break
-            if re.search(pattern, text, re.IGNORECASE):
+            if key in cached_patterns.get('subthemes', {}) and idx in cached_patterns['subthemes'][key]:
                 score += 2
-                subtheme_matches += 1
-                # Clean up subtheme key for display
+                subtheme_match_count += 1
                 nice_key = key.replace('_', ' ').title()
                 if nice_key not in matches:
                     matches.append(nice_key)
 
-        # LOWER PRIORITY: Other organ system matches (+1 each)
+        # LOWER PRIORITY: Other organ system matches (+1 each) - use cached sets
         for key, organ_label, organ_pattern in source_organs:
-            # Skip if this is the selected category (already counted)
             if selected_category and key == selected_category:
                 continue
-            if re.search(organ_pattern, text, re.IGNORECASE):
+            if key in cached_patterns.get('organs', {}) and idx in cached_patterns['organs'][key]:
                 score += 1
                 if organ_label not in matches and f"★{organ_label}" not in matches:
                     matches.append(organ_label)
@@ -1632,7 +1649,7 @@ def compute_grant_similarity(source_grants: pd.DataFrame, target_grants: pd.Data
     result = target_grants.copy()
     result['similarity_score'] = scores
     result['matching_features'] = matching_features_list
-    result['model_system'] = model_systems
+    result['model_system'] = model_systems_list
 
     return result
 
@@ -1744,6 +1761,13 @@ def compute_cooccurrence(df: pd.DataFrame) -> dict:
 
 
 @st.cache_data
+def get_full_cooccurrence(_cache_version: str = "v1_cooccur") -> dict:
+    """Cache co-occurrence stats for the full dataset (computed once per session)."""
+    df = load_data()
+    return compute_cooccurrence(df)
+
+
+@st.cache_data
 def load_data(_cache_version: str = "v24_direct_column_lookup") -> pd.DataFrame:
     """Load pre-filtered grant data (6,500 chemical exposure grants + conference abstracts)."""
     if not DATA_PATH.exists():
@@ -1782,6 +1806,162 @@ def load_crossfield_data(_cache_version: str = "v3_llm_mechanisms") -> pd.DataFr
     cf_df = cf_df.reset_index(drop=True)
 
     return cf_df
+
+
+@st.cache_data
+def get_detection_regex_masks(_df_hash: str) -> dict:
+    """Pre-compute regex match masks for all sample/method categories on the full dataset.
+
+    This allows the Detection tab to efficiently filter without re-running regex on every interaction.
+    Returns dict with category names as keys and list of matching PROJECT_TITLEs as values.
+    """
+    df = load_data()
+    if df.empty:
+        return {'sample_matches': {}, 'method_matches': {}, 'patterns': {}}
+
+    # Get detection/exposure subset
+    detection_col = 'LLM_STUDY_DETECTION'
+    exposure_col = 'LLM_STUDY_EXPOSURE_ASSESSMENT'
+    has_detection = df.get(detection_col, pd.Series([0]*len(df))) == 1
+    has_exposure = df.get(exposure_col, pd.Series([0]*len(df))) == 1
+    combined_df = df[has_detection | has_exposure].copy()
+    combined_df = combined_df.drop_duplicates(subset=['PROJECT_TITLE'], keep='first')
+
+    if combined_df.empty:
+        return {'sample_matches': {}, 'method_matches': {}, 'patterns': {}}
+
+    abstract_text = combined_df['ABSTRACT_TEXT'].fillna('').str.lower()
+    titles = combined_df['PROJECT_TITLE'].tolist()
+
+    # Sample categories
+    sample_categories = {
+        'Blood/Serum/Plasma': r'(?:blood|serum|plasma).{0,30}(?:sample|collect|analys|detect|measur)|(?:sample|collect|analys|detect|measur).{0,30}(?:blood|serum|plasma)|human.{0,20}(?:blood|serum|plasma)',
+        'Placenta': r'placent',
+        'Urine': r'\burine\b',
+        'Stool/Feces': r'\bstool\b|\bfeces\b|\bfecal\b|\bfaeces\b|\bfaecal\b|stool.?sample|fecal.?sample',
+        'Breast Milk': r'breast.?milk|human.?milk|lactation|lactat',
+        'Semen': r'\bsemen\b|sperm.+sample|seminal',
+        'Biospecimens (General)': r'biological.?sample|biospecimen|human.?sample',
+    }
+
+    # Method categories
+    method_categories = {
+        'Pyrolysis-GC/MS': r'pyrolysis|py-gc|pyr-gc|thermal.desorption',
+        'FTIR Spectroscopy': r'\bftir\b|fourier.transform.infrared|infrared.spectro',
+        'Raman Spectroscopy': r'\braman\b',
+        'Fluorescence/Nile Red': r'nile.red|fluorescen.+dye|fluorescen.+stain',
+        'SEM/TEM Imaging': r'\bsem\b|\btem\b|electron.microscop|scanning.electron|transmission.electron',
+        'Mass Spectrometry (LC-MS/HRMS)': r'mass.spectro|lc-ms|hplc-ms|hrms|orbitrap|tof-ms',
+    }
+
+    # Pre-compute which titles match each category
+    sample_matches = {}
+    for name, pattern in sample_categories.items():
+        mask = abstract_text.str.contains(pattern, regex=True, na=False)
+        matching_titles = [t for t, m in zip(titles, mask) if m]
+        sample_matches[name] = matching_titles
+
+    method_matches = {}
+    for name, pattern in method_categories.items():
+        mask = abstract_text.str.contains(pattern, regex=True, na=False)
+        matching_titles = [t for t, m in zip(titles, mask) if m]
+        method_matches[name] = matching_titles
+
+    # Store patterns for use in filtering
+    patterns = {**sample_categories, **method_categories}
+
+    return {
+        'sample_matches': sample_matches,
+        'method_matches': method_matches,
+        'patterns': patterns
+    }
+
+
+@st.cache_data
+def get_crossfield_target_scores(_cache_version: str = "v1_target_scores") -> dict:
+    """Pre-compute model systems and pattern matches for all target grants (cached).
+
+    This eliminates the expensive per-grant regex loop in compute_grant_similarity().
+    """
+    cf_df = load_crossfield_data()
+    if cf_df.empty:
+        return {'model_systems': {}, 'pattern_matches': {}}
+
+    # Get non-microplastics grants (these are the "other pollutant" grants)
+    other_exp_cols = [c for c in EXPOSURES.keys() if c != 'EXP_MICROPLASTICS' and c in cf_df.columns]
+    other_mask = pd.Series([False] * len(cf_df), index=cf_df.index)
+    for col in other_exp_cols:
+        other_mask = other_mask | (cf_df[col] == 1)
+    target_grants = cf_df[other_mask].copy()
+
+    if target_grants.empty:
+        return {'model_systems': {}, 'pattern_matches': {}}
+
+    # Pre-compute model system for each grant
+    target_text = target_grants['PROJECT_TITLE'].fillna('') + ' ' + target_grants['ABSTRACT_TEXT'].fillna('')
+
+    model_systems = {}
+    for idx, text in target_text.items():
+        for model_name, pattern in MODEL_SYSTEMS.items():
+            if re.search(pattern, text, re.IGNORECASE):
+                model_systems[idx] = model_name
+                break
+        if idx not in model_systems:
+            model_systems[idx] = 'Unknown'
+
+    # Pre-compute pattern matches for mechanisms, organs, subthemes
+    pattern_matches = {
+        'mechanisms': {},
+        'organs': {},
+        'subthemes': {},
+    }
+
+    # Mechanism matches
+    for key, (label, pattern) in MECHANISM_SYSTEMS.items():
+        matches = target_text.str.contains(pattern, regex=True, flags=re.IGNORECASE, na=False)
+        pattern_matches['mechanisms'][key] = set(matches[matches].index.tolist())
+
+    # Organ matches
+    for key, (label, pattern) in ORGAN_SYSTEMS.items():
+        matches = target_text.str.contains(pattern, regex=True, flags=re.IGNORECASE, na=False)
+        pattern_matches['organs'][key] = set(matches[matches].index.tolist())
+
+    # Subtheme matches
+    for key, pattern in SUBTHEMES.items():
+        matches = target_text.str.contains(pattern, regex=True, flags=re.IGNORECASE, na=False)
+        pattern_matches['subthemes'][key] = set(matches[matches].index.tolist())
+
+    return {
+        'model_systems': model_systems,
+        'pattern_matches': pattern_matches,
+        'target_indices': set(target_grants.index.tolist()),
+    }
+
+
+@st.cache_data
+def get_crossfield_category_counts(_cache_version: str = "v1_category_counts") -> dict:
+    """Pre-compute category counts for Cross-Field Insights dropdown (cached for performance)."""
+    cf_df = load_crossfield_data()
+    if cf_df.empty:
+        return {}
+
+    text_combined = cf_df['PROJECT_TITLE'].fillna('') + ' ' + cf_df['ABSTRACT_TEXT'].fillna('')
+    mp_mask = (cf_df['EXP_MICROPLASTICS'] == 1)
+
+    category_mp_counts = {}
+    for cat_key in MECHANISMS_AND_TYPES.keys():
+        if cat_key.startswith('TYPE_') and cat_key in TYPE_PATTERNS:
+            # TYPE_ categories use regex
+            pattern = TYPE_PATTERNS[cat_key]
+            cat_mask = mp_mask & text_combined.str.contains(pattern, regex=True, flags=re.IGNORECASE, na=False)
+        elif cat_key in cf_df.columns:
+            # LLM_MECH_ or MECH_ columns - use directly
+            cat_mask = mp_mask & (cf_df[cat_key] == 1)
+        else:
+            cat_mask = mp_mask
+        category_mp_counts[cat_key] = int(cat_mask.sum())
+
+    return category_mp_counts
 
 
 def filter_grants(df: pd.DataFrame, exposures: list, mechanisms: list,
@@ -1950,7 +2130,7 @@ else:
     filtered_display = filtered
 
 # Compute co-occurrence stats (full dataset for suggestions)
-cooccur = compute_cooccurrence(df)
+cooccur = get_full_cooccurrence()
 
 # Compute dynamic stats on filtered data
 cooccur_filtered = compute_cooccurrence(filtered) if len(filtered) > 0 else {}
@@ -2192,39 +2372,26 @@ with tab_detection:
 
         st.markdown("#### What sample types and methods are being used for detection?")
 
-        # Define sample types (true biospecimens for detection studies)
-        sample_categories = {
-            'Blood/Serum/Plasma': r'(?:blood|serum|plasma).{0,30}(?:sample|collect|analys|detect|measur)|(?:sample|collect|analys|detect|measur).{0,30}(?:blood|serum|plasma)|human.{0,20}(?:blood|serum|plasma)',
-            'Placenta': r'placent',
-            'Urine': r'\burine\b',
-            'Stool/Feces': r'\bstool\b|\bfeces\b|\bfecal\b|\bfaeces\b|\bfaecal\b|stool.?sample|fecal.?sample',
-            'Breast Milk': r'breast.?milk|human.?milk|lactation|lactat',
-            'Semen': r'\bsemen\b|sperm.+sample|seminal',
-            'Biospecimens (General)': r'biological.?sample|biospecimen|human.?sample',
-        }
+        # Use cached regex matches for performance (computed once on full dataset)
+        cached_masks = get_detection_regex_masks("v1")
+        sample_matches = cached_masks.get('sample_matches', {})
+        method_matches = cached_masks.get('method_matches', {})
+        sample_categories = {k: cached_masks['patterns'][k] for k in sample_matches.keys()}
+        method_categories = {k: cached_masks['patterns'][k] for k in method_matches.keys()}
 
-        # Define analytical methods (unambiguous - specific to detection)
-        method_categories = {
-            'Pyrolysis-GC/MS': r'pyrolysis|py-gc|pyr-gc|thermal.desorption',
-            'FTIR Spectroscopy': r'\bftir\b|fourier.transform.infrared|infrared.spectro',
-            'Raman Spectroscopy': r'\braman\b',
-            'Fluorescence/Nile Red': r'nile.red|fluorescen.+dye|fluorescen.+stain',
-            'SEM/TEM Imaging': r'\bsem\b|\btem\b|electron.microscop|scanning.electron|transmission.electron',
-            'Mass Spectrometry (LC-MS/HRMS)': r'mass.spectro|lc-ms|hplc-ms|hrms|orbitrap|tof-ms',
-        }
+        # Get titles in current filtered view for fast lookup
+        current_titles = set(combined_df['PROJECT_TITLE'].tolist())
 
-        # Calculate counts for each category
-        abstract_text = combined_df['ABSTRACT_TEXT'].fillna('').str.lower()
-
+        # Calculate counts by intersecting cached matches with current filter
         sample_data = {}
-        for name, pattern in sample_categories.items():
-            count = abstract_text.str.contains(pattern, regex=True, na=False).sum()
+        for name, matching_titles in sample_matches.items():
+            count = len(set(matching_titles) & current_titles)
             if count > 0:
                 sample_data[name] = count
 
         method_data = {}
-        for name, pattern in method_categories.items():
-            count = abstract_text.str.contains(pattern, regex=True, na=False).sum()
+        for name, matching_titles in method_matches.items():
+            count = len(set(matching_titles) & current_titles)
             if count > 0:
                 method_data[name] = count
 
@@ -2394,22 +2561,8 @@ Microplastics research is just getting started. Leverage existing biotech expert
     # Fixed chemical exposure to Microplastics
     my_exposure = 'EXP_MICROPLASTICS'
 
-    # Pre-compute microplastics grant counts for each category using the crossfield dataset
-    text_combined = cf_df['PROJECT_TITLE'].fillna('') + ' ' + cf_df['ABSTRACT_TEXT'].fillna('')
-    mp_mask = (cf_df[my_exposure] == 1)
-
-    category_mp_counts = {}
-    for cat_key in MECHANISMS_AND_TYPES.keys():
-        if cat_key.startswith('TYPE_') and cat_key in TYPE_PATTERNS:
-            # TYPE_ categories use regex
-            pattern = TYPE_PATTERNS[cat_key]
-            cat_mask = mp_mask & text_combined.str.contains(pattern, regex=True, flags=re.IGNORECASE, na=False)
-        elif cat_key in cf_df.columns:
-            # LLM_MECH_ or MECH_ columns - use directly
-            cat_mask = mp_mask & (cf_df[cat_key] == 1)
-        else:
-            cat_mask = mp_mask
-        category_mp_counts[cat_key] = cat_mask.sum()
+    # Use cached category counts (expensive regex computation done once)
+    category_mp_counts = get_crossfield_category_counts()
 
     # Category selection with dropdown + summary card
     category_options_list = list(MECHANISMS_AND_TYPES.keys())
@@ -2440,17 +2593,6 @@ Microplastics research is just getting started. Leverage existing biotech expert
         if my_mechanism:
             # Get the static summary for this category
             summary = CATEGORY_SUMMARIES.get(my_mechanism, "")
-
-            # Build organ/model tags for current category (compute here for display)
-            if my_mechanism.startswith('TYPE_') and my_mechanism in TYPE_PATTERNS:
-                type_pattern = TYPE_PATTERNS[my_mechanism]
-                cat_mask = mp_mask & text_combined.str.contains(type_pattern, regex=True, flags=re.IGNORECASE, na=False)
-            elif my_mechanism in cf_df.columns:
-                cat_mask = mp_mask & (cf_df[my_mechanism] == 1)
-            else:
-                cat_mask = mp_mask
-            cat_grants = cf_df[cat_mask]
-            cat_text = cat_grants['PROJECT_TITLE'].fillna('') + ' ' + cat_grants['ABSTRACT_TEXT'].fillna('')
 
             # Styled summary card
             summary_text = summary if summary else f"{mp_count} microplastics grants studying {mech_label}."
