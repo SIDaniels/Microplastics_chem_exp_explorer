@@ -1744,7 +1744,7 @@ def compute_cooccurrence(df: pd.DataFrame) -> dict:
 
 
 @st.cache_data
-def load_data(_cache_version: str = "v19_correct_data_file") -> pd.DataFrame:
+def load_data(_cache_version: str = "v20_source_preconverted") -> pd.DataFrame:
     """Load pre-filtered grant data (6,500 chemical exposure grants + conference abstracts)."""
     if not DATA_PATH.exists():
         return pd.DataFrame()
@@ -1757,6 +1757,9 @@ def load_data(_cache_version: str = "v19_correct_data_file") -> pd.DataFrame:
 
     # Create combined text field for searching
     df['_text'] = df['PROJECT_TITLE'].fillna('') + ' ' + df['ABSTRACT_TEXT'].fillna('')
+
+    # Pre-convert SOURCE to string to avoid repeated conversions in filter
+    df['SOURCE'] = df['SOURCE'].astype(str)
 
     # Reset index to avoid alignment issues
     df = df.reset_index(drop=True)
@@ -1787,16 +1790,17 @@ def filter_grants(df: pd.DataFrame, exposures: list, mechanisms: list,
     mask = pd.Series([True] * len(df), index=df.index)
 
     # Filter by source (NIH Grants, Conference Abstracts, Papers, STOMP Teaming)
+    # Note: SOURCE is pre-converted to string in load_data()
     if source == "NIH Grants":
-        mask &= df['SOURCE'].astype(str) == 'NIH'
+        mask &= df['SOURCE'] == 'NIH'
     elif source == "MP Conference Abstracts":
-        mask &= df['SOURCE'].astype(str) == 'CONFERENCE'
+        mask &= df['SOURCE'] == 'CONFERENCE'
     elif source == "Recent Papers (PMC)":
-        mask &= df['SOURCE'].astype(str).str.contains('PMC', na=False)
+        mask &= df['SOURCE'].str.contains('PMC', na=False)
     elif source == "Preprints (bioRxiv/medRxiv)":
-        mask &= df['SOURCE'].astype(str).str.contains('Rxiv', na=False)
+        mask &= df['SOURCE'].str.contains('Rxiv', na=False)
     elif source == "ARPA-H STOMP Team Search":
-        mask &= df['SOURCE'].astype(str) == 'STOMP Teaming'
+        mask &= df['SOURCE'] == 'STOMP Teaming'
 
     # Filter by year (include conference abstracts with NaN fiscal year)
     if years and 'FISCAL_YEAR' in df.columns:
