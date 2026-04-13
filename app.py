@@ -1744,7 +1744,7 @@ def compute_cooccurrence(df: pd.DataFrame) -> dict:
 
 
 @st.cache_data
-def load_data(_cache_version: str = "v21_tab_perf_optimization") -> pd.DataFrame:
+def load_data(_cache_version: str = "v22_revert_precompute") -> pd.DataFrame:
     """Load pre-filtered grant data (6,500 chemical exposure grants + conference abstracts)."""
     if not DATA_PATH.exists():
         return pd.DataFrame()
@@ -1958,16 +1958,6 @@ cooccur_filtered = compute_cooccurrence(filtered) if len(filtered) > 0 else {}
 # ============== SUMMARY CARD & ACTIVE FILTERS ==============
 # Get deduplicated data for summary
 filtered_unique = filtered.drop_duplicates(subset=['PROJECT_TITLE'], keep='first') if group_by_project else filtered
-
-# Pre-compute STOMP categories ONCE for all tabs (avoid redundant calls)
-# This is used by tab_organ and tab_model
-if len(filtered) > 0:
-    _stomp_results_cache = classify_stomp_categories(filtered)
-    # Also pre-compute filtered_stomp for reuse across tabs
-    _filtered_stomp = filtered.drop_duplicates(subset=['PROJECT_TITLE'], keep='first')
-else:
-    _stomp_results_cache = {'organs': {}, 'phases': {}, 'research_types': {}}
-    _filtered_stomp = filtered
 
 # Main content - tabs
 tab1, tab_organ, tab_model, tab_mech, tab_detection, tab4 = st.tabs(["Projects", "Organ Systems", "Model Organisms", "Mechanisms", "Detection & Exposure", "Cross-Field Insights"])
@@ -2196,8 +2186,8 @@ with tab_detection:
         combined_df = combined_df.drop_duplicates(subset=['PROJECT_TITLE'], keep='first')
 
         n_total = len(combined_df)
-        # Use pre-computed deduplicated count instead of calling drop_duplicates again
-        n_filtered = len(_filtered_stomp)
+        # Count deduplicated projects for coverage percentage
+        n_filtered = len(filtered.drop_duplicates(subset=['PROJECT_TITLE']))
         coverage_pct = round(100 * n_total / n_filtered, 1) if n_filtered > 0 else 0
 
         st.markdown("#### What sample types and methods are being used for detection?")
@@ -2805,11 +2795,11 @@ Microplastics research is just getting started. Leverage existing biotech expert
 # Organ Systems Tab
 with tab_organ:
     if len(filtered) > 0:
-        # Use pre-computed STOMP classification (computed once before tabs)
-        stomp_results = _stomp_results_cache
+        # Compute STOMP classification for this tab
+        stomp_results = classify_stomp_categories(filtered)
 
-        # Use pre-computed deduplicated data
-        filtered_stomp = _filtered_stomp
+        # Deduplicate for this tab
+        filtered_stomp = filtered.drop_duplicates(subset=['PROJECT_TITLE'], keep='first')
 
         organ_data = stomp_results['organs']
         if organ_data:
@@ -2944,11 +2934,11 @@ with tab_organ:
 # Model Systems Tab
 with tab_model:
     if len(filtered) > 0:
-        # Use pre-computed STOMP classification (computed once before tabs)
-        stomp_results = _stomp_results_cache
+        # Compute STOMP classification for this tab
+        stomp_results = classify_stomp_categories(filtered)
 
-        # Use pre-computed deduplicated data
-        filtered_stomp = _filtered_stomp
+        # Deduplicate for this tab
+        filtered_stomp = filtered.drop_duplicates(subset=['PROJECT_TITLE'], keep='first')
 
         # Calculate projects with any model system identified using pre-classified columns
         n_grants = len(filtered_stomp)
@@ -3068,8 +3058,8 @@ with tab_model:
     with tab_mech:
         # Use pre-classified MECH_* columns from CSV (same as Cross-Field Insights tab)
         # This provides consistent categorization across both tabs
-        # Use pre-computed deduplicated data
-        filtered_stomp = _filtered_stomp
+        # Deduplicate for this tab
+        filtered_stomp = filtered.drop_duplicates(subset=['PROJECT_TITLE'], keep='first')
         mech_name_to_key = {}
         mech_data = {}
         n_grants = len(filtered_stomp)
