@@ -716,6 +716,25 @@ st.markdown("""
     div[class*="stAppDeployButton"] {display: none !important;}
     [data-testid="manage-app-button"] {display: none !important;}
 
+    /* Hide profile/avatar/account button in top right */
+    [data-testid="stMainMenuButton"] {display: none !important;}
+    [data-testid="baseButton-headerNoPadding"] {display: none !important;}
+    button[kind="headerNoPadding"] {display: none !important;}
+    .stMainMenu {display: none !important;}
+    div[data-testid="stMainMenu"] {display: none !important;}
+    [data-testid="stAppViewContainer"] button[kind="header"] {display: none !important;}
+    /* Target the user avatar/profile icon */
+    img[alt="User avatar"] {display: none !important;}
+    [data-testid="stAvatar"] {display: none !important;}
+    div[class*="stAvatar"] {display: none !important;}
+    /* Hide all top-right corner buttons */
+    [data-testid="stToolbar"] button {display: none !important;}
+    [data-testid="stHeader"] button {display: none !important;}
+    .stApp > header button {display: none !important;}
+    /* Nuclear option: hide anything in top right corner */
+    div[style*="position: absolute"][style*="right: 0"] {display: none !important;}
+    div[style*="position: fixed"][style*="top: 0"][style*="right"] button {display: none !important;}
+
     /* Wrap text in dataframe tables so titles are fully visible */
     [data-testid="stDataFrame"] td {
         white-space: normal !important;
