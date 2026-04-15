@@ -891,9 +891,9 @@ EXPOSURES = {
 
 # Mechanism categories - using LLM classifications (more accurate than regex)
 # LLM classifications done via Claude Sonnet in April 2026
+# Note: Oxidative stress removed - too many false positives (STOMP capability profiles, generic mentions)
 MECHANISMS = {
-    'LLM_MECH_OXIDATIVE_STRESS': 'Oxidative Stress',
-    'LLM_MECH_INFLAMMATION': 'Inflammation',
+    'LLM_MECH_INFLAMMATION': 'Cellular Stress Response',  # Renamed from Inflammation - now includes oxidative stress
     'LLM_MECH_BARRIER': 'Barrier Disruption (e.g. blood-brain)',
     'LLM_MECH_NEURODEGENERATION': 'Neurodegeneration',
     'LLM_MECH_METABOLIC': 'Metabolic / Cardiovascular',
@@ -909,27 +909,20 @@ MECHANISMS = {
 # Updated April 2026 - evidence-based summaries from analysis of 356 microplastics studies
 # (NIH grants, conference abstracts, bioRxiv/medRxiv/PMC papers - reviewed for accuracy)
 CATEGORY_SUMMARIES = {
-    'LLM_MECH_OXIDATIVE_STRESS': """<strong>Oxidative Stress & Mitochondrial Dysfunction</strong>
+    # Note: Oxidative stress removed - too many false positives (STOMP capability profiles, generic mentions)
+    'LLM_MECH_INFLAMMATION': """<strong>Cellular Stress Response</strong>
 
-Research investigates ROS generation, antioxidant depletion, and mitochondrial damage induced by micro- and nanoplastics:
+Research investigates how micro- and nanoplastics trigger oxidative stress, mitochondrial dysfunction, and inflammatory cascades across multiple organ systems:
 
-<strong>ROS generation:</strong> Multiple studies demonstrate that MNPs induce reactive oxygen species in various cell types and model organisms. Polystyrene nanoplastics trigger dose-dependent ROS increases in hepatocytes, intestinal epithelial cells, and macrophages.
+<strong>Oxidative stress & mitochondrial dysfunction:</strong> Studies demonstrate MNP-induced ROS generation, antioxidant depletion (reduced glutathione, SOD, catalase), and mitochondrial damage. Research measures biomarkers including MDA (lipid peroxidation), 8-OHdG (DNA oxidation), and Nrf2/ARE pathway activation. Polystyrene nanoplastics disrupt mitochondrial membrane potential and ATP production in hepatocytes, neurons, and cardiomyocytes.
 
-<strong>Antioxidant depletion:</strong> Research shows MNP exposure depletes glutathione (GSH), reduces SOD and catalase activity, and disrupts the Nrf2/ARE antioxidant pathway. Studies measure oxidative stress markers including MDA and 8-OHdG.
+<strong>Gastrointestinal stress:</strong> Multiple NIH grants examine how ingested plastics trigger gut inflammation, NLRP3 inflammasome activation, and IL-1β/IL-6/TNF-α release via ROS-mediated pathways. Studies use 3D intestinal organoids (Caco-2, patient-derived models), zebrafish, and mouse models. Research links oxidative damage to IBD exacerbation, ulcerative colitis, and colorectal cancer progression (PIEZO1-dependent oxidative stress, HIF-3α signaling).
 
-<strong>Mitochondrial dysfunction:</strong> Nanoplastics accumulate in mitochondria, disrupting membrane potential, ATP production, and electron transport chain function. This is linked to downstream effects including apoptosis and cellular senescence.""",
+<strong>Cardiovascular effects:</strong> Studies document NLRP3 inflammasome activation and oxidative damage in aortas of exposed mice. PET-MPs trigger endothelial glycocalyx loss via ER stress and ROS, promoting vascular injury. Ocean-derived microplastics increase IL-1β secretion in macrophages and link to atherosclerosis progression.
 
-    'LLM_MECH_INFLAMMATION': """<strong>Inflammation</strong>
+<strong>Pulmonary stress:</strong> Research on inhaled microplastic fibers shows dose-dependent oxidative stress and inflammation, with PMMA nanoplastics inducing inflammatory cytokines in BALF and serum. Mitochondrial dysfunction in alveolar macrophages is linked to fibrotic responses.
 
-Research investigates inflammatory responses to micro- and nanoplastics across multiple organ systems and exposure routes:
-
-<strong>Gastrointestinal inflammation:</strong> Multiple NIH grants and studies examine how ingested plastics trigger gut inflammation, NLRP3 inflammasome activation, and IL-1β/IL-6/TNF-α release. Studies use 3D intestinal organoids (Caco-2, patient-derived models), zebrafish, and mouse models. Research links inflammation to IBD exacerbation, ulcerative colitis, and colorectal cancer progression (PIEZO1-dependent oxidative stress, HIF-3α signaling).
-
-<strong>Cardiovascular inflammation:</strong> Studies document NLRP3 inflammasome activation in aortas of exposed mice and link MNP exposure to atherosclerosis. Ocean-derived microplastics increase IL-1β secretion in macrophages. PET-MPs trigger endothelial glycocalyx loss via ER stress and ROS, promoting vascular injury.
-
-<strong>Pulmonary inflammation:</strong> Research on inhaled microplastic fibers shows dose-dependent lung inflammation, with PMMA nanoplastics inducing inflammatory cytokines in BALF and serum. Textile-derived fibers with azo dyes are investigated for combined fibrotic and allergic responses.
-
-<strong>Neuroinflammation:</strong> Studies link MNP exposure to microglial activation, GFAP changes, and neuroinflammatory cytokines, particularly in Alzheimer's disease models.""",
+<strong>Neurological effects:</strong> Studies link MNP exposure to microglial activation, neuroinflammatory cytokines, and oxidative damage markers in brain tissue, particularly in Alzheimer's disease models where plastics may exacerbate amyloid-β aggregation via ROS pathways.""",
 
     'LLM_MECH_NEURODEGENERATION': """<strong>Neurotoxicity & Neurodegeneration</strong>
 
@@ -1074,7 +1067,8 @@ CONF_TYPE_CATEGORIES = {
 # Mechanism columns are now unified under LLM_MECH_* naming
 # (Old regex-based MECH_* columns removed April 2026)
 LLM_MECH_COLUMNS = [
-    'LLM_MECH_OXIDATIVE_STRESS', 'LLM_MECH_INFLAMMATION', 'LLM_MECH_BARRIER',
+    # Note: LLM_MECH_OXIDATIVE_STRESS removed - merged into LLM_MECH_INFLAMMATION (now "Cellular Stress Response")
+    'LLM_MECH_INFLAMMATION', 'LLM_MECH_BARRIER',
     'LLM_MECH_MICROBIOME', 'LLM_MECH_ENDOCRINE', 'LLM_MECH_NEURODEGENERATION',
     'LLM_MECH_IMMUNE', 'LLM_MECH_DNA_DAMAGE', 'LLM_MECH_RECEPTOR',
     'LLM_MECH_CELL_DEATH', 'LLM_MECH_METABOLIC',
@@ -1083,7 +1077,7 @@ LLM_MECH_COLUMNS = [
 # Mapping from LLM_MECH_* columns to MECH_* columns for non-MP grants
 # Non-MP grants use regex-based MECH_* columns, not LLM classifications
 LLM_TO_REGEX_MECH = {
-    'LLM_MECH_OXIDATIVE_STRESS': 'MECH_OXIDATIVE_MITOCHONDRIAL',
+    # Note: LLM_MECH_OXIDATIVE_STRESS entry removed - merged into INFLAMMATION (now maps to both regex patterns)
     'LLM_MECH_INFLAMMATION': 'MECH_INFLAMMATION',
     'LLM_MECH_BARRIER': 'MECH_BARRIER_DISRUPTION',
     'LLM_MECH_MICROBIOME': 'MECH_MICROBIOME',
@@ -2045,8 +2039,7 @@ def get_category_title_sets(_cache_version: str = "v1") -> dict:
 
     # Mechanisms - use LLM_MECH_* columns
     mech_col_map = {
-        'Inflammatory Response': 'LLM_MECH_INFLAMMATION',
-        'Oxidative Stress': 'LLM_MECH_OXIDATIVE_STRESS',
+        'Cellular Stress Response': 'LLM_MECH_INFLAMMATION',
         'Neurodegeneration': 'LLM_MECH_NEURODEGENERATION',
         'Endocrine Disruption': 'LLM_MECH_ENDOCRINE',
         'Gut Microbiome': 'LLM_MECH_MICROBIOME',
@@ -2162,8 +2155,7 @@ def get_category_stats_for_titles(_cache_version: str, title_set_hash: str) -> d
 
     # Mechanisms - use LLM_MECH_* columns (the actual column names in the data)
     mech_keys = [
-        ('LLM_MECH_INFLAMMATION', 'Inflammatory Response'),
-        ('LLM_MECH_OXIDATIVE_STRESS', 'Oxidative Stress'),
+        ('LLM_MECH_INFLAMMATION', 'Cellular Stress Response'),
         ('LLM_MECH_NEURODEGENERATION', 'Neurodegeneration'),
         ('LLM_MECH_ENDOCRINE', 'Endocrine Disruption'),
         ('LLM_MECH_MICROBIOME', 'Gut Microbiome'),
@@ -2268,8 +2260,7 @@ def get_filtered_category_stats(filtered_df: pd.DataFrame) -> dict:
 
     # Mechanisms - use LLM_MECH_* columns (the actual column names in the data)
     mech_col_map = {
-        'Inflammatory Response': 'LLM_MECH_INFLAMMATION',
-        'Oxidative Stress': 'LLM_MECH_OXIDATIVE_STRESS',
+        'Cellular Stress Response': 'LLM_MECH_INFLAMMATION',
         'Neurodegeneration': 'LLM_MECH_NEURODEGENERATION',
         'Endocrine Disruption': 'LLM_MECH_ENDOCRINE',
         'Gut Microbiome': 'LLM_MECH_MICROBIOME',
