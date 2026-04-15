@@ -23,7 +23,7 @@ Microplastics research is a rapidly evolving field where researchers often work 
 | **Projects** | Browse and search 350+ microplastics studies (NIH grants, conference abstracts, papers) with filters for mechanisms, organs, models |
 | **Organ Systems** | Visual breakdown of which organ systems are being studied |
 | **Model Organisms** | Distribution of in vitro, rodent, zebrafish, human, and environmental models |
-| **Mechanisms** | Toxicity mechanisms under investigation (inflammation, neurodegeneration, barrier disruption, etc.) |
+| **Mechanisms** | Toxicity mechanisms under investigation (cellular stress response, neurodegeneration, barrier disruption, etc.) |
 | **Cross-Field Insights** | Search 3,000+ NIH-funded researchers studying similar problems with other pollutants |
 
 ---
@@ -81,7 +81,7 @@ Each grant was classified across multiple dimensions using regex pattern matchin
 - Heavy metals, air pollution, PFAS, pesticides, phthalates/BPA, solvents, PAHs/dioxins/PCBs, flame retardants, microplastics, nitrates
 
 **Mechanisms of Toxicity** (`MECH_*` columns):
-- Neurodegeneration, inflammation, oxidative stress/mitochondrial dysfunction, endocrine disruption, microbiome effects, immune dysfunction, DNA damage, epigenetic changes, receptor signaling, cell death/senescence, barrier disruption
+- Cellular stress response (inflammation + oxidative stress/mitochondrial dysfunction), neurodegeneration, endocrine disruption, microbiome effects, immune dysfunction, DNA damage, epigenetic changes, receptor signaling, cell death/senescence, barrier disruption
 
 **Organ Systems** (`ORGAN_*` columns):
 - Brain/nervous, GI/gut, respiratory, cardiovascular, reproductive, liver, kidney, immune, skin, endocrine
@@ -202,7 +202,7 @@ streamlit run app.py
 
 ### Cross-Field Insights: Relevance Scoring Algorithm
 
-The Cross-Field Insights tab helps researchers find experts studying similar problems with other pollutants. When a user selects a research category (e.g., "Gut Microbiome" or "Oxidative Stress"), the app scores and ranks 2,400+ grants from other pollutant fields based on research similarity.
+The Cross-Field Insights tab helps researchers find experts studying similar problems with other pollutants. When a user selects a research category (e.g., "Gut Microbiome" or "Cellular Stress Response"), the app scores and ranks 2,400+ grants from other pollutant fields based on research similarity.
 
 **How it works:**
 
@@ -231,7 +231,7 @@ The Cross-Field Insights tab helps researchers find experts studying similar pro
 
 We initially attempted pure regex-based classification for mechanisms of toxicity. This worked reasonably well for binary detection (does the grant mention inflammation?) but struggled with nuance (does the grant *study* inflammation as a primary outcome, or just mention it as background?).
 
-**Key lesson: Abstracts are challenging to query with regex.** Scientific abstracts use varied terminology, abbreviations, and sentence structures. A grant studying "ROS-mediated mitochondrial dysfunction" might not match a simple "oxidative stress" regex. Manual validation revealed many false negatives.
+**Key lesson: Abstracts are challenging to query with regex.** Scientific abstracts use varied terminology, abbreviations, and sentence structures. A grant studying "ROS-mediated mitochondrial dysfunction" might not match a simple "oxidative stress" regex. Manual validation revealed many false negatives. Additionally, we found that "oxidative stress" was often mentioned generically in capability profiles (e.g., STOMP teaming) without being the actual focus of research—leading us to consolidate oxidative stress and inflammation into a single "Cellular Stress Response" category.
 
 The LLM-based approach (`scripts/llm_classify_mechanisms.py`) resolved this by:
 1. Providing detailed definitions of each mechanism
