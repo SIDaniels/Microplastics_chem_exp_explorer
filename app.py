@@ -360,7 +360,7 @@ def create_horizontal_bar_chart(data: dict, title: str = "", value_label: str = 
             alt.Tooltip('value:Q', title=value_label, format=',')
         ]
     ).properties(
-        height=max(len(data) * 35, 150),
+        height=max(len(data) * 45, 200),
     ).configure_axis(
         labelFontSize=12,
         titleFontSize=13,
